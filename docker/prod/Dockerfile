@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libicu-dev libsqlite3-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
-        pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd zip intl \
+        opcache pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd zip intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default
 
@@ -42,6 +42,25 @@ RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
         -e 's/^;\?log_errors\s*=.*/log_errors = On/' \
         -e 's#^;\?error_log\s*=.*#error_log = /dev/stderr#' \
         "$PHP_INI_DIR/php.ini"
+
+# Without OPcache every request re-parses and recompiles every PHP file
+# Laravel and Filament touch, which is hundreds of files per request.
+#
+# validate_timestamps=0 is safe specifically because this image is
+# immutable: application code only ever changes by deploying a new image,
+# which starts a new container with an empty cache. The one thing that
+# writes PHP at runtime is entrypoint.sh (config/route/view caching), and
+# that finishes before php-fpm accepts its first request. If you ever edit
+# code inside a running container by hand, restart it or the change is
+# ignored.
+RUN { \
+        echo 'opcache.enable=1'; \
+        echo 'opcache.enable_cli=0'; \
+        echo 'opcache.memory_consumption=96'; \
+        echo 'opcache.interned_strings_buffer=16'; \
+        echo 'opcache.max_accelerated_files=20000'; \
+        echo 'opcache.validate_timestamps=0'; \
+    } > "$PHP_INI_DIR/conf.d/opcache.ini"
 
 WORKDIR /var/www/html
 COPY --from=vendor /app /var/www/html
