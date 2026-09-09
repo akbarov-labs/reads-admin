@@ -1,0 +1,30 @@
+# Production stack for the Contabo server. One container: PHP-FPM + nginx
+# together (see docker/prod/Dockerfile), using SQLite so there's no separate
+# database process. Joins the existing external Caddy network so Caddy can
+# reverse_proxy to it by container name — nothing else on the server changes.
+#
+# This file is copied to the server by the deploy workflow; the real .env
+# next to it on the server is created once by hand (see DEPLOY.md) and is
+# never touched by deploys.
+
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/akbarov-sarvar/reads-admin}:${IMAGE_TAG:-latest}
+    container_name: reads-admin-app
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - app_storage:/var/www/html/storage
+    mem_limit: 384m
+    networks:
+      - caddy_net
+
+networks:
+  caddy_net:
+    external: true
+    # kitoblarim's Caddy container's network (confirmed via:
+    # docker inspect kitoblarim-caddy-1 --format '{{json .NetworkSettings.Networks}}')
+    name: kitoblarim_default
+
+volumes:
+  app_storage:

@@ -1,0 +1,137 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image tag (short commit SHA)
+        id: meta
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Builds the Laravel app inside Docker (see docker/prod/Dockerfile) —
+      # this runs on GitHub's runner, not on the VPS, so the VPS's limited
+      # RAM never comes into play.
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/prod/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://dashboard.kitoblarim.uz
+    steps:
+      # The runner already has authenticated access to this private repo, so
+      # it is the right place to read the server's config files from — the
+      # server itself has no GitHub credentials and does not need any.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # appleboy/ssh-action downloads a prebuilt drone-ssh binary from GitHub
+      # Releases on every run, which intermittently 503s and fails the job
+      # for reasons unrelated to this repo. Use plain ssh instead — no
+      # runtime binary download, nothing to flake on.
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.CONTABO_SSH_KEY }}
+
+      - name: Trust VPS host key
+        env:
+          CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
+          CONTABO_PORT: ${{ secrets.CONTABO_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${CONTABO_PORT:-22}" -H "$CONTABO_HOST" >> ~/.ssh/known_hosts
+
+      # Everything else ships inside the image: the server never builds
+      # PHP/Composer/npm. docker-compose.prod.yml is the only repo file the
+      # server needs — compose reads it from disk at start-up.
+      #
+      # Copied from the runner rather than pulled by the server: the server
+      # has no GitHub credential and does not need one just to read one file.
+      #
+      # .env is deliberately NOT copied: it lives only on the server and
+      # holds the secrets (APP_KEY, etc.) — see .env.production.example.
+      - name: Sync server config
+        env:
+          CONTABO_USER: ${{ secrets.CONTABO_USER }}
+          CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
+          CONTABO_PORT: ${{ secrets.CONTABO_PORT }}
+          CONTABO_DEPLOY_PATH: ${{ secrets.CONTABO_DEPLOY_PATH }}
+        run: |
+          ssh -p "${CONTABO_PORT:-22}" "$CONTABO_USER@$CONTABO_HOST" "mkdir -p '$CONTABO_DEPLOY_PATH'"
+          scp -P "${CONTABO_PORT:-22}" docker-compose.prod.yml "$CONTABO_USER@$CONTABO_HOST:$CONTABO_DEPLOY_PATH/docker-compose.prod.yml"
+
+      - name: Pull new image and restart on the VPS
+        env:
+          CONTABO_USER: ${{ secrets.CONTABO_USER }}
+          CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
+          CONTABO_PORT: ${{ secrets.CONTABO_PORT }}
+          CONTABO_DEPLOY_PATH: ${{ secrets.CONTABO_DEPLOY_PATH }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.tag }}
+          GH_ACTOR: ${{ github.actor }}
+        run: |
+          ssh -p "${CONTABO_PORT:-22}" "$CONTABO_USER@$CONTABO_HOST" bash -s <<EOF
+          set -e
+          cd "$CONTABO_DEPLOY_PATH"
+          # Reclaim disk FIRST, before anything that writes. Every deploy
+          # pushes a uniquely tagged image, so the previous one keeps its
+          # :sha tag forever and is never *dangling* — the only thing plain
+          # "docker image prune -f" removes. Tagged images go too here;
+          # anything backing a running container is protected by Docker, so
+          # the live app is never at risk. Never add --volumes: app_storage
+          # holds the SQLite database and would be destroyed.
+          # Guarded: under set -e a transient prune failure would abort the
+          # deploy before anything is even pulled.
+          df -h /
+          docker image prune -af || true
+          docker builder prune -af || true
+          echo "$GHCR_PAT" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
+          export IMAGE_TAG=$IMAGE_TAG
+          docker compose -f docker-compose.prod.yml pull app
+          docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
+          # The superseded image is unreferenced now that the new container
+          # is up, so this second pass is what actually reclaims it.
+          docker image prune -af || true
+          df -h /
+          echo "--- running image ---"
+          docker compose -f docker-compose.prod.yml images app
+          EOF

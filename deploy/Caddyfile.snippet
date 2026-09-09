@@ -1,0 +1,11 @@
+# Add this block to the Caddyfile your existing Caddy container already
+# reads (the same one serving kitoblarim and my-blog), then reload Caddy —
+# it will request/renew the Let's Encrypt certificate for
+# dashboard.kitoblarim.uz automatically the first time it's requested.
+
+dashboard.kitoblarim.uz {
+    reverse_proxy reads-admin-app:80
+}
+
+# Reload without downtime, from wherever your Caddy compose file lives:
+#   docker exec <caddy-container-name> caddy reload --config /etc/caddy/Caddyfile
