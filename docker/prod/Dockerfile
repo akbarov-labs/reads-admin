@@ -31,6 +31,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default
 
+# The official php image ships php.ini-development and php.ini-production
+# templates but activates neither — without this, PHP runs on its
+# compiled-in defaults, which include display_errors=On. Any warning or
+# deprecation notice during a request then gets printed as raw text into
+# the response body, and Laravel's own exception handler fails with
+# "headers already sent" when it later tries to send its response.
+RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
+    && sed -i \
+        -e 's/^;\?log_errors\s*=.*/log_errors = On/' \
+        -e 's#^;\?error_log\s*=.*#error_log = /dev/stderr#' \
+        "$PHP_INI_DIR/php.ini"
+
 WORKDIR /var/www/html
 COPY --from=vendor /app /var/www/html
 COPY --from=assets /app/public/build /var/www/html/public/build
