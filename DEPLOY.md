@@ -121,6 +121,32 @@ Visit `https://dashboard.kitoblarim.uz`.
 Just push to `main`. That's the whole pipeline — build, push to GHCR, pull
 on the server, restart, run any new migrations automatically.
 
+## Creating an admin account
+
+The seeder only runs locally, so a freshly deployed server has no accounts at
+all. Create the first admin over SSH:
+
+```bash
+docker exec -it reads-admin-app php artisan reads:create-admin
+```
+
+It prompts for email, name, and password (twice, hidden). Use `-it` so the
+prompts work. To script it instead, pass everything up front — though note
+the password then lands in your shell history:
+
+```bash
+docker exec reads-admin-app php artisan reads:create-admin \
+  --name="Sarvar" --email="you@example.com" --password="..."
+```
+
+Re-running for an email that is already an admin is a safe no-op. If the
+email belongs to an existing *translator* account, add `--promote` to turn it
+into an admin.
+
+Do not use `php artisan make:filament-user` here: it is not aware of the
+`users.role` column, so it creates an account stuck on the default
+`translator` role, which can sign in but only ever sees its own profile.
+
 ## Changing `.env` on the server
 
 After editing `.env`, you must **recreate** the container, not restart it:
