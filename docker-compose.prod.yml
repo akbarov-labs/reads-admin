@@ -9,7 +9,7 @@
 
 services:
   app:
-    image: ${IMAGE:-ghcr.io/akbarov-sarvar/reads-admin}:${IMAGE_TAG:-latest}
+    image: ${IMAGE:-ghcr.io/akbarov-labs/reads-admin}:${IMAGE_TAG:-latest}
     container_name: reads-admin-app
     restart: unless-stopped
     env_file: .env
