@@ -50,13 +50,24 @@ existing Caddyfile, then reload Caddy (see the comment in that file for the
 exact command). Caddy will fetch the Let's Encrypt certificate for
 `dashboard.kitoblarim.uz` automatically the first time it's requested.
 
-**4. Create a GHCR pull token**
+**4. Log the server in to GHCR (one time, for manual operations)**
 
-The server needs its own long-lived credential to pull the (private by
-default) image from GHCR — it's a different machine from the one that
-pushed it. On GitHub: Settings → Developer settings → Personal access
+The deploy workflow authenticates its own pull using the `GITHUB_TOKEN`
+GitHub generates per run, so **automated deploys need nothing from you
+here**. But that token dies with the run, which means a *manual*
+`docker compose pull` / `up` on the server later will fail with
+`error from registry: denied`.
+
+To be able to intervene by hand, log the server in once with a long-lived
+credential: on GitHub go to Settings → Developer settings → Personal access
 tokens → Tokens (classic) → generate one with only the `read:packages`
-scope. This is the `GHCR_PAT` secret below.
+scope, then on the server:
+
+```bash
+echo '<the token>' | docker login ghcr.io -u <your-github-username> --password-stdin
+```
+
+This persists in `~/.docker/config.json` and survives reboots.
 
 **5. Create the `production` environment and add its secrets**
 
@@ -76,11 +87,11 @@ Repo → Settings → Environments → New environment → name it exactly
 | `CONTABO_PORT` | SSH port (usually `22`) |
 | `CONTABO_SSH_KEY` | Private key (PEM) for a key whose public half is in that user's `~/.ssh/authorized_keys` |
 | `CONTABO_DEPLOY_PATH` | `/opt/apps/reads-admin` (or wherever you created it in step 2) |
-| `GHCR_PAT` | The personal access token from step 4 |
 
-`GITHUB_TOKEN` (used to push to GHCR in the `build-and-push` job) needs
-nothing from you — GitHub generates and injects it automatically on every
-run.
+`GITHUB_TOKEN` (used to push to GHCR in `build-and-push`, and to pull on the
+server in `deploy`) needs nothing from you — GitHub generates and injects it
+automatically on every run. The token from step 4 is only for your own manual
+`docker` commands on the server; it is not a repository secret.
 
 Don't reuse a personal key you need elsewhere — generate a dedicated
 deploy keypair (`ssh-keygen -t ed25519 -f ~/.ssh/deploy_key_reads_admin -N ""`),
@@ -110,6 +121,19 @@ Visit `https://dashboard.kitoblarim.uz`.
 Just push to `main`. That's the whole pipeline — build, push to GHCR, pull
 on the server, restart, run any new migrations automatically.
 
+## Changing `.env` on the server
+
+After editing `.env`, you must **recreate** the container, not restart it:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --force-recreate
+```
+
+`docker compose restart` reuses the existing container, and a container's
+environment is captured once when it is *created*. Restarting re-runs
+`entrypoint.sh` (so config/route/view caches are rebuilt) but the process
+still sees the old values, so `.env` edits appear to have no effect.
+
 ## Rollback
 
 Every image is also tagged with its commit SHA. To roll back:
@@ -118,6 +142,43 @@ Every image is also tagged with its commit SHA. To roll back:
 cd /opt/apps/reads-admin
 IMAGE_TAG=<previous-commit-sha> docker compose -f docker-compose.prod.yml up -d
 ```
+
+Note that `IMAGE_TAG` defaults to `latest`, which the server never pulls
+during normal deploys (the workflow pulls by commit SHA). If a bare
+`docker compose up` fails with `error from registry: denied`, either log in
+per step 4 above, or point it at an image already on the box:
+
+```bash
+docker images ghcr.io/akbarov-labs/reads-admin   # see what's local
+IMAGE_TAG=<one-of-those-tags> docker compose -f docker-compose.prod.yml up -d
+```
+
+## Troubleshooting
+
+**Every request 500s, log shows "Unsupported cipher or incorrect key
+length"** — `APP_KEY` is malformed. Almost always quoting: see the warning
+at the top of `.env.production.example`. `APP_KEY="base64:..."` is wrong,
+`APP_KEY=base64:...` is right. A correct value is exactly 51 characters:
+`base64:` plus 44 characters. Check with:
+
+```bash
+grep '^APP_KEY=' .env | awk -F= '{print length($2)}'
+```
+
+**Log shows "Cannot modify header information - headers already sent"** —
+this is a *symptom*, not the cause. Something failed earlier in the request
+and Laravel's error page rendering hit a second failure on the way out. Look
+for the other error logged at the same timestamp:
+
+```bash
+docker exec reads-admin-app grep 'production.ERROR' storage/logs/laravel.log | sort -u
+```
+
+**Container restart-loops, `docker exec` says "is restarting"** —
+`entrypoint.sh` runs under `set -e`, so any failed step (missing `APP_KEY`,
+a failed migration) aborts before `supervisord` starts, meaning nothing
+listens on port 80 and Caddy returns 502. `docker logs reads-admin-app`
+works on a restarting container and shows exactly which step died.
 
 ## Notes
 
