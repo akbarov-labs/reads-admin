@@ -13,7 +13,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Caddy terminates TLS and forwards plain HTTP into this container
+        // over the internal Docker network. Without trusting it, Laravel
+        // sees an http request and builds http:// asset URLs, which the
+        // browser then blocks as mixed content on the https page.
         //
+        // Trusting any proxy is safe here specifically because the container
+        // publishes no ports (see docker-compose.prod.yml) -- nothing outside
+        // the Docker network can reach it to spoof X-Forwarded-* headers.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
