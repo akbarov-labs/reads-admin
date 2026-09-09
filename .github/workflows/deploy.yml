@@ -55,6 +55,11 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # So GITHUB_TOKEN can authenticate `docker login` on the VPS below —
+      # jobs don't inherit permissions from other jobs in the same workflow.
+      packages: read
     environment:
       name: production
       url: https://dashboard.kitoblarim.uz
@@ -107,7 +112,7 @@ jobs:
           CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
           CONTABO_PORT: ${{ secrets.CONTABO_PORT }}
           CONTABO_DEPLOY_PATH: ${{ secrets.CONTABO_DEPLOY_PATH }}
-          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GHCR_TOKEN: ${{ github.token }}
           IMAGE_TAG: ${{ needs.build-and-push.outputs.tag }}
           GH_ACTOR: ${{ github.actor }}
         run: |
@@ -126,7 +131,7 @@ jobs:
           df -h /
           docker image prune -af || true
           docker builder prune -af || true
-          echo "$GHCR_PAT" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
           export IMAGE_TAG=$IMAGE_TAG
           docker compose -f docker-compose.prod.yml pull app
           docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
