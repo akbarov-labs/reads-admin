@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\TranslatorResource\RelationManagers;
 
 use App\Enums\BookRole;
+use App\Filament\Resources\TranslatorResource;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -44,6 +45,9 @@ class BooksRelationManager extends RelationManager
             Forms\Components\FileUpload::make('cover_path')
                 ->label('Cover image')
                 ->image()
+                // @see TranslatorResource::SAFE_IMAGE_TYPES — no SVG.
+                ->acceptedFileTypes(TranslatorResource::SAFE_IMAGE_TYPES)
+                ->maxSize(4096)
                 ->disk('public')
                 ->directory('covers')
                 ->imageEditor()

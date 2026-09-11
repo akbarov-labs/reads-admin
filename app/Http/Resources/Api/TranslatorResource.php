@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api;
 
+use App\Support\TranslatorSeo;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -10,6 +11,20 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class TranslatorResource extends JsonResource
 {
+    /**
+     * The controller has already validated ?locale= and applied it to the
+     * app; reading it back keeps this resource honest if it is ever rendered
+     * outside that controller.
+     */
+    private function requestedLocale(): string
+    {
+        $locale = app()->getLocale();
+
+        return in_array($locale, TranslatorSeo::LOCALES, true)
+            ? $locale
+            : 'uz';
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -34,6 +49,16 @@ class TranslatorResource extends JsonResource
             'startYear' => $this->start_year,
             'totalBooksTranslated' => $this->books->count(),
             'books' => BookResource::collection($this->books),
+
+            // Sitemap <lastmod>. Covers the whole page, not just the
+            // translator row — a new book changes what the page says.
+            'updatedAt' => $this->content_updated_at?->toAtomString(),
+
+            // Already resolved for the requested locale: an admin override
+            // when one exists, otherwise a value derived from this profile.
+            // The site renders these verbatim, so what an admin previews in
+            // the panel is exactly what search engines index.
+            'seo' => $this->resource->seo()->toArray($this->requestedLocale()),
         ];
     }
 }

@@ -37,10 +37,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # deprecation notice during a request then gets printed as raw text into
 # the response body, and Laravel's own exception handler fails with
 # "headers already sent" when it later tries to send its response.
+#
+# cgi.fix_pathinfo=0 and expose_php=Off are hardening, not error handling:
+# the first stops PHP-FPM from walking a path backwards to execute an
+# uploaded file that merely *contains* PHP (nginx's try_files already blocks
+# this -- two locks on one door), the second stops advertising the exact PHP
+# version in every response header.
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
     && sed -i \
         -e 's/^;\?log_errors\s*=.*/log_errors = On/' \
         -e 's#^;\?error_log\s*=.*#error_log = /dev/stderr#' \
+        -e 's/^;\?cgi.fix_pathinfo\s*=.*/cgi.fix_pathinfo = 0/' \
+        -e 's/^;\?expose_php\s*=.*/expose_php = Off/' \
         "$PHP_INI_DIR/php.ini"
 
 # Without OPcache every request re-parses and recompiles every PHP file

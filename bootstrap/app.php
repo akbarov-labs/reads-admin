@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,6 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Applies to the panel, the API and anything else served by PHP.
+        // Files under /storage are served by nginx directly and get their
+        // own headers there (docker/prod/nginx.conf).
+        $middleware->append(SecurityHeaders::class);
+
         // Caddy terminates TLS and forwards plain HTTP into this container
         // over the internal Docker network. Without trusting it, Laravel
         // sees an http request and builds http:// asset URLs, which the

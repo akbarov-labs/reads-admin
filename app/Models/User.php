@@ -50,8 +50,19 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === UserRole::Translator;
     }
 
+    /**
+     * Gate for the whole admin panel. `users.role` defaults to "translator",
+     * so any row that ends up in the table — created by a future signup
+     * route, an import, a seeder — would otherwise be able to sign in. A
+     * translator earns access by having a profile to manage; an admin always
+     * has access.
+     */
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->isTranslator() && $this->translator()->exists();
     }
 }

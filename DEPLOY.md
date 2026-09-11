@@ -160,6 +160,48 @@ environment is captured once when it is *created*. Restarting re-runs
 `entrypoint.sh` (so config/route/view caches are rebuilt) but the process
 still sees the old values, so `.env` edits appear to have no effect.
 
+## SEO metadata and the revalidation webhook
+
+The public site's `<title>`, meta description and share image for each
+translator are produced **here**, not there: the API returns them already
+resolved, so what an admin previews in the panel is the exact string Google
+indexes. Blank fields are derived from the profile — name, professional
+title, location, language pairs and the live book count — which means the
+description updates itself when a book is added, with nobody editing it.
+
+These fields are admin-only. Translators never see the section, and a write
+to them from a non-admin account is refused server-side by
+`App\Observers\TranslatorObserver`, not merely hidden in the UI.
+
+Four variables in the server `.env` drive it:
+
+```
+SEO_SITE_NAME=Reads
+SEO_SITE_URL=https://tarjima.kitoblarim.uz
+SEO_REVALIDATE_URL=http://reads-app:3000/api/revalidate
+SEO_REVALIDATE_SECRET=<the same value as REVALIDATE_SECRET in the Reads .env>
+```
+
+After any save to a translator, book, language pair or social link, this app
+POSTs to `SEO_REVALIDATE_URL` so the site drops its cached copy of that
+profile at once, instead of waiting out its 5-minute cache window. The call
+goes over the internal Docker network by container name, so it never touches
+the public internet and works before any certificate exists.
+
+It is deliberately best-effort: if the site is down or the secret is wrong,
+the save still succeeds and a warning goes to `storage/logs/laravel.log`
+("Site revalidation was rejected" / "Site revalidation failed"). The site's
+own cache window then picks the change up within five minutes. Leave
+`SEO_REVALIDATE_URL` blank to switch the pings off entirely.
+
+Verify after a deploy:
+
+```bash
+docker compose -f docker-compose.prod.yml exec app \
+  php artisan tinker --execute="App\Models\Translator::first()->touch();"
+tail -n 20 storage/logs/laravel.log     # silence here means it worked
+```
+
 ## Rollback
 
 Every image is also tagged with its commit SHA. To roll back:

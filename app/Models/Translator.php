@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Observers\TranslatorObserver;
+use App\Support\TranslatorSeo;
+use Carbon\CarbonInterface as Carbon;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
+#[ObservedBy(TranslatorObserver::class)]
 #[Fillable([
     'user_id',
     'slug',
@@ -16,6 +21,10 @@ use Spatie\Translatable\HasTranslations;
     'location',
     'bio',
     'title',
+    'meta_title',
+    'meta_description',
+    'og_image_path',
+    'seo_noindex',
     'years_active',
     'start_year',
 ])]
@@ -30,7 +39,40 @@ class Translator extends Model
      *
      * @var array<int, string>
      */
-    public array $translatable = ['bio', 'location', 'title'];
+    public array $translatable = ['bio', 'location', 'title', 'meta_title', 'meta_description'];
+
+    protected function casts(): array
+    {
+        return [
+            'seo_noindex' => 'boolean',
+        ];
+    }
+
+    /**
+     * Search-engine metadata for this profile: the admin's overrides where
+     * they exist, values derived from the profile everywhere else.
+     */
+    public function seo(): TranslatorSeo
+    {
+        return TranslatorSeo::for($this);
+    }
+
+    /**
+     * Newest change anywhere in the profile, used as the sitemap's
+     * <lastmod>. A new book is a change to the page, so the book timestamps
+     * count even though the translator row itself did not move.
+     */
+    public function getContentUpdatedAtAttribute(): ?Carbon
+    {
+        $timestamps = collect([
+            $this->updated_at,
+            $this->books->max('updated_at'),
+            $this->socialLinks->max('updated_at'),
+            $this->languagePairs->max('updated_at'),
+        ])->filter();
+
+        return $timestamps->isEmpty() ? null : $timestamps->max();
+    }
 
     public function getRouteKeyName(): string
     {

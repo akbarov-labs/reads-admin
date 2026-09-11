@@ -28,6 +28,11 @@ class SocialLinksRelationManager extends RelationManager
             Forms\Components\TextInput::make('url')
                 ->label('Profile URL')
                 ->url()
+                // Laravel's bare `url` rule accepts any scheme, which would
+                // let a `javascript:` URL through into an <a href> on the
+                // public site. Pin it to the two schemes a profile link can
+                // legitimately use. The site refuses anything else as well.
+                ->rules(['url:http,https'])
                 ->required()
                 ->placeholder('https://...')
                 ->maxLength(255),
