@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
+  <rect width="400" height="600" fill="#18181b"/>
+  <line x1="40" y1="60" x2="360" y2="60" stroke="#52525b" stroke-width="1"/>
+  <line x1="40" y1="540" x2="360" y2="540" stroke="#52525b" stroke-width="1"/>
+  <text x="200" y="285" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="46" fill="#fafaf9">Shisha</text>
+  <text x="200" y="340" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="46" fill="#fafaf9">bog&#8217;</text>
+  <line x1="170" y1="368" x2="230" y2="368" stroke="#71717a" stroke-width="1"/>
+  <text x="200" y="400" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" letter-spacing="3" fill="#a1a1aa">HELENA MARSH</text>
+  <text x="200" y="505" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" letter-spacing="2" fill="#71717a">TARJIMA &#183; D. YUSUPOVA</text>
+</svg>

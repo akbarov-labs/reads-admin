@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
+  <rect width="400" height="600" fill="#3f3f46"/>
+  <line x1="40" y1="56" x2="360" y2="56" stroke="#71717a" stroke-width="1"/>
+  <text x="200" y="255" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="40" fill="#fafaf9">Sho&#8217;r</text>
+  <text x="200" y="305" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="40" fill="#fafaf9">qirg&#8217;oqdan</text>
+  <text x="200" y="355" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="40" fill="#fafaf9">xatlar</text>
+  <line x1="170" y1="383" x2="230" y2="383" stroke="#a1a1aa" stroke-width="1"/>
+  <text x="200" y="415" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" letter-spacing="3" fill="#d4d4d8">THOMAS REYES</text>
+  <text x="200" y="505" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" letter-spacing="2" fill="#a1a1aa">TARJIMA &#183; D. YUSUPOVA</text>
+</svg>

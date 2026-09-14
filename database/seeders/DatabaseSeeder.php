@@ -5,12 +5,15 @@ namespace Database\Seeders;
 use App\Enums\BookRole;
 use App\Enums\SocialPlatform;
 use App\Enums\UserRole;
+use App\Models\Author;
 use App\Models\Book;
+use App\Models\Publisher;
 use App\Models\LanguagePair;
 use App\Models\SocialLink;
 use App\Models\Translator;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 class DatabaseSeeder extends Seeder
 {
@@ -19,6 +22,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->publishDemoAssets();
+
         $admin = User::create([
             'name' => 'Reads Admin',
             'email' => 'admin@reads.test',
@@ -157,11 +162,82 @@ class DatabaseSeeder extends Seeder
             ],
         ];
 
+        // The shared catalogue, keyed by the name each book above already
+        // carries. Seeded rather than left to the 2026_09_14 migrations:
+        // those backfill an existing database, and a freshly seeded one has
+        // no books at the point they run — which used to leave the site's
+        // Authors and Publishers sections empty on every new install.
+        $authors = [
+            'Ilhom Salimov' => ['slug' => 'ilhom-salimov-author', 'nationality' => ['uz' => "O'zbek", 'en' => 'Uzbek'], 'birth_year' => 1995],
+            'Pierre Boulle' => ['slug' => 'pierre-boulle', 'nationality' => ['uz' => 'Fransuz', 'en' => 'French'], 'birth_year' => 1912, 'death_year' => 1994],
+            'Katherine Paterson' => ['slug' => 'katherine-paterson', 'nationality' => ['uz' => 'Amerikalik', 'en' => 'American'], 'birth_year' => 1932],
+            'Sarah Jio' => ['slug' => 'sarah-jio', 'nationality' => ['uz' => 'Amerikalik', 'en' => 'American'], 'birth_year' => 1978],
+            'Halis Karabenli' => ['slug' => 'halis-karabenli', 'nationality' => ['uz' => 'Turk', 'en' => 'Turkish']],
+            'H.G. Wells' => ['slug' => 'hg-wells', 'nationality' => ['uz' => 'Ingliz', 'en' => 'English'], 'birth_year' => 1866, 'death_year' => 1946],
+        ];
+
+        $authorIds = [];
+        foreach ($authors as $name => $attributes) {
+            $authorIds[$name] = Author::create([...$attributes, 'name' => $name])->id;
+        }
+
+        $publishers = [
+            'Yangi Kitob' => ['slug' => 'yangi-kitob', 'country' => ['uz' => "O'zbekiston", 'en' => 'Uzbekistan']],
+            'Asaxiy Books' => ['slug' => 'asaxiy-books', 'country' => ['uz' => "O'zbekiston", 'en' => 'Uzbekistan'], 'established_year' => 2016],
+            'Zabarjad Media' => ['slug' => 'zabarjad-media', 'country' => ['uz' => "O'zbekiston", 'en' => 'Uzbekistan']],
+            'Nihol' => ['slug' => 'nihol', 'country' => ['uz' => "O'zbekiston", 'en' => 'Uzbekistan']],
+            'Factor Books' => ['slug' => 'factor-books', 'country' => ['uz' => "O'zbekiston", 'en' => 'Uzbekistan']],
+            'Yangi Asr Avlodi' => ['slug' => 'yangi-asr-avlodi', 'country' => ['uz' => "O'zbekiston", 'en' => 'Uzbekistan'], 'established_year' => 1991],
+        ];
+
+        $publisherIds = [];
+        foreach ($publishers as $name => $attributes) {
+            $publisherIds[$name] = Publisher::create([...$attributes, 'name' => $name])->id;
+        }
+
         foreach ($books as $i => $book) {
-            Book::create([...$book, 'translator_id' => $translator->id, 'sort_order' => $i]);
+            Book::create([
+                ...$book,
+                'translator_id' => $translator->id,
+                // The free-text columns stay as they are, exactly as they do
+                // for a migrated row: the catalogue link is what the site
+                // reads, the string is what it falls back to.
+                'author_id' => $authorIds[$book['author']] ?? null,
+                'publisher_id' => $publisherIds[$book['publisher']] ?? null,
+                'sort_order' => $i,
+            ]);
         }
 
         $this->command?->info("Admin login: {$admin->email} / password");
         $this->command?->info("Translator login: {$translatorUser->email} / password");
+    }
+
+    /**
+     * Copies the placeholder avatar and covers this seeder references onto
+     * the public disk.
+     *
+     * storage/app/public is gitignored, so without this a fresh checkout
+     * seeds rows whose cover_path and avatar_path point at files that were
+     * never there — and the site renders a grid of broken images rather than
+     * the placeholder each one falls back to. The source files live under
+     * database/seeders/assets precisely so they are committed.
+     *
+     * Existing files are left alone: re-seeding must not overwrite an image
+     * somebody uploaded through the panel onto the same path.
+     */
+    private function publishDemoAssets(): void
+    {
+        $disk = Storage::disk('public');
+        $root = database_path('seeders/assets');
+
+        foreach (['covers', 'avatars'] as $directory) {
+            foreach (glob("{$root}/{$directory}/*.svg") ?: [] as $file) {
+                $target = $directory.'/'.basename($file);
+
+                if (! $disk->exists($target)) {
+                    $disk->put($target, file_get_contents($file));
+                }
+            }
+        }
     }
 }
