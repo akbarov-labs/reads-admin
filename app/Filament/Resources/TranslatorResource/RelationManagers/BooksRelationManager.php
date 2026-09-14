@@ -30,14 +30,28 @@ class BooksRelationManager extends RelationManager
             Forms\Components\TextInput::make('original_title')
                 ->required()
                 ->maxLength(255),
-            Forms\Components\TextInput::make('author')
+            Forms\Components\Select::make('author_id')
+                ->relationship('authorRecord', 'name')
+                ->label('Author')
                 ->required()
-                ->maxLength(255),
+                ->searchable()
+                ->preload()
+                ->createOptionForm([
+                    Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                    Forms\Components\TextInput::make('slug')->required()->alphaDash()->maxLength(255),
+                ]),
             Forms\Components\TextInput::make('source_language')
                 ->required()
                 ->maxLength(255),
-            Forms\Components\TextInput::make('publisher')
-                ->maxLength(255),
+            Forms\Components\Select::make('publisher_id')
+                ->relationship('publisherRecord', 'name')
+                ->label('Publisher')
+                ->searchable()
+                ->preload()
+                ->createOptionForm([
+                    Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                    Forms\Components\TextInput::make('slug')->required()->alphaDash()->maxLength(255),
+                ]),
             Forms\Components\TextInput::make('year')
                 ->numeric()
                 ->minValue(1000)
@@ -92,8 +106,13 @@ class BooksRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('original_title')
                     ->searchable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('author')
+                Tables\Columns\TextColumn::make('authorRecord.name')
+                    ->label('Author')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('publisherRecord.name')
+                    ->label('Publisher')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('role')
                     ->badge(),
                 Tables\Columns\TextColumn::make('year')

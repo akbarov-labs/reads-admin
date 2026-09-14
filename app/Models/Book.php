@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[ObservedBy(ProfileContentObserver::class)]
 #[Fillable([
     'translator_id',
+    'author_id',
+    'publisher_id',
     'role',
     'uzbek_title',
     'original_title',
@@ -37,6 +39,16 @@ class Book extends Model
     public function translator(): BelongsTo
     {
         return $this->belongsTo(Translator::class);
+    }
+
+    public function authorRecord(): BelongsTo
+    {
+        return $this->belongsTo(Author::class, 'author_id');
+    }
+
+    public function publisherRecord(): BelongsTo
+    {
+        return $this->belongsTo(Publisher::class, 'publisher_id');
     }
 
     /** @see Translator::getAvatarUrlAttribute() for why this is relative, not absolute. */

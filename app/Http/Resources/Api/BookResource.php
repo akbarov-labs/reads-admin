@@ -18,11 +18,14 @@ class BookResource extends JsonResource
         return [
             'id' => (string) $this->id,
             'role' => $this->role?->value,
+            'authorId' => $this->author_id ? (string) $this->author_id : null,
             'uzbekTitle' => $this->uzbek_title,
             'originalTitle' => $this->original_title,
-            'author' => $this->author,
+            'author' => $this->authorRecord?->name ?? $this->author,
             'sourceLanguage' => $this->source_language,
             'publisher' => $this->publisher,
+            'publisherId' => $this->publisher_id ? (string) $this->publisher_id : null,
+            'publisherName' => $this->publisherRecord?->name ?? $this->publisher,
             'year' => $this->year,
             'coverUrl' => $this->cover_url,
             'excerpt' => $this->hasExcerpt() ? [

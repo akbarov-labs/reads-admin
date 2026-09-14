@@ -17,7 +17,7 @@ class TranslatorController extends Controller
     {
         $this->applyRequestedLocale($request);
 
-        $translators = Translator::with(['languagePairs', 'books', 'socialLinks'])->get();
+        $translators = Translator::with(['languagePairs', 'books.authorRecord', 'books.publisherRecord', 'socialLinks'])->get();
 
         return TranslatorResource::collection($translators);
     }
@@ -26,7 +26,7 @@ class TranslatorController extends Controller
     {
         $this->applyRequestedLocale($request);
 
-        $translator->load(['languagePairs', 'books', 'socialLinks']);
+        $translator->load(['languagePairs', 'books.authorRecord', 'books.publisherRecord', 'socialLinks']);
 
         return new TranslatorResource($translator);
     }
