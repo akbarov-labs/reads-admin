@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
+  <rect width="400" height="600" fill="#f5f5f4"/>
+  <rect x="24" y="24" width="352" height="552" fill="none" stroke="#d6d3d1" stroke-width="1"/>
+  <line x1="60" y1="70" x2="340" y2="70" stroke="#18181b" stroke-width="1.5"/>
+  <text x="200" y="290" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="44" fill="#18181b">Nomsiz</text>
+  <text x="200" y="342" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="44" fill="#18181b">daryolar</text>
+  <line x1="60" y1="530" x2="340" y2="530" stroke="#18181b" stroke-width="1.5"/>
+  <text x="200" y="400" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" letter-spacing="3" fill="#71717a">ANDREI VOLKONSKY</text>
+  <text x="200" y="505" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" letter-spacing="2" fill="#a8a29e">TARJIMA &#183; D. YUSUPOVA</text>
+</svg>

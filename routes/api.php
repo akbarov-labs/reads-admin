@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\InquiryController;
+use App\Http\Controllers\Api\AuthorController;
+use App\Http\Controllers\Api\BookController;
+use App\Http\Controllers\Api\PublisherController;
 use App\Http\Controllers\Api\TranslatorController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,6 +14,12 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('throttle:120,1')->group(function () {
     Route::get('/translators', [TranslatorController::class, 'index']);
     Route::get('/translators/{translator}', [TranslatorController::class, 'show']);
+    Route::get('/authors', [AuthorController::class, 'index']);
+    Route::get('/authors/{author}', [AuthorController::class, 'show']);
+    Route::get('/books', [BookController::class, 'index']);
+    Route::get('/books/{book}', [BookController::class, 'show']);
+    Route::get('/publishers', [PublisherController::class, 'index']);
+    Route::get('/publishers/{publisher}', [PublisherController::class, 'show']);
 });
 
 // Public inquiry form submissions. Rate-limited per IP on top of the

@@ -127,7 +127,8 @@ class BooksRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('original_title')
                     ->searchable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('author')
+                Tables\Columns\TextColumn::make('authorRecord.name')
+                    ->label('Author')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('publisher')
                     ->searchable()
