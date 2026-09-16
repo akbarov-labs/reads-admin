@@ -23,25 +23,55 @@ class BooksRelationManager extends RelationManager
                 ->options(BookRole::class)
                 ->required()
                 ->default(BookRole::Translator),
+
             Forms\Components\TextInput::make('uzbek_title')
                 ->label('Title (in your language)')
                 ->required()
                 ->maxLength(255),
+
             Forms\Components\TextInput::make('original_title')
                 ->required()
                 ->maxLength(255),
+
             Forms\Components\TextInput::make('author')
                 ->required()
                 ->maxLength(255),
+
+            Forms\Components\FileUpload::make('author_image_path')
+                ->label('Author photo')
+                ->helperText('Portrait of the author. Used on the Authors discovery page.')
+                ->image()
+                ->acceptedFileTypes(TranslatorResource::SAFE_IMAGE_TYPES)
+                ->maxSize(4096)
+                ->disk('public')
+                ->directory('authors')
+                ->imageEditor()
+                ->imageEditorAspectRatios(['1:1'])
+                ->columnSpanFull(),
+
             Forms\Components\TextInput::make('source_language')
                 ->required()
                 ->maxLength(255),
+
             Forms\Components\TextInput::make('publisher')
                 ->maxLength(255),
+
+            Forms\Components\FileUpload::make('publisher_image_path')
+                ->label('Publisher logo / image')
+                ->helperText('Logo or cover image representing this publisher. Used on the Publishers discovery page.')
+                ->image()
+                ->acceptedFileTypes(TranslatorResource::SAFE_IMAGE_TYPES)
+                ->maxSize(4096)
+                ->disk('public')
+                ->directory('publishers')
+                ->imageEditor()
+                ->columnSpanFull(),
+
             Forms\Components\TextInput::make('year')
                 ->numeric()
                 ->minValue(1000)
                 ->maxValue(9999),
+
             Forms\Components\FileUpload::make('cover_path')
                 ->label('Cover image')
                 ->image()
@@ -86,6 +116,11 @@ class BooksRelationManager extends RelationManager
                 Tables\Columns\ImageColumn::make('cover_path')
                     ->label('')
                     ->disk('public'),
+                Tables\Columns\ImageColumn::make('author_image_path')
+                    ->label('Author')
+                    ->disk('public')
+                    ->circular()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('uzbek_title')
                     ->label('Title')
                     ->searchable(),
@@ -94,6 +129,9 @@ class BooksRelationManager extends RelationManager
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('author')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('publisher')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('role')
                     ->badge(),
                 Tables\Columns\TextColumn::make('year')

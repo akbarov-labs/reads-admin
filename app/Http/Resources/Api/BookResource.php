@@ -16,19 +16,21 @@ class BookResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => (string) $this->id,
-            'role' => $this->role?->value,
-            'uzbekTitle' => $this->uzbek_title,
-            'originalTitle' => $this->original_title,
-            'author' => $this->author,
-            'sourceLanguage' => $this->source_language,
-            'publisher' => $this->publisher,
-            'year' => $this->year,
-            'coverUrl' => $this->cover_url,
-            'excerpt' => $this->hasExcerpt() ? [
-                'sourceLanguage' => $this->excerpt_source_language,
-                'sourceText' => $this->excerpt_source_text,
-                'translatedText' => $this->excerpt_translated_text,
+            'id'               => (string) $this->id,
+            'role'             => $this->role?->value,
+            'uzbekTitle'       => $this->uzbek_title,
+            'originalTitle'    => $this->original_title,
+            'author'           => $this->author,
+            'authorImageUrl'   => $this->author_image_url,
+            'sourceLanguage'   => $this->source_language,
+            'publisher'        => $this->publisher,
+            'publisherImageUrl'=> $this->publisher_image_url,
+            'year'             => $this->year,
+            'coverUrl'         => $this->cover_url,
+            'excerpt'          => $this->hasExcerpt() ? [
+                'sourceLanguage'  => $this->excerpt_source_language,
+                'sourceText'      => $this->excerpt_source_text,
+                'translatedText'  => $this->excerpt_translated_text,
             ] : null,
         ];
     }

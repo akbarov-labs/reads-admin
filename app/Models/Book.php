@@ -16,8 +16,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'uzbek_title',
     'original_title',
     'author',
+    'author_image_path',
     'source_language',
     'publisher',
+    'publisher_image_path',
     'year',
     'cover_path',
     'excerpt_source_language',
@@ -43,6 +45,18 @@ class Book extends Model
     public function getCoverUrlAttribute(): ?string
     {
         return $this->cover_path ? '/storage/'.$this->cover_path : null;
+    }
+
+    /** Relative URL for the author's photo, or null when not set. */
+    public function getAuthorImageUrlAttribute(): ?string
+    {
+        return $this->author_image_path ? '/storage/'.$this->author_image_path : null;
+    }
+
+    /** Relative URL for the publisher's logo/image, or null when not set. */
+    public function getPublisherImageUrlAttribute(): ?string
+    {
+        return $this->publisher_image_path ? '/storage/'.$this->publisher_image_path : null;
     }
 
     public function hasExcerpt(): bool
