@@ -23,6 +23,13 @@ class TaqrizResource extends Resource
 
     protected static ?string $navigationLabel = 'Taqrizlar';
 
+    /**
+     * Filament derives the URL from the class name, which gives "taqrizs" —
+     * English pluralisation applied to an Uzbek word. Pinned to the real
+     * plural so the panel URL matches the public site's /taqriz routes.
+     */
+    protected static ?string $slug = 'taqrizlar';
+
     protected static ?string $modelLabel = 'taqriz';
 
     protected static ?string $pluralModelLabel = 'taqrizlar';

@@ -28,6 +28,9 @@ class TaqrizchiResource extends Resource
 
     protected static ?string $navigationLabel = 'Taqrizchilar';
 
+    /** @see TaqrizResource::$slug — "taqrizchis" for the same reason. */
+    protected static ?string $slug = 'taqrizchilar';
+
     protected static ?string $modelLabel = 'taqrizchi';
 
     protected static ?string $pluralModelLabel = 'taqrizchilar';
