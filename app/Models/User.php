@@ -45,6 +45,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(Taqrizchi::class);
     }
 
+    public function publisher(): HasOne
+    {
+        return $this->hasOne(Publisher::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
@@ -58,6 +63,11 @@ class User extends Authenticatable implements FilamentUser
     public function isTaqrizchi(): bool
     {
         return $this->role === UserRole::Taqrizchi;
+    }
+
+    public function isPublisher(): bool
+    {
+        return $this->role === UserRole::Publisher;
     }
 
     /**
@@ -77,6 +87,10 @@ class User extends Authenticatable implements FilamentUser
             return $this->translator()->exists();
         }
 
-        return $this->isTaqrizchi() && $this->taqrizchi()->exists();
+        if ($this->isTaqrizchi()) {
+            return $this->taqrizchi()->exists();
+        }
+
+        return $this->isPublisher() && $this->publisher()->exists();
     }
 }

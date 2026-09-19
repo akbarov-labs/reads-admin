@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\PublisherResource\Pages;
+use App\Filament\Resources\PublisherResource\RelationManagers\BooksRelationManager;
 use App\Models\Publisher;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -10,6 +12,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Unique;
 
 class PublisherResource extends Resource
 {
@@ -17,17 +21,58 @@ class PublisherResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
     protected static ?string $navigationLabel = 'Publishers';
 
+    /**
+     * Publishers now sign in to maintain their own entry and add the books
+     * they publish, so unlike the other shared catalogue resources this is
+     * not admin-only. A publisher's list is scoped to their single row.
+     */
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()?->isAdmin() ?? false;
+        $user = auth()->user();
+
+        return (bool) ($user?->isAdmin() || $user?->isPublisher());
+    }
+
+    public static function getRelations(): array
+    {
+        return [BooksRelationManager::class];
     }
 
     public static function form(Form $form): Form
     {
         return $form->schema([
+            Forms\Components\Section::make('Login account')
+                ->description('Credentials the publisher uses to sign in. Only admins can see or change these.')
+                ->visible(fn () => auth()->user()?->isAdmin())
+                ->schema([
+                    Forms\Components\TextInput::make('email')
+                        ->email()
+                        ->helperText('Leave blank if this publisher has nobody maintaining it yet.')
+                        ->unique(
+                            table: 'users',
+                            column: 'email',
+                            modifyRuleUsing: fn (Unique $rule, $record) => $record?->user_id
+                                ? $rule->ignore($record->user_id)
+                                : $rule,
+                        ),
+                    Forms\Components\TextInput::make('password')
+                        ->password()
+                        ->revealable()
+                        ->label(fn (string $context) => $context === 'create' ? 'Password' : 'Reset password')
+                        ->helperText(fn (string $context) => $context === 'create'
+                            ? 'Share this with the publisher — it will not be shown again.'
+                            : 'Leave blank to keep the current password.')
+                        ->default(fn (string $context) => $context === 'create' ? Str::password(12) : null)
+                        ->dehydrated(fn ($state) => filled($state)),
+                ])
+                ->columns(2),
+
             Forms\Components\Section::make('Publisher identity')->schema([
                 Forms\Components\TextInput::make('name')->required()->maxLength(255),
-                Forms\Components\TextInput::make('slug')->required()->alphaDash()->unique(ignoreRecord: true)->maxLength(255),
+                Forms\Components\TextInput::make('slug')->required()->alphaDash()->unique(ignoreRecord: true)->maxLength(255)
+                    // Admin-only in the UI; PublisherObserver is what
+                    // actually stops a publisher moving their own URL.
+                    ->disabled(fn () => ! (auth()->user()?->isAdmin() ?? false)),
                 Forms\Components\TextInput::make('website_url')->url()->maxLength(255),
                 Forms\Components\FileUpload::make('logo_path')->label('Logo')->image()->acceptedFileTypes(TranslatorResource::SAFE_IMAGE_TYPES)->maxSize(4096)->disk('public')->directory('publishers'),
             ])->columns(2),
@@ -67,7 +112,18 @@ class PublisherResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->withCount('books');
+        $query = parent::getEloquentQuery()->withCount('books');
+        $user = auth()->user();
+
+        // Scoped for publishers only, not for every non-admin. A translator
+        // is neither, and PublisherPolicy already refuses them with a 403 —
+        // narrowing the query for them as well would turn that into a 404
+        // and quietly change what the panel tells them.
+        if ($user?->isPublisher()) {
+            $query->where('user_id', $user->id);
+        }
+
+        return $query;
     }
 
     public static function getPages(): array
