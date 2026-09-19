@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\TranslatorResource\Pages;
 use App\Filament\Resources\TranslatorResource\RelationManagers\BooksRelationManager;
 use App\Filament\Resources\TranslatorResource\RelationManagers\LanguagePairsRelationManager;
-use App\Filament\Resources\TranslatorResource\RelationManagers\SocialLinksRelationManager;
+use App\Filament\RelationManagers\SocialLinksRelationManager;
 use App\Models\Translator;
 use App\Support\TranslatorSeo;
 use Filament\Forms;

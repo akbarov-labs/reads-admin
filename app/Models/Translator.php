@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\Translatable\HasTranslations;
 
 #[ObservedBy(TranslatorObserver::class)]
@@ -102,10 +103,15 @@ class Translator extends Model
         return $this->hasMany(Inquiry::class)->latest();
     }
 
-    /** @return HasMany<SocialLink, $this> */
-    public function socialLinks(): HasMany
+    /**
+     * Polymorphic since taqrizchilar gained profiles of their own — the same
+     * row of links, owned by either kind of profile.
+     *
+     * @return MorphMany<SocialLink, $this>
+     */
+    public function socialLinks(): MorphMany
     {
-        return $this->hasMany(SocialLink::class)->orderBy('sort_order');
+        return $this->morphMany(SocialLink::class, 'owner')->orderBy('sort_order');
     }
 
     /**
