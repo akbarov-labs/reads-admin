@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Models\Taqrizchi;
 use App\Models\Translator;
 use App\Models\User;
 use Filament\Facades\Filament;
@@ -70,4 +71,39 @@ class PanelAccessTest extends TestCase
         $this->assertSame(UserRole::Translator, $stored->role);
         $this->assertFalse($stored->canAccessPanel($this->panel()));
     }
+
+    public function test_a_taqrizchi_with_a_profile_can_access_the_panel(): void
+    {
+        $user = User::create([
+            'name' => 'Nodira',
+            'email' => 'nodira@example.test',
+            'password' => 'password',
+            'role' => UserRole::Taqrizchi,
+        ]);
+
+        Taqrizchi::create([
+            'user_id' => $user->id,
+            'slug' => 'nodira',
+            'name' => 'Nodira',
+        ]);
+
+        $this->assertTrue($user->fresh()->canAccessPanel($this->panel()));
+    }
+
+    /**
+     * Same reasoning as the translator case above: a reviewer earns access by
+     * having a profile to manage, not by carrying the role.
+     */
+    public function test_a_taqrizchi_without_a_profile_cannot_access_the_panel(): void
+    {
+        $user = User::create([
+            'name' => 'Nobody',
+            'email' => 'nobody@example.test',
+            'password' => 'password',
+            'role' => UserRole::Taqrizchi,
+        ]);
+
+        $this->assertFalse($user->canAccessPanel($this->panel()));
+    }
+
 }

@@ -14,13 +14,13 @@ class AuthorController extends Controller
     {
         $this->applyRequestedLocale($request);
 
-        return AuthorResource::collection(Author::withCount('books')->orderBy('name')->get());
+        return AuthorResource::collection(Author::withCount(['books' => fn ($query) => $query->approved()])->orderBy('name')->get());
     }
 
     public function show(Request $request, Author $author): AuthorResource
     {
         $this->applyRequestedLocale($request);
-        $author->loadCount('books');
+        $author->loadCount(['books' => fn ($query) => $query->approved()]);
 
         return new AuthorResource($author);
     }

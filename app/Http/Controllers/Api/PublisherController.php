@@ -14,13 +14,13 @@ class PublisherController extends Controller
     {
         $this->applyRequestedLocale($request);
 
-        return PublisherResource::collection(Publisher::withCount('books')->orderBy('name')->get());
+        return PublisherResource::collection(Publisher::withCount(['books' => fn ($query) => $query->approved()])->orderBy('name')->get());
     }
 
     public function show(Request $request, Publisher $publisher): PublisherResource
     {
         $this->applyRequestedLocale($request);
-        $publisher->loadCount('books');
+        $publisher->loadCount(['books' => fn ($query) => $query->approved()]);
 
         return new PublisherResource($publisher);
     }

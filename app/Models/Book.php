@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BookRole;
+use App\Enums\ModerationStatus;
 use App\Observers\ProfileContentObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -29,13 +30,25 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'excerpt_source_text',
     'excerpt_translated_text',
     'sort_order',
+    'status',
 ])]
 class Book extends Model
 {
+    /**
+     * Mirrors the database default so a freshly built model reports its real
+     * state before it has been saved and read back.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'status' => ModerationStatus::Approved->value,
+    ];
+
     protected function casts(): array
     {
         return [
             'role' => BookRole::class,
+            'status' => ModerationStatus::class,
         ];
     }
 
@@ -81,6 +94,12 @@ class Book extends Model
     public function getPublisherImageUrlAttribute(): ?string
     {
         return $this->publisher_image_path ? '/storage/'.$this->publisher_image_path : null;
+    }
+
+    /** @param  \Illuminate\Database\Eloquent\Builder<Book>  $query */
+    public function scopeApproved(\Illuminate\Database\Eloquent\Builder $query): void
+    {
+        $query->where('status', ModerationStatus::Approved);
     }
 
     public function hasExcerpt(): bool
