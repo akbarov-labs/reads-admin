@@ -14,7 +14,7 @@ class SocialLinkPolicy
 
     public function view(User $user, SocialLink $socialLink): bool
     {
-        return $user->isAdmin() || $socialLink->translator->user_id === $user->id;
+        return $user->isAdmin() || $socialLink->owner?->user_id === $user->id;
     }
 
     public function create(User $user): bool
@@ -24,17 +24,17 @@ class SocialLinkPolicy
 
     public function update(User $user, SocialLink $socialLink): bool
     {
-        return $user->isAdmin() || $socialLink->translator->user_id === $user->id;
+        return $user->isAdmin() || $socialLink->owner?->user_id === $user->id;
     }
 
     public function delete(User $user, SocialLink $socialLink): bool
     {
-        return $user->isAdmin() || $socialLink->translator->user_id === $user->id;
+        return $user->isAdmin() || $socialLink->owner?->user_id === $user->id;
     }
 
     public function restore(User $user, SocialLink $socialLink): bool
     {
-        return $user->isAdmin() || $socialLink->translator->user_id === $user->id;
+        return $user->isAdmin() || $socialLink->owner?->user_id === $user->id;
     }
 
     public function forceDelete(User $user, SocialLink $socialLink): bool

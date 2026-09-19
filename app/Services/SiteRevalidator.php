@@ -19,7 +19,27 @@ class SiteRevalidator
 {
     public function translator(?string $slug): void
     {
-        $this->ping(['slug' => $slug]);
+        $this->ping(['type' => 'translator', 'slug' => $slug]);
+    }
+
+    /**
+     * A reviewer's own page. `type` tells the site which kind of profile the
+     * slug names — without it, a taqrizchi and a translator who happen to
+     * share a slug would invalidate each other's page and neither their own.
+     */
+    public function taqrizchi(?string $slug): void
+    {
+        $this->ping(['type' => 'taqrizchi', 'slug' => $slug]);
+    }
+
+    /**
+     * One book's page, which carries its own taqrizlar. Books are no longer
+     * reached only through a translator profile, so a book change is not
+     * necessarily a translator change.
+     */
+    public function book(int|string|null $id): void
+    {
+        $this->ping(['type' => 'book', 'id' => (string) $id]);
     }
 
     public function everything(): void

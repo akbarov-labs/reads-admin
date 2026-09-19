@@ -7,10 +7,10 @@ use App\Observers\ProfileContentObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 #[ObservedBy(ProfileContentObserver::class)]
-#[Fillable(['translator_id', 'platform', 'url', 'sort_order'])]
+#[Fillable(['owner_type', 'owner_id', 'platform', 'url', 'sort_order'])]
 class SocialLink extends Model
 {
     protected function casts(): array
@@ -20,8 +20,12 @@ class SocialLink extends Model
         ];
     }
 
-    public function translator(): BelongsTo
+    /**
+     * A translator or a taqrizchi. Both have public profiles that show the
+     * same row of links.
+     */
+    public function owner(): MorphTo
     {
-        return $this->belongsTo(Translator::class);
+        return $this->morphTo();
     }
 }

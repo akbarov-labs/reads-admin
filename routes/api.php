@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\AuthorController;
 use App\Http\Controllers\Api\BookController;
 use App\Http\Controllers\Api\PublisherController;
+use App\Http\Controllers\Api\TaqrizchiController;
+use App\Http\Controllers\Api\TaqrizController;
 use App\Http\Controllers\Api\TranslatorController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +22,9 @@ Route::middleware('throttle:120,1')->group(function () {
     Route::get('/books/{book}', [BookController::class, 'show']);
     Route::get('/publishers', [PublisherController::class, 'index']);
     Route::get('/publishers/{publisher}', [PublisherController::class, 'show']);
+    Route::get('/taqrizchilar', [TaqrizchiController::class, 'index']);
+    Route::get('/taqrizchilar/{taqrizchi}', [TaqrizchiController::class, 'show']);
+    Route::get('/taqrizlar/{taqriz}', [TaqrizController::class, 'show']);
 });
 
 // Public inquiry form submissions. Rate-limited per IP on top of the

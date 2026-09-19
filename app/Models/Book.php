@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[ObservedBy(ProfileContentObserver::class)]
 #[Fillable([
@@ -38,9 +39,20 @@ class Book extends Model
         ];
     }
 
+    /**
+     * Optional: a book can reach the catalogue without anyone having
+     * translated it — a taqrizchi adding a book they want to review, or an
+     * original-language work.
+     */
     public function translator(): BelongsTo
     {
         return $this->belongsTo(Translator::class);
+    }
+
+    /** @return HasMany<Taqriz, $this> */
+    public function taqrizlar(): HasMany
+    {
+        return $this->hasMany(Taqriz::class)->latest();
     }
 
     public function authorRecord(): BelongsTo

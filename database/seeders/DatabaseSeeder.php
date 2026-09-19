@@ -9,7 +9,6 @@ use App\Models\Author;
 use App\Models\Book;
 use App\Models\Publisher;
 use App\Models\LanguagePair;
-use App\Models\SocialLink;
 use App\Models\Translator;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -67,8 +66,7 @@ class DatabaseSeeder extends Seeder
 
         $i = 0;
         foreach ($socialLinks as $platform => $url) {
-            SocialLink::create([
-                'translator_id' => $translator->id,
+            $translator->socialLinks()->create([
                 'platform' => $platform,
                 'url' => $url,
                 'sort_order' => $i++,

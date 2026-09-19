@@ -40,6 +40,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(Translator::class);
     }
 
+    public function taqrizchi(): HasOne
+    {
+        return $this->hasOne(Taqrizchi::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
@@ -48,6 +53,11 @@ class User extends Authenticatable implements FilamentUser
     public function isTranslator(): bool
     {
         return $this->role === UserRole::Translator;
+    }
+
+    public function isTaqrizchi(): bool
+    {
+        return $this->role === UserRole::Taqrizchi;
     }
 
     /**
@@ -63,6 +73,10 @@ class User extends Authenticatable implements FilamentUser
             return true;
         }
 
-        return $this->isTranslator() && $this->translator()->exists();
+        if ($this->isTranslator()) {
+            return $this->translator()->exists();
+        }
+
+        return $this->isTaqrizchi() && $this->taqrizchi()->exists();
     }
 }

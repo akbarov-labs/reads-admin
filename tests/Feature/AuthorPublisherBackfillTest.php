@@ -34,9 +34,21 @@ class AuthorPublisherBackfillTest extends TestCase
      * Rewinds to the schema as it was before the catalogue existed: books
      * with free-text author/publisher columns and no foreign keys.
      */
+    /**
+     * The step count is derived rather than hardcoded. Migration file names
+     * sort chronologically, so "everything from the authors migration
+     * onwards" is a string comparison — and unlike a literal 2, it stays
+     * correct as migrations are added after these ones.
+     */
+    private const FIRST_CATALOGUE_MIGRATION = '2026_09_14_000001_create_authors_table';
+
     private function rewindToLegacySchema(): void
     {
-        Artisan::call('migrate:rollback', ['--step' => 2, '--force' => true]);
+        $steps = DB::table('migrations')
+            ->where('migration', '>=', self::FIRST_CATALOGUE_MIGRATION)
+            ->count();
+
+        Artisan::call('migrate:rollback', ['--step' => $steps, '--force' => true]);
 
         $this->assertFalse(DB::getSchemaBuilder()->hasTable('authors'));
         $this->assertFalse(DB::getSchemaBuilder()->hasColumn('books', 'author_id'));

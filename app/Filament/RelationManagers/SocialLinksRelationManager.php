@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\TranslatorResource\RelationManagers;
+namespace App\Filament\RelationManagers;
 
 use App\Enums\SocialPlatform;
 use Filament\Forms;
@@ -24,7 +24,9 @@ class SocialLinksRelationManager extends RelationManager
                 // One row per platform — the unique DB constraint would
                 // reject a duplicate anyway, but this stops the mistake
                 // before a failed save.
-                ->unique(ignoreRecord: true, modifyRuleUsing: fn ($rule) => $rule->where('translator_id', $this->getOwnerRecord()->id)),
+                ->unique(ignoreRecord: true, modifyRuleUsing: fn ($rule) => $rule
+                    ->where('owner_type', $this->getOwnerRecord()->getMorphClass())
+                    ->where('owner_id', $this->getOwnerRecord()->id)),
             Forms\Components\TextInput::make('url')
                 ->label('Profile URL')
                 ->url()
