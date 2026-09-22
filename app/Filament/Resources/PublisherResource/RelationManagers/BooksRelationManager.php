@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PublisherResource\RelationManagers;
 use App\Enums\BookRole;
 use App\Enums\ModerationStatus;
 use App\Filament\Resources\TranslatorResource;
+use App\Models\Translator;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -58,7 +59,24 @@ class BooksRelationManager extends RelationManager
                 // Optional: an original-language work has no translator, and
                 // a translation whose translator has no profile here still
                 // belongs in the catalogue.
-                ->helperText('Leave blank for an original-language work, or if the translator has no profile here.'),
+                ->helperText('Leave blank for an original-language work. Not in the list? Add their name — an admin can turn it into a full profile with a login later.')
+                // A publisher cannot open TranslatorResource's own create
+                // page (admin-only), so this is the only way they can credit
+                // someone with no profile yet. The name-only form and this
+                // closure are deliberately the entire surface: no slug,
+                // email or password field reaches a non-admin here, and
+                // TranslatorObserver enforces that server-side too if this
+                // form is ever bypassed.
+                ->createOptionForm([
+                    Forms\Components\TextInput::make('name')
+                        ->label('Translator name')
+                        ->required()
+                        ->maxLength(255),
+                ])
+                ->createOptionUsing(fn (array $data): int => Translator::create([
+                    'name' => $data['name'],
+                    'slug' => Translator::generateUniqueSlug($data['name']),
+                ])->getKey()),
 
             Forms\Components\TextInput::make('year')
                 ->numeric()

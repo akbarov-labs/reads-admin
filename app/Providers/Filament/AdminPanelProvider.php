@@ -42,7 +42,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn () => Auth::user()?->isTranslator()
+                fn () => (Auth::user()?->isTranslator() || Auth::user()?->isPublisher())
                     ? new HtmlString(<<<'HTML'
                         <style>
                             .fi-sidebar, .fi-topbar-open-sidebar-btn { display: none !important; }
@@ -50,9 +50,10 @@ class AdminPanelProvider extends PanelProvider
                         HTML)
                     : '',
             )
-            // The sidebar (hidden for translators, above) normally carries
-            // the only logo/home link back to the dashboard — this keeps
-            // that path available in the topbar regardless of role.
+            // The sidebar (hidden for translators and publishers, above)
+            // normally carries the only logo/home link back to the
+            // dashboard — this keeps that path available in the topbar
+            // regardless of role.
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
                 fn () => view('filament.render-hooks.dashboard-link'),

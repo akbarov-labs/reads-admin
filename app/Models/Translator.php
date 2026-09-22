@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
 
 #[ObservedBy(TranslatorObserver::class)]
@@ -78,6 +79,25 @@ class Translator extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /**
+     * `slug` is required and unique, but a translator created inline by a
+     * publisher (see PublisherResource\RelationManagers\BooksRelationManager)
+     * supplies only a name — nobody is filling in a "URL" field for someone
+     * who does not yet have a login to reach a profile page with. This picks
+     * one for them; an admin can change it once the profile is filled in.
+     */
+    public static function generateUniqueSlug(string $name): string
+    {
+        $base = Str::slug($name) ?: 'translator';
+        $slug = $base;
+
+        for ($suffix = 2; static::where('slug', $slug)->exists(); $suffix++) {
+            $slug = "{$base}-{$suffix}";
+        }
+
+        return $slug;
     }
 
     public function user(): BelongsTo

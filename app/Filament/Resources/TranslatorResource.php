@@ -41,12 +41,12 @@ class TranslatorResource extends Resource
     {
         return $form->schema([
             Forms\Components\Section::make('Login account')
-                ->description('Credentials the translator uses to sign in. Only admins can see or change these.')
+                ->description('Credentials the translator uses to sign in. Only admins can see or change these. Leave blank if this is a name-only entry with nobody signing in yet.')
                 ->visible(fn () => auth()->user()?->isAdmin())
                 ->schema([
                     Forms\Components\TextInput::make('email')
                         ->email()
-                        ->required()
+                        ->helperText('Leave blank if this translator has nobody maintaining it yet.')
                         ->unique(
                             table: 'users',
                             column: 'email',
@@ -62,7 +62,6 @@ class TranslatorResource extends Resource
                             ? 'Share this with the translator — it will not be shown again.'
                             : 'Leave blank to keep the current password.')
                         ->default(fn (string $context) => $context === 'create' ? Str::password(12) : null)
-                        ->required(fn (string $context) => $context === 'create')
                         ->dehydrated(fn ($state) => filled($state)),
                 ])
                 ->columns(2),
@@ -224,6 +223,7 @@ class TranslatorResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.email')
                     ->label('Email')
+                    ->placeholder('No account yet')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('slug')
                     ->searchable(),

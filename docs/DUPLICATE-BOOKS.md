@@ -4,13 +4,15 @@ Written for: whoever decides the content model for `reads-admin` next.
 
 ## The question
 
-`books.translator_id` is a required foreign key with `cascadeOnDelete`, so a
-book row belongs to exactly one translator. When two translators have both
-worked on *The Old Man and the Sea*, the database holds two rows, and
-`/api/books` — the site-wide catalogue behind the homepage's "Books &
-translations" section — returns both. Should those be merged into one shared
-record, the way author and publisher names were merged in the 2026_09_14
-migrations?
+`books.translator_id` is a foreign key, so a book row belongs to at most one
+translator. (It became nullable in the 2026_09_19 taqrizchi migrations so a
+reviewer can add a book with no translator to review it; that's an
+orthogonal change and doesn't affect the question below, which is only about
+rows that *do* have a translator.) When two translators have both worked on
+*The Old Man and the Sea*, the database holds two rows, and `/api/books` —
+the site-wide catalogue behind the homepage's "Books & translations"
+section — returns both. Should those be merged into one shared record, the
+way author and publisher names were merged in the 2026_09_14 migrations?
 
 ## Recommendation: keep them translator-specific
 

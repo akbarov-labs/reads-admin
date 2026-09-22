@@ -38,6 +38,18 @@ class TranslatorObserver
             return;
         }
 
+        // This guard exists to stop an existing owner moving their own slug
+        // or reassigning their own account — it has nothing to say about
+        // creation, which is controlled elsewhere: TranslatorPolicy keeps
+        // the full create form admin-only, and the one other path a
+        // non-admin can reach (a publisher naming a translator inline while
+        // adding a book) builds the row itself with a generated slug and no
+        // user_id. Applying this loop there would strip both right back out
+        // and fail the insert on the NOT NULL slug column.
+        if (! $translator->exists) {
+            return;
+        }
+
         foreach (self::ADMIN_ONLY as $attribute) {
             if (! $translator->isDirty($attribute)) {
                 continue;

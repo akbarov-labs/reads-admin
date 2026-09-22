@@ -22,16 +22,26 @@ class CreateTranslator extends CreateRecord
         return Arr::except($data, ['email', 'password']);
     }
 
+    /**
+     * The login is optional here for the same reason it is on
+     * PublisherResource\Pages\CreatePublisher: a translator can now exist as
+     * a name-only row — most commonly one a publisher named inline while
+     * adding a book — before anyone is ready to sign in as them.
+     */
     protected function handleRecordCreation(array $data): Model
     {
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $this->accountData['email'],
-            'password' => $this->accountData['password'],
-            'role' => UserRole::Translator,
-        ]);
+        $email = $this->accountData['email'] ?? null;
 
-        $data['user_id'] = $user->id;
+        if (filled($email)) {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $email,
+                'password' => $this->accountData['password'] ?? null,
+                'role' => UserRole::Translator,
+            ]);
+
+            $data['user_id'] = $user->id;
+        }
 
         return static::getModel()::create($data);
     }
