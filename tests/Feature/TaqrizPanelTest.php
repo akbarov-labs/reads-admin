@@ -7,13 +7,14 @@ use App\Enums\TaqrizStatus;
 use App\Enums\UserRole;
 use App\Filament\Resources\TaqrizResource\Pages\CreateTaqriz;
 use App\Filament\Resources\TaqrizResource\Pages\ListTaqrizlar;
-use App\Models\Book;
+use App\Models\Edition;
 use App\Models\Taqriz;
 use App\Models\Taqrizchi;
 use App\Models\Translator;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Tests\Concerns\BuildsCatalogue;
 use Tests\TestCase;
 
 /**
@@ -26,6 +27,7 @@ use Tests\TestCase;
  */
 class TaqrizPanelTest extends TestCase
 {
+    use BuildsCatalogue;
     use RefreshDatabase;
 
     private function admin(): User
@@ -54,15 +56,16 @@ class TaqrizPanelTest extends TestCase
         ]);
     }
 
-    private function book(array $attributes = []): Book
+    /**
+     * The edition a reviewer read, of a book with no translator unless
+     * credits are given.
+     *
+     * @param  array<string, mixed>  $book
+     * @param  array<string, mixed>  $edition
+     */
+    private function reviewed(array $book = [], array $edition = [], array $credits = []): Edition
     {
-        return Book::create(array_merge([
-            'uzbek_title' => 'Chol va dengiz',
-            'original_title' => 'The Old Man and the Sea',
-            'author' => 'Ernest Hemingway',
-            'source_language' => 'en',
-            'year' => 1952,
-        ], $attributes));
+        return $this->catalogueBook($book, $edition, credits: $credits)->editions()->first();
     }
 
     private function translator(): Translator
@@ -85,13 +88,13 @@ class TaqrizPanelTest extends TestCase
     public function test_a_reviewer_can_write_a_taqriz_and_it_arrives_unpublished(): void
     {
         $reviewer = $this->reviewer();
-        $book = $this->book();
+        $book = $this->reviewed()->book;
 
         $this->actingAs($reviewer->user);
 
         Livewire::test(CreateTaqriz::class)
             ->fillForm([
-                'book_id' => $book->id,
+                'edition_id' => $book->editions()->first()->id,
                 'body' => 'Juda yaxshi kitob.',
                 'score_plot' => 8.5,
             ])
@@ -110,7 +113,7 @@ class TaqrizPanelTest extends TestCase
     {
         $reviewer = $this->reviewer();
         $taqriz = Taqriz::create([
-            'book_id' => $this->book()->id,
+            'edition_id' => $this->reviewed()->id,
             'taqrizchi_id' => $reviewer->id,
             'body' => 'Matn.',
         ]);
@@ -128,7 +131,7 @@ class TaqrizPanelTest extends TestCase
     {
         $reviewer = $this->reviewer();
         $taqriz = Taqriz::create([
-            'book_id' => $this->book()->id,
+            'edition_id' => $this->reviewed()->id,
             'taqrizchi_id' => $reviewer->id,
             'body' => 'Matn.',
             'status' => TaqrizStatus::Approved,
@@ -147,7 +150,7 @@ class TaqrizPanelTest extends TestCase
     {
         $reviewer = $this->reviewer();
         $taqriz = Taqriz::create([
-            'book_id' => $this->book()->id,
+            'edition_id' => $this->reviewed()->id,
             'taqrizchi_id' => $reviewer->id,
             'body' => 'Matn.',
         ]);
@@ -166,12 +169,12 @@ class TaqrizPanelTest extends TestCase
         $theirs = $this->reviewer('anvar', 'Anvar');
 
         $ours = Taqriz::create([
-            'book_id' => $this->book()->id,
+            'edition_id' => $this->reviewed()->id,
             'taqrizchi_id' => $mine->id,
             'body' => 'Meniki.',
         ]);
         $other = Taqriz::create([
-            'book_id' => $this->book(['uzbek_title' => 'Boshqa'])->id,
+            'edition_id' => $this->reviewed(['uzbek_title' => 'Boshqa'])->id,
             'taqrizchi_id' => $theirs->id,
             'body' => 'Boshqasi.',
         ]);
@@ -188,8 +191,8 @@ class TaqrizPanelTest extends TestCase
         $a = $this->reviewer('nodira', 'Nodira');
         $b = $this->reviewer('anvar', 'Anvar');
 
-        $one = Taqriz::create(['book_id' => $this->book()->id, 'taqrizchi_id' => $a->id, 'body' => 'A']);
-        $two = Taqriz::create(['book_id' => $this->book(['uzbek_title' => 'X'])->id, 'taqrizchi_id' => $b->id, 'body' => 'B']);
+        $one = Taqriz::create(['edition_id' => $this->reviewed()->id, 'taqrizchi_id' => $a->id, 'body' => 'A']);
+        $two = Taqriz::create(['edition_id' => $this->reviewed(['uzbek_title' => 'X'])->id, 'taqrizchi_id' => $b->id, 'body' => 'B']);
 
         $this->actingAs($this->admin());
 
@@ -199,10 +202,11 @@ class TaqrizPanelTest extends TestCase
     public function test_approving_a_taqriz_also_publishes_the_book_it_is_about(): void
     {
         $reviewer = $this->reviewer();
-        // The book a reviewer added along with the review: still queued.
-        $book = $this->book(['status' => ModerationStatus::Pending]);
+        // The book and edition a reviewer added along with the review: still queued.
+        $edition = $this->reviewed(['status' => ModerationStatus::Pending], ['status' => ModerationStatus::Pending]);
+        $book = $edition->book;
         $taqriz = Taqriz::create([
-            'book_id' => $book->id,
+            'edition_id' => $edition->id,
             'taqrizchi_id' => $reviewer->id,
             'body' => 'Matn.',
         ]);
@@ -216,37 +220,55 @@ class TaqrizPanelTest extends TestCase
         // put it on a 404.
         $this->assertSame(TaqrizStatus::Approved, $taqriz->fresh()->status);
         $this->assertSame(ModerationStatus::Approved, $book->fresh()->status);
+        $this->assertSame(ModerationStatus::Approved, $edition->fresh()->status);
     }
 
-    public function test_a_reviewer_gets_one_taqriz_per_book(): void
+    public function test_a_reviewer_gets_one_taqriz_per_edition(): void
     {
         $reviewer = $this->reviewer();
-        $book = $this->book();
+        $edition = $this->reviewed();
 
-        Taqriz::create(['book_id' => $book->id, 'taqrizchi_id' => $reviewer->id, 'body' => 'Birinchi.']);
+        Taqriz::create(['edition_id' => $edition->id, 'taqrizchi_id' => $reviewer->id, 'body' => 'Birinchi.']);
 
         $this->actingAs($reviewer->user);
 
         Livewire::test(CreateTaqriz::class)
-            ->fillForm(['book_id' => $book->id, 'body' => 'Ikkinchi.'])
+            ->fillForm(['edition_id' => $edition->id, 'body' => 'Ikkinchi.'])
             ->call('create')
-            ->assertHasFormErrors(['book_id']);
+            ->assertHasFormErrors(['edition_id']);
 
         $this->assertSame(1, Taqriz::count());
     }
 
-    public function test_the_translation_aspect_is_dropped_for_a_book_with_no_translator(): void
+    public function test_another_translation_of_the_same_book_can_be_reviewed_separately(): void
     {
         $reviewer = $this->reviewer();
-        $book = $this->book();
+        $first = $this->reviewed();
+        $second = $this->edition($first->book, ['year' => 2024]);
 
-        $this->assertNull($book->translator_id);
+        Taqriz::create(['edition_id' => $first->id, 'taqrizchi_id' => $reviewer->id, 'body' => 'Birinchi.']);
+
+        $this->actingAs($reviewer->user);
+
+        Livewire::test(CreateTaqriz::class)
+            ->fillForm(['edition_id' => $second->id, 'body' => 'Ikkinchisi boshqa tarjima.'])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        // Both show on the book's page.
+        $this->assertSame(2, $first->book->taqrizlar()->count());
+    }
+
+    public function test_the_translation_aspect_is_dropped_for_an_edition_with_no_translator(): void
+    {
+        $reviewer = $this->reviewer();
+        $edition = $this->reviewed();
 
         $this->actingAs($reviewer->user);
 
         Livewire::test(CreateTaqriz::class)
             ->fillForm([
-                'book_id' => $book->id,
+                'edition_id' => $edition->id,
                 'body' => 'Matn.',
                 'score_plot' => 8.0,
                 'score_translation' => 9.0,
@@ -261,16 +283,16 @@ class TaqrizPanelTest extends TestCase
         $this->assertSame(8.0, $taqriz->average_score);
     }
 
-    public function test_the_translation_aspect_is_kept_when_the_book_has_a_translator(): void
+    public function test_the_translation_aspect_is_kept_when_the_edition_has_a_translator(): void
     {
         $reviewer = $this->reviewer();
-        $book = $this->book(['translator_id' => $this->translator()->id]);
+        $edition = $this->reviewed(credits: [$this->translator()]);
 
         $this->actingAs($reviewer->user);
 
         Livewire::test(CreateTaqriz::class)
             ->fillForm([
-                'book_id' => $book->id,
+                'edition_id' => $edition->id,
                 'body' => 'Matn.',
                 'score_plot' => 8.0,
                 'score_translation' => 9.0,

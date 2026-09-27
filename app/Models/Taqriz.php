@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 /**
  * One reviewer's take on one book. See the create_taqrizlar_table migration
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 #[ObservedBy(TaqrizObserver::class)]
 #[Fillable([
-    'book_id',
+    'edition_id',
     'taqrizchi_id',
     'body',
     'youtube_url',
@@ -85,12 +86,19 @@ class Taqriz extends Model
     /** @param  Builder<Taqriz>  $query */
     public function scopeApproved(Builder $query): void
     {
-        $query->where('status', TaqrizStatus::Approved);
+        $query->where('taqrizlar.status', TaqrizStatus::Approved);
     }
 
-    public function book(): BelongsTo
+    /** The edition the reviewer read: its translation and its printing are what get scored. */
+    public function edition(): BelongsTo
     {
-        return $this->belongsTo(Book::class);
+        return $this->belongsTo(Edition::class);
+    }
+
+    /** @return HasOneThrough<Book, Edition, $this> */
+    public function book(): HasOneThrough
+    {
+        return $this->hasOneThrough(Book::class, Edition::class, 'id', 'id', 'edition_id', 'book_id');
     }
 
     public function taqrizchi(): BelongsTo

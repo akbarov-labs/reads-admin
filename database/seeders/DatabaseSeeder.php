@@ -194,16 +194,27 @@ class DatabaseSeeder extends Seeder
         }
 
         foreach ($books as $i => $book) {
-            Book::create([
-                ...$book,
-                'translator_id' => $translator->id,
-                // The free-text columns stay as they are, exactly as they do
-                // for a migrated row: the catalogue link is what the site
-                // reads, the string is what it falls back to.
-                'author_id' => $authorIds[$book['author']] ?? null,
-                'publisher_id' => $publisherIds[$book['publisher']] ?? null,
+            // Each demo entry is one book with one edition, credited to the
+            // demo translator in the role the entry names.
+            $work = Book::create([
+                'uzbek_title' => $book['uzbek_title'],
+                'original_title' => $book['original_title'],
+                'source_language' => $book['source_language'],
                 'sort_order' => $i,
             ]);
+            $work->authors()->attach($authorIds[$book['author']], ['position' => 0]);
+
+            $edition = $work->editions()->create([
+                'publisher_id' => $publisherIds[$book['publisher']] ?? null,
+                'year' => $book['year'],
+                'language' => "O'zbek tili",
+                'cover_path' => $book['cover_path'],
+                'excerpt_source_language' => $book['excerpt_source_language'] ?? null,
+                'excerpt_source_text' => $book['excerpt_source_text'] ?? null,
+                'excerpt_translated_text' => $book['excerpt_translated_text'] ?? null,
+                'sort_order' => $i,
+            ]);
+            $edition->translators()->attach($translator->id, ['role' => $book['role']->value, 'position' => 0]);
         }
 
         $this->command?->info("Admin login: {$admin->email} / password");

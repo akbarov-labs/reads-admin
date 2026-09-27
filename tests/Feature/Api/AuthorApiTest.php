@@ -2,12 +2,10 @@
 
 namespace Tests\Feature\Api;
 
-use App\Enums\UserRole;
+use App\Enums\ModerationStatus;
 use App\Models\Author;
-use App\Models\Book;
-use App\Models\Translator;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\BuildsCatalogue;
 use Tests\TestCase;
 
 /**
@@ -19,43 +17,24 @@ use Tests\TestCase;
  */
 class AuthorApiTest extends TestCase
 {
+    use BuildsCatalogue;
     use RefreshDatabase;
 
-    private function author(array $attributes = []): Author
+    /** An author with one published book, unless told otherwise — the list only shows authors with books. */
+    private function author(array $attributes = [], int $books = 1): Author
     {
-        return Author::create(array_merge([
+        $author = Author::create(array_merge([
             'slug' => 'ernest-hemingway',
             'name' => 'Ernest Hemingway',
         ], $attributes));
-    }
 
-    private function translator(string $slug = 'ilhom'): Translator
-    {
-        $user = User::create([
-            'name' => 'Ilhom',
-            'email' => "{$slug}@example.test",
-            'password' => 'password',
-            'role' => UserRole::Translator,
-        ]);
+        foreach (range(1, $books) as $i) {
+            if ($books > 0) {
+                $this->catalogueBook(['uzbek_title' => "{$author->name} {$i}"], authors: [$author]);
+            }
+        }
 
-        return Translator::create([
-            'user_id' => $user->id,
-            'slug' => $slug,
-            'name' => 'Ilhom',
-            'years_active' => 5,
-        ]);
-    }
-
-    private function book(Translator $translator, Author $author, array $attributes = []): Book
-    {
-        return Book::create(array_merge([
-            'translator_id' => $translator->id,
-            'author_id' => $author->id,
-            'uzbek_title' => 'Chol va dengiz',
-            'original_title' => 'The Old Man and the Sea',
-            'author' => $author->name,
-            'source_language' => 'en',
-        ], $attributes));
+        return $author;
     }
 
     public function test_the_collection_matches_the_shape_the_site_expects(): void
@@ -82,7 +61,7 @@ class AuthorApiTest extends TestCase
             // Relative on purpose: the API cannot know which host name the
             // caller used to reach it, so lib/api.ts resolves it.
             ->assertJsonPath('data.0.portraitUrl', '/storage/authors/hemingway.jpg')
-            ->assertJsonPath('data.0.bookCount', 0);
+            ->assertJsonPath('data.0.bookCount', 1);
     }
 
     public function test_an_id_is_serialised_as_a_string(): void
@@ -107,33 +86,58 @@ class AuthorApiTest extends TestCase
 
     public function test_book_counts_come_from_the_author_relation(): void
     {
-        $author = $this->author();
-        $other = $this->author(['slug' => 'orhan-pamuk', 'name' => 'Orhan Pamuk']);
-        $translator = $this->translator();
+        $this->author(books: 2);
+        $this->author(['slug' => 'orhan-pamuk', 'name' => 'Orhan Pamuk']);
 
-        $this->book($translator, $author);
-        $this->book($translator, $author, ['uzbek_title' => 'Alvido, qurol']);
-        $this->book($translator, $other, ['uzbek_title' => 'Qor']);
-
-        $response = $this->getJson('/api/authors')->assertOk();
-
-        $counts = collect($response->json('data'))->pluck('bookCount', 'slug');
+        $counts = collect($this->getJson('/api/authors')->assertOk()->json('data'))->pluck('bookCount', 'slug');
 
         $this->assertSame(2, $counts['ernest-hemingway']);
         $this->assertSame(1, $counts['orhan-pamuk']);
     }
 
-    public function test_the_collection_is_ordered_by_name(): void
+    public function test_each_author_carries_a_few_covers_for_their_card(): void
+    {
+        $author = $this->author(books: 0);
+        foreach (range(1, 5) as $year) {
+            $this->catalogueBook(['uzbek_title' => "Kitob {$year}"], ['year' => 2000 + $year, 'cover_path' => "covers/{$year}.webp"], [$author]);
+        }
+
+        $this->getJson('/api/authors')
+            ->assertJsonCount(4, 'data.0.coverUrls')
+            ->assertJsonPath('data.0.coverUrls.0', '/storage/covers/5.webp');
+    }
+
+    public function test_only_authors_with_a_published_book_are_listed(): void
+    {
+        $this->author(['slug' => 'no-books', 'name' => 'No Books'], books: 0);
+        $pending = $this->author(['slug' => 'pending', 'name' => 'Pending'], books: 0);
+        $this->catalogueBook(['status' => ModerationStatus::Pending], authors: [$pending]);
+
+        $this->getJson('/api/authors')->assertJsonCount(0, 'data');
+    }
+
+    public function test_the_collection_puts_the_most_published_first_then_sorts_by_name(): void
     {
         $this->author(['slug' => 'orhan-pamuk', 'name' => 'Orhan Pamuk']);
         $this->author();
-        $this->author(['slug' => 'franz-kafka', 'name' => 'Franz Kafka']);
+        $this->author(['slug' => 'franz-kafka', 'name' => 'Franz Kafka'], books: 2);
 
         $this->getJson('/api/authors')
             ->assertOk()
-            ->assertJsonPath('data.0.name', 'Ernest Hemingway')
-            ->assertJsonPath('data.1.name', 'Franz Kafka')
+            ->assertJsonPath('data.0.name', 'Franz Kafka')
+            ->assertJsonPath('data.1.name', 'Ernest Hemingway')
             ->assertJsonPath('data.2.name', 'Orhan Pamuk');
+
+        $this->getJson('/api/authors?sort=name')->assertJsonPath('data.1.name', 'Franz Kafka');
+    }
+
+    public function test_it_is_paginated_and_searchable(): void
+    {
+        $this->author(['slug' => 'orhan-pamuk', 'name' => 'Orhan Pamuk', 'original_name' => 'Orhan Pamuk']);
+        $this->author(['slug' => 'abdulla-qodiriy', 'name' => 'Abdulla Qodiriy', 'original_name' => 'Абдулла Қодирий']);
+
+        $this->getJson('/api/authors?per_page=1')->assertJsonCount(1, 'data')->assertJsonPath('meta.total', 2);
+        $this->getJson('/api/authors?q=Қодирий')->assertJsonCount(1, 'data')->assertJsonPath('data.0.slug', 'abdulla-qodiriy');
     }
 
     public function test_translatable_fields_follow_the_requested_locale(): void
@@ -178,7 +182,6 @@ class AuthorApiTest extends TestCase
     public function test_a_single_author_can_be_fetched(): void
     {
         $author = $this->author();
-        $this->book($this->translator(), $author);
 
         $this->getJson("/api/authors/{$author->id}")
             ->assertOk()

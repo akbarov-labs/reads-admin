@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ModerationStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\TranslatorResource;
 use App\Models\Translator;
@@ -20,7 +21,9 @@ class TranslatorController extends Controller
         $translators = Translator::with([
             'languagePairs',
             'socialLinks',
-            'books' => fn ($query) => $query->approved()->with(['authorRecord', 'publisherRecord']),
+            'editions' => fn ($query) => $query->approved()
+                ->whereHas('book', fn ($book) => $book->where('books.status', ModerationStatus::Approved))
+                ->with(['book.authors', 'publisher']),
         ])->get();
 
         return TranslatorResource::collection($translators);
@@ -33,7 +36,9 @@ class TranslatorController extends Controller
         $translator->load([
             'languagePairs',
             'socialLinks',
-            'books' => fn ($query) => $query->approved()->with(['authorRecord', 'publisherRecord']),
+            'editions' => fn ($query) => $query->approved()
+                ->whereHas('book', fn ($book) => $book->where('books.status', ModerationStatus::Approved))
+                ->with(['book.authors', 'publisher']),
         ]);
 
         return new TranslatorResource($translator);

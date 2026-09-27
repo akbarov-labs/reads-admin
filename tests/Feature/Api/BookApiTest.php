@@ -3,68 +3,34 @@
 namespace Tests\Feature\Api;
 
 use App\Enums\BookRole;
-use App\Enums\UserRole;
-use App\Models\Author;
-use App\Models\Book;
-use App\Models\Publisher;
-use App\Models\Translator;
-use App\Models\User;
+use App\Enums\ModerationStatus;
+use App\Models\Category;
+use App\Models\Series;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\BuildsCatalogue;
 use Tests\TestCase;
 
 /**
- * /api/books is the site-wide catalogue, as opposed to the per-profile book
- * list nested inside /api/translators/{slug}. It serialises through
- * CatalogBookResource, which adds the owning translator on top of the shared
- * BookResource fields.
+ * /api/books is the site-wide catalogue: works, a page at a time, each shown
+ * through its primary edition. /api/books/{id} is the book's own page, with
+ * every edition.
  *
- * The interesting part is the author/publisher columns: every book still
- * carries the free-text `author` and `publisher` strings it was created with
- * before the catalogue tables existed, and the resource prefers the linked
- * record when there is one. Both halves of that are pinned here, because a
- * book that silently reverts to its legacy string is how a renamed author
- * comes back from the dead.
+ * The flat card fields (publisher, year, coverUrl, translator …) predate
+ * editions and are what the site's BookCard reads, so they are pinned here
+ * alongside the new ones.
  */
 class BookApiTest extends TestCase
 {
+    use BuildsCatalogue;
     use RefreshDatabase;
-
-    private function translator(string $slug = 'ilhom', string $name = 'Ilhom'): Translator
-    {
-        $user = User::create([
-            'name' => $name,
-            'email' => "{$slug}@example.test",
-            'password' => 'password',
-            'role' => UserRole::Translator,
-        ]);
-
-        return Translator::create([
-            'user_id' => $user->id,
-            'slug' => $slug,
-            'name' => $name,
-            'years_active' => 5,
-        ]);
-    }
-
-    private function book(array $attributes = []): Book
-    {
-        return Book::create(array_merge([
-            'translator_id' => $attributes['translator_id'] ?? $this->translator()->id,
-            'uzbek_title' => 'Chol va dengiz',
-            'original_title' => 'The Old Man and the Sea',
-            'author' => 'Ernest Hemingway',
-            'source_language' => 'en',
-            'year' => 1952,
-        ], $attributes));
-    }
 
     public function test_the_collection_matches_the_shape_the_site_expects(): void
     {
-        $book = $this->book([
-            'publisher' => 'Yangi asr avlodi',
-            'cover_path' => 'covers/chol.jpg',
-            'role' => BookRole::Translator,
-        ]);
+        $translator = $this->translatorWithAccount('ilhom', 'Ilhom Salimov');
+        $book = $this->catalogueBook(
+            edition: ['publisher_id' => $this->publisher()->id, 'cover_path' => 'covers/chol.jpg'],
+            credits: [$translator],
+        );
 
         $this->getJson('/api/books')
             ->assertOk()
@@ -74,79 +40,50 @@ class BookApiTest extends TestCase
             ->assertJsonPath('data.0.uzbekTitle', 'Chol va dengiz')
             ->assertJsonPath('data.0.originalTitle', 'The Old Man and the Sea')
             ->assertJsonPath('data.0.author', 'Ernest Hemingway')
+            ->assertJsonPath('data.0.authors.0.slug', 'ernest-hemingway')
             ->assertJsonPath('data.0.sourceLanguage', 'en')
             ->assertJsonPath('data.0.publisher', 'Yangi asr avlodi')
+            ->assertJsonPath('data.0.publisherSlug', 'yangi-asr-avlodi')
             ->assertJsonPath('data.0.year', 1952)
-            ->assertJsonPath('data.0.coverUrl', '/storage/covers/chol.jpg');
+            ->assertJsonPath('data.0.coverUrl', '/storage/covers/chol.jpg')
+            ->assertJsonPath('data.0.translator.slug', 'ilhom')
+            ->assertJsonPath('data.0.translators.0.role', 'translator')
+            ->assertJsonPath('data.0.editionCount', 1)
+            ->assertJsonPath('meta.total', 1);
     }
 
     public function test_a_missing_cover_is_null_rather_than_an_empty_path(): void
     {
-        $this->book();
+        $this->catalogueBook();
 
         // BookCard falls back to a typographic placeholder on null; an
         // empty string would put next/image on "/storage/" instead.
         $this->getJson('/api/books')->assertJsonPath('data.0.coverUrl', null);
     }
 
-    public function test_each_book_carries_the_translator_who_owns_it(): void
+    public function test_several_authors_are_listed_in_credit_order(): void
     {
-        $this->book(['translator_id' => $this->translator('ilhom', 'Ilhom Salimov')->id]);
+        $this->catalogueBook(authors: [$this->author('Ellen Feyn'), $this->author('Sherri Shnayder')]);
 
-        // The site-wide catalogue is the one place a book appears outside
-        // its own profile page, so the credit has to travel with it.
         $this->getJson('/api/books')
-            ->assertJsonPath('data.0.translator.slug', 'ilhom')
-            ->assertJsonPath('data.0.translator.name', 'Ilhom Salimov');
+            ->assertJsonPath('data.0.author', 'Ellen Feyn, Sherri Shnayder')
+            ->assertJsonPath('data.0.authors.1.name', 'Sherri Shnayder');
     }
 
-    public function test_a_linked_author_wins_over_the_legacy_string(): void
+    public function test_the_card_shows_the_edition_with_a_cover_then_the_newest(): void
     {
-        $author = Author::create(['slug' => 'ernest-hemingway', 'name' => 'Ernest Hemingway']);
-
-        $book = $this->book([
-            'author_id' => $author->id,
-            // Deliberately stale: this is the value the row was imported
-            // with, before anyone tidied the spelling in the catalogue.
-            'author' => 'E. Hemingway',
-        ]);
+        $book = $this->catalogueBook(edition: ['year' => 2024]);
+        $this->edition($book, ['year' => 2020, 'cover_path' => 'covers/old.jpg', 'publisher_id' => $this->publisher('Asaxiy Books')->id]);
 
         $this->getJson('/api/books')
-            ->assertJsonPath('data.0.author', 'Ernest Hemingway')
-            ->assertJsonPath('data.0.authorId', (string) $author->id);
-
-        $this->assertSame('E. Hemingway', $book->fresh()->getRawOriginal('author'));
-    }
-
-    public function test_a_book_with_no_linked_author_still_shows_its_string(): void
-    {
-        $this->book(['author' => 'Ernest Hemingway']);
-
-        $this->getJson('/api/books')
-            ->assertJsonPath('data.0.author', 'Ernest Hemingway')
-            ->assertJsonPath('data.0.authorId', null);
-    }
-
-    public function test_a_linked_publisher_is_exposed_alongside_the_legacy_string(): void
-    {
-        $publisher = Publisher::create(['slug' => 'yangi-asr-avlodi', 'name' => 'Yangi asr avlodi']);
-
-        $this->book([
-            'publisher_id' => $publisher->id,
-            'publisher' => 'Yangi Asr',
-        ]);
-
-        $this->getJson('/api/books')
-            ->assertJsonPath('data.0.publisherId', (string) $publisher->id)
-            ->assertJsonPath('data.0.publisherName', 'Yangi asr avlodi')
-            // `publisher` stays the raw column: BookCard reads it directly
-            // and changing it here would be a silent contract change.
-            ->assertJsonPath('data.0.publisher', 'Yangi Asr');
+            ->assertJsonPath('data.0.coverUrl', '/storage/covers/old.jpg')
+            ->assertJsonPath('data.0.publisher', 'Asaxiy Books')
+            ->assertJsonPath('data.0.editionCount', 2);
     }
 
     public function test_an_excerpt_is_only_present_when_both_halves_are_filled_in(): void
     {
-        $this->book([
+        $this->catalogueBook(edition: [
             'excerpt_source_language' => 'en',
             'excerpt_source_text' => 'He was an old man...',
             'excerpt_translated_text' => 'U chol edi...',
@@ -154,63 +91,150 @@ class BookApiTest extends TestCase
 
         $this->getJson('/api/books')
             ->assertJsonPath('data.0.excerpt.sourceLanguage', 'en')
-            ->assertJsonPath('data.0.excerpt.sourceText', 'He was an old man...')
             ->assertJsonPath('data.0.excerpt.translatedText', 'U chol edi...');
     }
 
     public function test_a_half_filled_excerpt_is_omitted(): void
     {
-        // ExcerptReader renders a side-by-side pair; one side alone is not
-        // an excerpt, it is a half-finished draft.
-        $this->book(['excerpt_source_text' => 'He was an old man...']);
+        $this->catalogueBook(edition: ['excerpt_source_text' => 'He was an old man...']);
 
         $this->getJson('/api/books')->assertJsonPath('data.0.excerpt', null);
     }
 
-    public function test_the_collection_is_ordered_by_sort_order_then_id(): void
+    public function test_the_collection_is_newest_first_and_stable(): void
     {
-        $translator = $this->translator();
+        $this->catalogueBook(['uzbek_title' => 'Old'], ['year' => 1990]);
+        $this->catalogueBook(['uzbek_title' => 'New'], ['year' => 2024]);
+        $this->catalogueBook(['uzbek_title' => 'Undated'], ['year' => null]);
 
-        $this->book(['translator_id' => $translator->id, 'uzbek_title' => 'Third', 'sort_order' => 2]);
-        $this->book(['translator_id' => $translator->id, 'uzbek_title' => 'First', 'sort_order' => 0]);
-        $this->book(['translator_id' => $translator->id, 'uzbek_title' => 'Second', 'sort_order' => 0]);
-
-        // sort_order is what a translator drags in the panel; id breaks the
-        // tie so the order is stable between requests rather than left to
-        // whatever MySQL feels like returning.
         $this->getJson('/api/books')
-            ->assertJsonPath('data.0.uzbekTitle', 'First')
-            ->assertJsonPath('data.1.uzbekTitle', 'Second')
-            ->assertJsonPath('data.2.uzbekTitle', 'Third');
+            ->assertJsonPath('data.0.uzbekTitle', 'New')
+            ->assertJsonPath('data.1.uzbekTitle', 'Old')
+            ->assertJsonPath('data.2.uzbekTitle', 'Undated');
+
+        $this->getJson('/api/books?sort=title')->assertJsonPath('data.0.uzbekTitle', 'New');
     }
 
-    public function test_the_catalogue_spans_every_translator(): void
+    public function test_it_is_paginated(): void
     {
-        $this->book(['translator_id' => $this->translator('ilhom', 'Ilhom')->id]);
-        $this->book(['translator_id' => $this->translator('dilnoza', 'Dilnoza')->id, 'uzbek_title' => 'Qor']);
+        foreach (range(1, 3) as $i) {
+            $this->catalogueBook(['uzbek_title' => "Kitob {$i}"], ['year' => 2000 + $i]);
+        }
 
-        $this->getJson('/api/books')->assertOk()->assertJsonCount(2, 'data');
+        $this->getJson('/api/books?per_page=2')
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('meta.total', 3)
+            ->assertJsonPath('meta.last_page', 2);
+
+        $this->getJson('/api/books?per_page=2&page=2')
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.uzbekTitle', 'Kitob 1');
+
+        // A client cannot ask for the whole table in one go.
+        $this->getJson('/api/books?per_page=100000')->assertJsonPath('meta.per_page', 100);
     }
 
-    public function test_a_single_book_can_be_fetched(): void
+    public function test_it_filters_by_author_publisher_translator_category_and_series(): void
     {
-        $book = $this->book();
+        $translator = $this->translatorWithAccount('dilnoza', 'Dilnoza');
+        $series = Series::create(['slug' => 'garri-potter', 'name' => 'Garri Potter']);
+        $parent = Category::create(['slug' => 'badiiy', 'name' => 'Badiiy adabiyot']);
+        $genre = Category::create(['slug' => 'jahon', 'name' => 'Jahon adabiyoti', 'parent_id' => $parent->id]);
+
+        $match = $this->catalogueBook(
+            ['uzbek_title' => 'Match', 'series_id' => $series->id],
+            ['publisher_id' => $this->publisher('Asaxiy Books')->id],
+            [$this->author('Joan Rouling')],
+            [$translator],
+        );
+        $match->categories()->attach($genre->id, ['is_primary' => true]);
+        $this->catalogueBook(['uzbek_title' => 'Other']);
+
+        foreach ([
+            'author=joan-rouling',
+            'publisher=asaxiy-books',
+            'translator=dilnoza',
+            'category=jahon',
+            'category=badiiy', // a parent includes its children
+            'series=garri-potter',
+            'q=Rouling',
+            'q=match',
+        ] as $filter) {
+            $this->getJson("/api/books?{$filter}")
+                ->assertJsonCount(1, 'data')
+                ->assertJsonPath('data.0.uzbekTitle', 'Match');
+        }
+    }
+
+    public function test_an_isbn_search_finds_the_edition_however_it_is_typed(): void
+    {
+        $this->catalogueBook(edition: ['isbn' => '9789943231986']);
+
+        $this->getJson('/api/books?q=978-9943-23-198-6')->assertJsonCount(1, 'data');
+    }
+
+    public function test_pending_books_and_editions_stay_off_the_site(): void
+    {
+        $this->catalogueBook(['status' => ModerationStatus::Pending]);
+        $this->catalogueBook(edition: ['status' => ModerationStatus::Pending]);
+
+        $this->getJson('/api/books')->assertJsonCount(0, 'data');
+    }
+
+    public function test_a_single_book_lists_every_approved_edition_with_its_credits(): void
+    {
+        $first = $this->translatorWithAccount('ilhom', 'Ilhom');
+        $second = $this->translatorWithAccount('dilnoza', 'Dilnoza');
+        $book = $this->catalogueBook(edition: ['isbn' => '9789943231986', 'publisher_id' => $this->publisher()->id], credits: [$first]);
+        $this->edition($book, ['isbn' => '9789943231672', 'pages' => 320], [[$second, BookRole::Translator], [$first, BookRole::Editor]]);
+        $this->edition($book, ['status' => ModerationStatus::Pending]);
 
         $this->getJson("/api/books/{$book->id}")
             ->assertOk()
-            ->assertJsonPath('data.uzbekTitle', 'Chol va dengiz')
-            ->assertJsonPath('data.translator.slug', 'ilhom');
+            ->assertJsonCount(2, 'data.editions')
+            ->assertJsonPath('data.editions.0.isbn', '9789943231986')
+            ->assertJsonPath('data.editions.0.publisher.name', 'Yangi asr avlodi')
+            ->assertJsonPath('data.editions.1.pages', 320)
+            ->assertJsonPath('data.editions.1.translators.0.slug', 'dilnoza')
+            ->assertJsonPath('data.editions.1.translators.1.role', 'editor');
     }
 
-    public function test_an_unknown_book_is_a_404(): void
+    public function test_a_book_suggests_related_books_strongest_signal_first(): void
+    {
+        $author = $this->author('Tohir Malik');
+        $book = $this->catalogueBook(['uzbek_title' => 'Shaytanat'], authors: [$author]);
+        $sameAuthor = $this->catalogueBook(['uzbek_title' => 'Alvido bolalik'], authors: [$author]);
+        $recommended = $this->catalogueBook(['uzbek_title' => 'Recommended'], authors: [$this->author('Boshqa')]);
+        $this->catalogueBook(['uzbek_title' => 'Unrelated'], authors: [$this->author('Yana boshqa')]);
+
+        $book->relatedBooks()->attach($recommended->id, ['source' => 'asaxiy', 'position' => 0]);
+
+        $this->getJson("/api/books/{$book->id}")
+            ->assertJsonCount(2, 'data.relatedBooks')
+            ->assertJsonPath('data.relatedBooks.0.id', (string) $recommended->id)
+            ->assertJsonPath('data.relatedBooks.1.id', (string) $sameAuthor->id);
+    }
+
+    public function test_an_unknown_or_pending_book_is_a_404(): void
     {
         $this->getJson('/api/books/404404')->assertNotFound();
+
+        $pending = $this->catalogueBook(['status' => ModerationStatus::Pending]);
+        $this->getJson("/api/books/{$pending->id}")->assertNotFound();
     }
 
-    public function test_the_endpoints_need_no_authentication(): void
+    public function test_categories_are_served_as_a_tree_with_counts(): void
     {
-        $this->book();
+        $parent = Category::create(['slug' => 'badiiy', 'name' => 'Badiiy adabiyot']);
+        $child = Category::create(['slug' => 'jahon', 'name' => 'Jahon adabiyoti', 'parent_id' => $parent->id]);
+        Category::create(['slug' => 'empty', 'name' => 'Nothing here']);
+        $this->catalogueBook()->categories()->attach($child->id);
 
-        $this->getJson('/api/books')->assertOk();
+        $this->getJson('/api/categories')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.slug', 'badiiy')
+            ->assertJsonPath('data.0.children.0.slug', 'jahon')
+            ->assertJsonPath('data.0.children.0.bookCount', 1);
     }
 }

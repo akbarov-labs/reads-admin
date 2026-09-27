@@ -28,6 +28,14 @@ class PublisherObserver
             return;
         }
 
+        // Guards an existing row's URL and owner, not creation: a translator
+        // or publisher naming a new publisher inline on an edition form
+        // gets a generated slug and no user_id. Stripping the slug here
+        // would fail the insert on the NOT NULL column. @see TranslatorObserver
+        if (! $publisher->exists) {
+            return;
+        }
+
         foreach (self::ADMIN_ONLY as $attribute) {
             if (! $publisher->isDirty($attribute)) {
                 continue;

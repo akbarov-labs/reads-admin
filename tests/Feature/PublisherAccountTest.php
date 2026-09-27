@@ -12,6 +12,7 @@ use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
+use Tests\Concerns\BuildsCatalogue;
 use Tests\TestCase;
 
 /**
@@ -25,6 +26,7 @@ use Tests\TestCase;
  */
 class PublisherAccountTest extends TestCase
 {
+    use BuildsCatalogue;
     use RefreshDatabase;
 
     private function admin(): User
@@ -146,24 +148,18 @@ class PublisherAccountTest extends TestCase
         $this->assertSame($originalUserId, $publisher->fresh()->user_id);
     }
 
-    public function test_a_book_a_publisher_adds_goes_live_immediately(): void
+    public function test_an_edition_a_publisher_adds_goes_live_immediately(): void
     {
         $publisher = $this->claimed();
 
         $this->actingAs($publisher->user);
 
-        $book = $publisher->books()->create([
-            'uzbek_title' => 'Chol va dengiz',
-            'original_title' => 'The Old Man and the Sea',
-            'author' => 'Ernest Hemingway',
-            'source_language' => 'en',
-            'year' => 1952,
-        ]);
+        $book = $this->catalogueBook(edition: ['publisher_id' => $publisher->id]);
 
         // Unlike a taqrizchi adding somebody else's book in order to review
         // it, a publisher describing their own catalogue is the source for it.
         $this->assertSame(ModerationStatus::Approved, $book->fresh()->status);
-        $this->assertNull($book->translator_id);
+        $this->assertSame(ModerationStatus::Approved, $book->editions()->first()->status);
 
         $this->getJson('/api/books')
             ->assertOk()
@@ -174,16 +170,33 @@ class PublisherAccountTest extends TestCase
     {
         $publisher = $this->claimed();
 
-        $book = Book::create([
-            'publisher_id' => $publisher->id,
-            'uzbek_title' => 'Asl asar',
-            'original_title' => 'An Original Work',
-            'author' => 'Someone',
-            'source_language' => 'uz',
-        ]);
+        $book = $this->catalogueBook(edition: ['publisher_id' => $publisher->id]);
 
         $this->getJson("/api/books/{$book->id}")
             ->assertOk()
             ->assertJsonPath('data.translator', null);
+    }
+
+    public function test_a_publisher_can_edit_their_own_editions_but_nobody_elses(): void
+    {
+        $publisher = $this->claimed();
+        $mine = $this->catalogueBook(edition: ['publisher_id' => $publisher->id])->editions()->first();
+        $theirs = $this->catalogueBook(edition: ['publisher_id' => $this->publisher('Boshqa')->id])->editions()->first();
+
+        $this->assertTrue($publisher->user->can('update', $mine));
+        $this->assertFalse($publisher->user->can('update', $theirs));
+
+        // The book is shared with nobody yet, so it is theirs to rename too.
+        $this->assertTrue($publisher->user->can('update', $mine->book));
+    }
+
+    public function test_once_another_edition_exists_only_an_admin_can_rename_the_book(): void
+    {
+        $publisher = $this->claimed();
+        $book = $this->catalogueBook(edition: ['publisher_id' => $publisher->id]);
+        $this->edition($book, ['publisher_id' => $this->publisher('Boshqa')->id]);
+
+        $this->assertFalse($publisher->user->can('update', $book->fresh()));
+        $this->assertTrue($publisher->user->can('update', $book->editions()->where('publisher_id', $publisher->id)->first()));
     }
 }

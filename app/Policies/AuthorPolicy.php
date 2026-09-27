@@ -33,7 +33,7 @@ class AuthorPolicy
 
     /**
      * Open to translators as well, because the author picker on the book
-     * form creates rows inline (BooksRelationManager's `createOptionForm`):
+     * form creates rows inline (CatalogueFields::authorsSelect's `createOptionForm`):
      * a translator logging a book by a writer nobody has entered yet has to
      * be able to add them, or they cannot record the book at all. Adding a
      * new row cannot damage anyone else's data — only editing an existing

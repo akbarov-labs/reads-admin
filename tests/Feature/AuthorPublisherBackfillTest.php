@@ -119,11 +119,11 @@ class AuthorPublisherBackfillTest extends TestCase
 
         $this->replayTheMigrations();
 
-        $this->assertSame('Ernest Hemingway', Book::find($hemingway)->authorRecord->name);
-        $this->assertSame('Orhan Pamuk', Book::find($pamuk)->authorRecord->name);
+        $this->assertSame('Ernest Hemingway', Book::find($hemingway)->authors->first()->name);
+        $this->assertSame('Orhan Pamuk', Book::find($pamuk)->authors->first()->name);
     }
 
-    public function test_the_original_strings_are_left_in_place(): void
+    public function test_the_typed_names_survive_on_the_catalogue_rows(): void
     {
         $this->rewindToLegacySchema();
 
@@ -131,12 +131,11 @@ class AuthorPublisherBackfillTest extends TestCase
 
         $this->replayTheMigrations();
 
-        // Nothing is dropped: BookResource falls back to these columns for
-        // any row the backfill could not match, and they are the only
-        // record of what was actually typed.
+        // The free-text columns are gone since the editions migration; what
+        // was typed lives on as the names of the rows they became.
         $book = Book::find($id);
-        $this->assertSame('Ernest Hemingway', $book->getRawOriginal('author'));
-        $this->assertSame('Yangi asr avlodi', $book->publisher);
+        $this->assertSame('Ernest Hemingway', $book->author_names);
+        $this->assertSame('Yangi asr avlodi', $book->editions->first()->publisher->name);
     }
 
     public function test_names_are_slugged(): void
@@ -199,7 +198,7 @@ class AuthorPublisherBackfillTest extends TestCase
 
         // publisher is nullable and always has been; an empty string must
         // not become a catalogue row called "".
-        $this->assertNull(Book::find($id)->publisher_id);
+        $this->assertNull(Book::find($id)->editions->first()->publisher_id);
         $this->assertSame(0, Publisher::count());
     }
 
@@ -212,7 +211,7 @@ class AuthorPublisherBackfillTest extends TestCase
         $this->replayTheMigrations();
 
         $this->assertSame(0, Publisher::count());
-        $this->assertNull(Book::find($id)->publisher_id);
+        $this->assertNull(Book::find($id)->editions->first()->publisher_id);
     }
 
     public function test_publishers_are_deduplicated_and_linked_like_authors(): void
@@ -227,8 +226,8 @@ class AuthorPublisherBackfillTest extends TestCase
 
         $this->assertSame(2, Publisher::count());
         $this->assertSame(
-            Book::find($first)->publisher_id,
-            Book::find($second)->publisher_id,
+            Book::find($first)->editions->first()->publisher_id,
+            Book::find($second)->editions->first()->publisher_id,
         );
         $this->assertSame(2, Publisher::where('name', 'Yangi asr avlodi')->first()->books()->count());
     }
@@ -244,14 +243,12 @@ class AuthorPublisherBackfillTest extends TestCase
         Author::first()->delete();
         Publisher::first()->delete();
 
-        // nullOnDelete, not cascade: removing a duplicate author from the
-        // catalogue must never take a translator's book with it.
+        // Removing a duplicate author from the catalogue must never take a
+        // translator's book with it: the credit goes, the book stays.
         $book = Book::find($id);
         $this->assertNotNull($book);
-        $this->assertNull($book->author_id);
-        $this->assertNull($book->publisher_id);
-        // ...and the book can still name them, from the legacy columns.
-        $this->assertSame('Ernest Hemingway', $book->getRawOriginal('author'));
+        $this->assertCount(0, $book->authors);
+        $this->assertNull($book->editions->first()->publisher_id);
     }
 
     public function test_the_migrations_roll_back_cleanly(): void
@@ -261,7 +258,7 @@ class AuthorPublisherBackfillTest extends TestCase
         $this->legacyBook('Ernest Hemingway', 'Yangi asr avlodi', 'Chol va dengiz');
 
         $this->replayTheMigrations();
-        $this->assertTrue(DB::getSchemaBuilder()->hasColumn('books', 'author_id'));
+        $this->assertTrue(DB::getSchemaBuilder()->hasTable('editions'));
 
         // A migration that cannot be undone is a deploy that cannot be
         // undone.

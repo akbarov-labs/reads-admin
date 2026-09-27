@@ -3,7 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TranslatorResource\Pages;
-use App\Filament\Resources\TranslatorResource\RelationManagers\BooksRelationManager;
+use App\Filament\Resources\TranslatorResource\RelationManagers\EditionsRelationManager;
 use App\Filament\Resources\TranslatorResource\RelationManagers\LanguagePairsRelationManager;
 use App\Filament\RelationManagers\SocialLinksRelationManager;
 use App\Models\Translator;
@@ -110,7 +110,7 @@ class TranslatorResource extends Resource
                 ->schema([
                     Forms\Components\Placeholder::make('seo_intro')
                         ->hiddenLabel()
-                        ->content('Leave a field blank and the site generates it from the profile itself — the name, professional title, location, language pairs and current book count. Those generated values update on their own as books are added, so blank is a good default. Fill a field in only to override.')
+                        ->content('Leave a field blank and the site generates it from the profile itself — the name, professional title, location, language pairs and current book count. Those generated values update on their own as editions are added, so blank is a good default. Fill a field in only to override.')
                         ->columnSpanFull(),
 
                     Forms\Components\Tabs::make('SEO locales')
@@ -229,8 +229,8 @@ class TranslatorResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('location')
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('books_count')
-                    ->counts('books')
+                Tables\Columns\TextColumn::make('editions_count')
+                    ->counts('editions')
                     ->label('Books')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('language_pairs_count')
@@ -260,13 +260,13 @@ class TranslatorResource extends Resource
         return [
             LanguagePairsRelationManager::class,
             SocialLinksRelationManager::class,
-            BooksRelationManager::class,
+            EditionsRelationManager::class,
         ];
     }
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery()->withCount(['books', 'languagePairs']);
+        $query = parent::getEloquentQuery()->withCount(['editions', 'languagePairs']);
 
         if (auth()->user()?->isAdmin()) {
             return $query;

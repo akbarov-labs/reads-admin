@@ -24,7 +24,7 @@ class TaqrizchiController extends Controller
         $this->applyRequestedLocale($request);
 
         return TaqrizchiResource::collection(
-            Taqrizchi::with(['socialLinks', 'taqrizlar' => fn ($q) => $q->approved()->with('book')])
+            Taqrizchi::with(['socialLinks', 'taqrizlar' => fn ($q) => $q->approved()->with(['edition.book.authors', 'edition.publisher', 'edition.translators'])])
                 ->orderBy('name')
                 ->get(),
         );
@@ -34,7 +34,7 @@ class TaqrizchiController extends Controller
     {
         $this->applyRequestedLocale($request);
 
-        $taqrizchi->load(['socialLinks', 'taqrizlar' => fn ($q) => $q->approved()->with('book')]);
+        $taqrizchi->load(['socialLinks', 'taqrizlar' => fn ($q) => $q->approved()->with(['edition.book.authors', 'edition.publisher', 'edition.translators'])]);
 
         return new TaqrizchiResource($taqrizchi);
     }

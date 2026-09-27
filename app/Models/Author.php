@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GeneratesUniqueSlug;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Translatable\HasTranslations;
 
 #[Fillable([
     'slug',
     'name',
+    'original_name',
     'bio',
     'nationality',
     'birth_year',
@@ -19,6 +21,7 @@ use Spatie\Translatable\HasTranslations;
 ])]
 class Author extends Model
 {
+    use GeneratesUniqueSlug;
     use HasTranslations;
 
     /** @var array<int, string> */
@@ -51,10 +54,10 @@ class Author extends Model
         return ctype_digit((string) $value) ? $this->whereKey($value)->first() : null;
     }
 
-    /** @return HasMany<Book, $this> */
-    public function books(): HasMany
+    /** @return BelongsToMany<Book, $this> */
+    public function books(): BelongsToMany
     {
-        return $this->hasMany(Book::class);
+        return $this->belongsToMany(Book::class, 'book_author')->withPivot('position');
     }
 
     public function getPortraitUrlAttribute(): ?string

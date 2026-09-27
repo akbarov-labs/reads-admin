@@ -24,7 +24,7 @@ class TaqrizController extends Controller
             throw new NotFoundHttpException;
         }
 
-        $taqriz->load(['taqrizchi', 'book']);
+        $taqriz->load(['taqrizchi', 'edition' => fn ($edition) => $edition->with(['book.authors', 'publisher', 'translators'])]);
 
         return new TaqrizResource($taqriz);
     }

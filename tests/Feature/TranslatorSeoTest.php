@@ -9,10 +9,12 @@ use App\Models\Translator;
 use App\Models\User;
 use App\Support\TranslatorSeo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\BuildsCatalogue;
 use Tests\TestCase;
 
 class TranslatorSeoTest extends TestCase
 {
+    use BuildsCatalogue;
     use RefreshDatabase;
 
     private function translator(array $attributes = []): Translator
@@ -91,13 +93,7 @@ class TranslatorSeoTest extends TestCase
             $translator->seo()->description('en'),
         );
 
-        Book::create([
-            'translator_id' => $translator->id,
-            'uzbek_title' => 'Maymunlar sayyorasi',
-            'original_title' => 'La Planète des singes',
-            'author' => 'Pierre Boulle',
-            'source_language' => 'French',
-        ]);
+        $this->catalogueBook(['uzbek_title' => 'Maymunlar sayyorasi'], credits: [$translator]);
 
         $this->assertStringContainsString(
             '1 published books and translations',

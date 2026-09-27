@@ -2,33 +2,41 @@
 
 namespace App\Http\Resources\Api;
 
+use App\Models\Book;
 use Illuminate\Http\Request;
 
-class CatalogBookResource extends BookResource
+/**
+ * A book's own page: the card fields, plus every approved edition, the
+ * approved taqrizlar of all of them, and what to read next.
+ *
+ * @mixin Book
+ */
+class BookDetailResource extends BookResource
 {
+    /** @param  iterable<Book>  $related */
+    public function __construct(Book $book, private readonly iterable $related = [])
+    {
+        parent::__construct($book);
+    }
+
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         return array_merge(parent::toArray($request), [
-            // Null for a book nobody has translated. whenLoaded() collapses a
-            // loaded-but-null relation to null for us.
-            'translator' => $this->whenLoaded('translator', fn () => [
-                'slug' => $this->translator->slug,
-                'name' => $this->translator->name,
-            ]),
+            'description' => $this->description,
+            'editions' => EditionResource::collection($this->approvedEditions),
 
-            // Approved reviews only — the controller's eager load constrains
-            // this, so pending rows never reach the resource.
+            // Approved only — the controller constrains the eager load, so
+            // pending rows never reach the resource.
             'taqrizlar' => TaqrizResource::collection($this->whenLoaded('taqrizlar')),
 
             // The book's headline score: the mean of each review's own
             // average. Averaging the reviews rather than pooling every raw
             // aspect keeps one thorough reviewer from outweighing three
             // brief ones simply for having filled in more fields.
-            'averageScore' => $this->when(
-                $this->relationLoaded('taqrizlar'),
-                fn () => $this->averageOfTaqrizlar(),
-            ),
+            'averageScore' => $this->when($this->relationLoaded('taqrizlar'), fn () => $this->averageOfTaqrizlar()),
+
+            'relatedBooks' => BookResource::collection(collect($this->related)),
         ]);
     }
 

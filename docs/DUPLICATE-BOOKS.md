@@ -1,3 +1,8 @@
+> **Superseded (2026-09-26).** The split this document proposed has been
+> built the other way round: `books` is now the work and a new `editions`
+> table holds each printing, with translators many-to-many per edition. See
+> [DATA-MODEL.md](DATA-MODEL.md). Kept for the reasoning it records.
+
 # Duplicate books across translators
 
 Written for: whoever decides the content model for `reads-admin` next.

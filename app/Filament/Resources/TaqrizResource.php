@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\BookRole;
 use App\Enums\ModerationStatus;
 use App\Enums\TaqrizStatus;
 use App\Filament\Resources\TaqrizResource\Pages;
-use App\Models\Book;
+use App\Filament\Support\CatalogueFields;
+use App\Models\Edition;
 use App\Models\Taqriz;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -48,7 +50,7 @@ class TaqrizResource extends Resource
     /** Admins see the whole queue; a reviewer sees only what they wrote. */
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery()->with(['book', 'taqrizchi']);
+        $query = parent::getEloquentQuery()->with(['edition.book.authors', 'taqrizchi']);
         $user = auth()->user();
 
         if ($user && ! $user->isAdmin()) {
@@ -92,31 +94,27 @@ class TaqrizResource extends Resource
                         ->visible(fn () => auth()->user()?->isAdmin() ?? false)
                         ->dehydrated(),
 
-                    Forms\Components\Select::make('book_id')
-                        ->label('Book')
-                        ->relationship('book', 'uzbek_title')
-                        ->getOptionLabelFromRecordUsing(fn (Book $record) => sprintf(
-                            '%s — %s%s',
-                            $record->uzbek_title,
-                            $record->author,
-                            $record->year ? " ({$record->year})" : '',
-                        ))
-                        ->searchable(['uzbek_title', 'original_title', 'author'])
-                        ->preload()
+                    Forms\Components\Select::make('edition_id')
+                        ->label('Book (the edition you read)')
+                        ->relationship('edition', 'id')
+                        ->getOptionLabelFromRecordUsing(fn (Edition $record) => CatalogueFields::editionLabel($record->loadMissing(['book.authors', 'publisher', 'translators'])))
+                        ->searchable()
+                        ->getSearchResultsUsing(fn (string $search) => self::searchEditions($search))
                         ->required()
                         // The translation-quality aspect appears or
-                        // disappears with the chosen book, so the form has to
-                        // know about the change as it happens.
+                        // disappears with the chosen edition, so the form
+                        // has to know about the change as it happens.
                         ->live()
-                        ->helperText('Not in the list? Add it — it will be published once an admin approves it.')
-                        ->createOptionForm(self::bookFields())
+                        ->helperText('Different translations and printings are listed separately — pick the one you read. Not in the list? Add it; it will be published once an admin approves it.')
+                        ->createOptionForm(self::newEditionFields())
                         ->createOptionUsing(function (array $data): int {
-                            // Explicitly pending: the table defaults to
-                            // approved so that translator-entered books stay
-                            // live, so this path opts itself into the queue.
+                            // Explicitly pending, book and edition both: the
+                            // tables default to approved so that translator-
+                            // and publisher-entered rows stay live, so this
+                            // path opts itself into the queue.
                             $data['status'] = ModerationStatus::Pending;
 
-                            return Book::create($data)->getKey();
+                            return Edition::create($data)->getKey();
                         }),
                 ])
                 ->columns(2),
@@ -182,16 +180,12 @@ class TaqrizResource extends Resource
                 ->native(false);
 
             if ($column === 'score_translation') {
-                // A book nobody has translated has no translation to rate.
+                // An edition nobody translated has no translation to rate.
                 // Hidden rather than disabled, and nulled on save, so an
-                // answer cannot survive the book being changed underneath it.
+                // answer cannot survive the edition being changed underneath it.
                 $field
-                    ->visible(fn (Get $get) => filled($get('book_id'))
-                        && Book::whereKey($get('book_id'))->whereNotNull('translator_id')->exists())
-                    ->dehydrateStateUsing(fn ($state, Get $get) => filled($get('book_id'))
-                        && Book::whereKey($get('book_id'))->whereNotNull('translator_id')->exists()
-                            ? $state
-                            : null);
+                    ->visible(fn (Get $get) => self::editionIsTranslated($get('edition_id')))
+                    ->dehydrateStateUsing(fn ($state, Get $get) => self::editionIsTranslated($get('edition_id')) ? $state : null);
             }
 
             $fields[] = $field;
@@ -201,29 +195,17 @@ class TaqrizResource extends Resource
     }
 
     /**
-     * Enough of a book to publish one. Deliberately omits translator: a
-     * reviewer is describing a book, not claiming to have translated it.
+     * Enough of an edition to publish one: which book (picked, or added as a
+     * pending work), who printed it, when, and its cover. Deliberately omits
+     * translators: a reviewer is describing a book, not crediting people.
      *
      * @return array<int, Forms\Components\Component>
      */
-    private static function bookFields(): array
+    private static function newEditionFields(): array
     {
         return [
-            Forms\Components\TextInput::make('uzbek_title')
-                ->label('Title')
-                ->required()
-                ->maxLength(255),
-            Forms\Components\TextInput::make('original_title')
-                ->required()
-                ->maxLength(255),
-            Forms\Components\TextInput::make('author')
-                ->required()
-                ->maxLength(255),
-            Forms\Components\TextInput::make('source_language')
-                ->required()
-                ->maxLength(255),
-            Forms\Components\TextInput::make('publisher')
-                ->maxLength(255),
+            CatalogueFields::bookSelect(newBookStatus: ModerationStatus::Pending)->columnSpanFull(),
+            CatalogueFields::publisherSelect(),
             Forms\Components\TextInput::make('year')
                 ->numeric()
                 ->minValue(1000)
@@ -241,19 +223,45 @@ class TaqrizResource extends Resource
         ];
     }
 
+    /** @return array<int, string> */
+    private static function searchEditions(string $search): array
+    {
+        $isbn = preg_replace('/[^0-9Xx]/', '', $search);
+
+        return Edition::query()
+            ->where(fn (Builder $q) => $q
+                ->whereHas('book', fn (Builder $book) => $book->where('uzbek_title', 'like', "%{$search}%")
+                    ->orWhere('original_title', 'like', "%{$search}%")
+                    ->orWhereHas('authors', fn (Builder $a) => $a->where('name', 'like', "%{$search}%")))
+                ->orWhere('title', 'like', "%{$search}%")
+                ->when(strlen($isbn) >= 10, fn (Builder $q) => $q->orWhere('isbn', strtoupper($isbn))))
+            ->with(['book.authors', 'publisher', 'translators'])
+            ->limit(50)
+            ->get()
+            ->mapWithKeys(fn (Edition $edition) => [$edition->id => CatalogueFields::editionLabel($edition)])
+            ->all();
+    }
+
+    /** Whether the chosen edition has anyone credited as its translator. */
+    private static function editionIsTranslated(mixed $editionId): bool
+    {
+        return filled($editionId) && Edition::whereKey($editionId)
+            ->whereHas('credits', fn (Builder $credit) => $credit->where('role', BookRole::Translator))
+            ->exists();
+    }
+
     public static function table(Table $table): Table
     {
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                Tables\Columns\ImageColumn::make('book.cover_path')
+                Tables\Columns\ImageColumn::make('edition.cover_path')
                     ->label('')
                     ->disk('public'),
-                Tables\Columns\TextColumn::make('book.uzbek_title')
+                Tables\Columns\TextColumn::make('edition.book.uzbek_title')
                     ->label('Book')
                     ->searchable()
-                    ->sortable()
-                    ->description(fn (Taqriz $record) => $record->book?->author),
+                    ->description(fn (Taqriz $record) => $record->edition?->book?->author_names),
                 Tables\Columns\TextColumn::make('taqrizchi.name')
                     ->label('Taqrizchi')
                     ->searchable()
@@ -285,12 +293,14 @@ class TaqrizResource extends Resource
                         $record->status = TaqrizStatus::Approved;
                         $record->save();
 
-                        // A review can only be published against a book that
-                        // is itself published, or it would appear on a page
-                        // the site refuses to serve.
-                        if ($record->book && $record->book->status !== ModerationStatus::Approved) {
-                            $record->book->status = ModerationStatus::Approved;
-                            $record->book->save();
+                        // A review can only be published against an edition
+                        // and book that are themselves published, or it would
+                        // appear on a page the site refuses to serve.
+                        foreach ([$record->edition, $record->edition?->book] as $row) {
+                            if ($row && $row->status !== ModerationStatus::Approved) {
+                                $row->status = ModerationStatus::Approved;
+                                $row->save();
+                            }
                         }
                     }),
                 Tables\Actions\Action::make('reject')

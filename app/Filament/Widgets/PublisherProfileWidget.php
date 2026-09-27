@@ -31,7 +31,7 @@ class PublisherProfileWidget extends Widget
 
     public function getPublisher(): Publisher
     {
-        return Auth::user()->publisher->loadCount('books');
+        return Auth::user()->publisher->loadCount('editions');
     }
 
     public function getEditUrl(): string

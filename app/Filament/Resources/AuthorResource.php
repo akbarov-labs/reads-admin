@@ -32,6 +32,10 @@ class AuthorResource extends Resource
                     Forms\Components\TextInput::make('name')
                         ->required()
                         ->maxLength(255),
+                    Forms\Components\TextInput::make('original_name')
+                        ->label('Name in original script')
+                        ->helperText('e.g. "Абдулла Қодирий" — lets editions in other languages find this author.')
+                        ->maxLength(255),
                     Forms\Components\TextInput::make('slug')
                         ->required()
                         ->alphaDash()

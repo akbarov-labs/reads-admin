@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\AuthorController;
 use App\Http\Controllers\Api\BookController;
+use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PublisherController;
 use App\Http\Controllers\Api\TaqrizchiController;
 use App\Http\Controllers\Api\TaqrizController;
@@ -20,6 +21,7 @@ Route::middleware('throttle:120,1')->group(function () {
     Route::get('/authors/{author}', [AuthorController::class, 'show']);
     Route::get('/books', [BookController::class, 'index']);
     Route::get('/books/{book}', [BookController::class, 'show']);
+    Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/publishers', [PublisherController::class, 'index']);
     Route::get('/publishers/{publisher}', [PublisherController::class, 'show']);
     Route::get('/taqrizchilar', [TaqrizchiController::class, 'index']);

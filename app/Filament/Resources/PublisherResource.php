@@ -4,7 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\UserRole;
 use App\Filament\Resources\PublisherResource\Pages;
-use App\Filament\Resources\PublisherResource\RelationManagers\BooksRelationManager;
+use App\Filament\Resources\PublisherResource\RelationManagers\EditionsRelationManager;
 use App\Models\Publisher;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -35,7 +35,7 @@ class PublisherResource extends Resource
 
     public static function getRelations(): array
     {
-        return [BooksRelationManager::class];
+        return [EditionsRelationManager::class];
     }
 
     public static function form(Form $form): Form
@@ -102,7 +102,7 @@ class PublisherResource extends Resource
             Tables\Columns\ImageColumn::make('logo_path')->label('')->disk('public'),
             Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
             Tables\Columns\TextColumn::make('slug')->searchable(),
-            Tables\Columns\TextColumn::make('books_count')->counts('books')->label('Books')->sortable(),
+            Tables\Columns\TextColumn::make('books_count')->label('Books')->sortable(),
         ])->actions([
             Tables\Actions\EditAction::make(),
         ])->bulkActions([
@@ -112,7 +112,7 @@ class PublisherResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery()->withCount('books');
+        $query = parent::getEloquentQuery()->withBookCount();
         $user = auth()->user();
 
         // Scoped for publishers only, not for every non-admin. A translator

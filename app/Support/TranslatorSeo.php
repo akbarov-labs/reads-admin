@@ -168,8 +168,7 @@ class TranslatorSeo
         $strings = self::strings($locale);
         $role = $this->translation('title', $locale) ?: $strings['role'];
 
-        $count = $this->translator->books_count
-            ?? $this->translator->books()->count();
+        $count = $this->translator->total_books_translated;
 
         $books = $count > 0
             ? strtr($strings['books'], [':count' => (string) $count])

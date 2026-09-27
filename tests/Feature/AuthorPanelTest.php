@@ -14,6 +14,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
+use Tests\Concerns\BuildsCatalogue;
 use Tests\TestCase;
 
 /**
@@ -32,6 +33,7 @@ use Tests\TestCase;
  */
 class AuthorPanelTest extends TestCase
 {
+    use BuildsCatalogue;
     use RefreshDatabase;
 
     private function admin(): User
@@ -88,16 +90,7 @@ class AuthorPanelTest extends TestCase
     public function test_the_list_shows_how_many_books_each_author_has(): void
     {
         $author = $this->author();
-        $translator = Translator::first() ?? $this->translatorUser()->translator;
-
-        Book::create([
-            'translator_id' => $translator->id,
-            'author_id' => $author->id,
-            'uzbek_title' => 'Chol va dengiz',
-            'original_title' => 'The Old Man and the Sea',
-            'author' => 'Ernest Hemingway',
-            'source_language' => 'en',
-        ]);
+        $this->catalogueBook(authors: [$author]);
 
         $this->actingAs($this->admin());
 
@@ -157,12 +150,13 @@ class AuthorPanelTest extends TestCase
             ->assertHasNoFormErrors();
 
         // The round trip is the point: the panel writes it, the site reads
-        // it, and nothing in between renames a field.
-        $this->getJson('/api/authors?locale=en')
+        // it, and nothing in between renames a field. (The list only shows
+        // authors with a published book; the profile is reachable at once.)
+        $this->getJson('/api/authors/orhan-pamuk?locale=en')
             ->assertOk()
-            ->assertJsonPath('data.0.name', 'Orhan Pamuk')
-            ->assertJsonPath('data.0.slug', 'orhan-pamuk')
-            ->assertJsonPath('data.0.bio', 'Turkish novelist.');
+            ->assertJsonPath('data.name', 'Orhan Pamuk')
+            ->assertJsonPath('data.slug', 'orhan-pamuk')
+            ->assertJsonPath('data.bio', 'Turkish novelist.');
     }
 
     public function test_an_admin_can_edit_an_author(): void
@@ -191,16 +185,7 @@ class AuthorPanelTest extends TestCase
     public function test_an_admin_can_delete_an_author_without_taking_its_books(): void
     {
         $author = $this->author();
-        $translator = $this->translatorUser()->translator;
-
-        $book = Book::create([
-            'translator_id' => $translator->id,
-            'author_id' => $author->id,
-            'uzbek_title' => 'Chol va dengiz',
-            'original_title' => 'The Old Man and the Sea',
-            'author' => 'Ernest Hemingway',
-            'source_language' => 'en',
-        ]);
+        $book = $this->catalogueBook(authors: [$author]);
 
         $this->actingAs($this->admin());
 
@@ -209,10 +194,10 @@ class AuthorPanelTest extends TestCase
 
         $this->assertDatabaseMissing('authors', ['id' => $author->id]);
 
-        // nullOnDelete — a tidy-up in the catalogue must not delete a
-        // translator's work.
+        // A tidy-up in the catalogue must not delete a translator's work;
+        // the book just loses that author credit.
         $this->assertNotNull($book->fresh());
-        $this->assertNull($book->fresh()->author_id);
+        $this->assertCount(0, $book->fresh()->authors);
     }
 
     // ---- form rules ------------------------------------------------------
@@ -285,7 +270,7 @@ class AuthorPanelTest extends TestCase
         $this->actingAs($user);
 
         // The author picker on the book form creates rows inline
-        // (BooksRelationManager's createOptionForm). Without this a
+        // (CatalogueFields::authorsSelect's createOptionForm). Without this a
         // translator could not record a book by a writer nobody has entered
         // yet — and adding a row, unlike editing one, cannot damage anyone
         // else's data.

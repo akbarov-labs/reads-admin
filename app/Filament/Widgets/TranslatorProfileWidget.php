@@ -29,7 +29,7 @@ class TranslatorProfileWidget extends Widget
 
     public function getTranslator(): Translator
     {
-        return Auth::user()->translator->loadCount(['books', 'languagePairs']);
+        return Auth::user()->translator->loadCount(['editions', 'languagePairs']);
     }
 
     public function getEditUrl(): string

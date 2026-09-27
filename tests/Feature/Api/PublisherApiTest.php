@@ -2,12 +2,9 @@
 
 namespace Tests\Feature\Api;
 
-use App\Enums\UserRole;
-use App\Models\Book;
 use App\Models\Publisher;
-use App\Models\Translator;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\BuildsCatalogue;
 use Tests\TestCase;
 
 /**
@@ -21,43 +18,22 @@ use Tests\TestCase;
  */
 class PublisherApiTest extends TestCase
 {
+    use BuildsCatalogue;
     use RefreshDatabase;
 
-    private function publisher(array $attributes = []): Publisher
+    /** A publisher with one published edition, unless told otherwise — the list only shows publishers with books. */
+    private function publisher(array $attributes = [], int $books = 1): Publisher
     {
-        return Publisher::create(array_merge([
+        $publisher = Publisher::create(array_merge([
             'slug' => 'yangi-asr-avlodi',
             'name' => 'Yangi asr avlodi',
         ], $attributes));
-    }
 
-    private function translator(): Translator
-    {
-        $user = User::create([
-            'name' => 'Ilhom',
-            'email' => 'ilhom@example.test',
-            'password' => 'password',
-            'role' => UserRole::Translator,
-        ]);
+        for ($i = 1; $i <= $books; $i++) {
+            $this->catalogueBook(['uzbek_title' => "{$publisher->name} {$i}"], ['publisher_id' => $publisher->id]);
+        }
 
-        return Translator::create([
-            'user_id' => $user->id,
-            'slug' => 'ilhom',
-            'name' => 'Ilhom',
-            'years_active' => 5,
-        ]);
-    }
-
-    private function book(Translator $translator, Publisher $publisher, string $title): Book
-    {
-        return Book::create([
-            'translator_id' => $translator->id,
-            'publisher_id' => $publisher->id,
-            'uzbek_title' => $title,
-            'original_title' => $title,
-            'author' => 'Ernest Hemingway',
-            'source_language' => 'en',
-        ]);
+        return $publisher;
     }
 
     public function test_the_collection_matches_the_shape_the_site_expects(): void
@@ -80,7 +56,7 @@ class PublisherApiTest extends TestCase
             ->assertJsonPath('data.0.establishedYear', 1991)
             ->assertJsonPath('data.0.websiteUrl', 'https://example.test/yaa')
             ->assertJsonPath('data.0.logoUrl', '/storage/publishers/yaa.svg')
-            ->assertJsonPath('data.0.bookCount', 0);
+            ->assertJsonPath('data.0.bookCount', 1);
     }
 
     public function test_an_id_is_serialised_as_a_string(): void
@@ -105,13 +81,11 @@ class PublisherApiTest extends TestCase
 
     public function test_book_counts_come_from_the_publisher_relation(): void
     {
-        $publisher = $this->publisher();
-        $other = $this->publisher(['slug' => 'akademnashr', 'name' => 'Akademnashr']);
-        $translator = $this->translator();
+        $publisher = $this->publisher(books: 2);
+        $this->publisher(['slug' => 'akademnashr', 'name' => 'Akademnashr']);
 
-        $this->book($translator, $publisher, 'Chol va dengiz');
-        $this->book($translator, $publisher, 'Alvido, qurol');
-        $this->book($translator, $other, 'Qor');
+        // Two editions of one book are one book on a publisher's page.
+        $this->edition($publisher->books()->first(), ['publisher_id' => $publisher->id, 'year' => 2025]);
 
         $counts = collect($this->getJson('/api/publishers')->assertOk()->json('data'))
             ->pluck('bookCount', 'slug');
@@ -120,14 +94,27 @@ class PublisherApiTest extends TestCase
         $this->assertSame(1, $counts['akademnashr']);
     }
 
-    public function test_the_collection_is_ordered_by_name(): void
+    public function test_only_publishers_with_a_published_edition_are_listed(): void
+    {
+        $this->publisher(books: 0);
+
+        $this->getJson('/api/publishers')->assertJsonCount(0, 'data');
+    }
+
+    public function test_the_collection_puts_the_most_published_first_then_sorts_by_name(): void
     {
         $this->publisher();
         $this->publisher(['slug' => 'akademnashr', 'name' => 'Akademnashr']);
+        $this->publisher(['slug' => 'zabarjad', 'name' => 'Zabarjad'], books: 2);
 
         $this->getJson('/api/publishers')
+            ->assertJsonPath('data.0.name', 'Zabarjad')
+            ->assertJsonPath('data.1.name', 'Akademnashr')
+            ->assertJsonPath('data.2.name', 'Yangi asr avlodi');
+
+        $this->getJson('/api/publishers?sort=name&per_page=1')
             ->assertJsonPath('data.0.name', 'Akademnashr')
-            ->assertJsonPath('data.1.name', 'Yangi asr avlodi');
+            ->assertJsonPath('meta.total', 3);
     }
 
     public function test_translatable_fields_follow_the_requested_locale(): void
@@ -156,7 +143,6 @@ class PublisherApiTest extends TestCase
     public function test_a_single_publisher_can_be_fetched(): void
     {
         $publisher = $this->publisher();
-        $this->book($this->translator(), $publisher, 'Chol va dengiz');
 
         $this->getJson("/api/publishers/{$publisher->id}")
             ->assertOk()

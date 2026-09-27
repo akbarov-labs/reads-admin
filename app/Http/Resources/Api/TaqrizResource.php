@@ -35,11 +35,21 @@ class TaqrizResource extends JsonResource
                 'name' => $this->taqrizchi->name,
                 'avatarUrl' => $this->taqrizchi->avatar_url,
             ]),
-            'book' => $this->whenLoaded('book', fn () => [
-                'id' => (string) $this->book->id,
-                'uzbekTitle' => $this->book->uzbek_title,
-                'author' => $this->book->author,
-                'coverUrl' => $this->book->cover_url,
+            // The edition the reviewer read, and the book it is an edition
+            // of. `book.coverUrl` is that edition's cover — the one they
+            // actually held.
+            'book' => $this->whenLoaded('edition', fn () => [
+                'id' => (string) $this->edition->book->id,
+                'uzbekTitle' => $this->edition->book->uzbek_title,
+                'author' => (string) $this->edition->book->author_names,
+                'coverUrl' => $this->edition->cover_url,
+            ]),
+            'edition' => $this->whenLoaded('edition', fn () => [
+                'id' => (string) $this->edition->id,
+                'title' => $this->edition->title,
+                'publisher' => $this->edition->publisher?->name,
+                'year' => $this->edition->year,
+                'translators' => $this->edition->translators->map(fn ($t) => ['slug' => $t->slug, 'name' => $t->name])->values(),
             ]),
         ];
     }

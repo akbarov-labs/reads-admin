@@ -47,8 +47,8 @@ class TranslatorResource extends JsonResource
             ]),
             'yearsActive' => $this->years_active,
             'startYear' => $this->start_year,
-            'totalBooksTranslated' => $this->books->count(),
-            'books' => BookResource::collection($this->books),
+            'totalBooksTranslated' => $this->total_books_translated,
+            'books' => TranslatorBookResource::collection($this->editions),
 
             // Sitemap <lastmod>. Covers the whole page, not just the
             // translator row — a new book changes what the page says.

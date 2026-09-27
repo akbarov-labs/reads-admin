@@ -25,7 +25,7 @@
 
                     <div class="mt-2 flex flex-wrap gap-1.5">
                         <x-filament::badge color="gray">
-                            {{ $publisher->books_count }} {{ \Illuminate\Support\Str::plural('book', $publisher->books_count) }}
+                            {{ $publisher->editions_count }} {{ \Illuminate\Support\Str::plural('edition', $publisher->editions_count) }}
                         </x-filament::badge>
                     </div>
 

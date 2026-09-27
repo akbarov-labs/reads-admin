@@ -66,7 +66,7 @@ class TaqrizObserver
      */
     private function revalidate(Taqriz $taqriz): void
     {
-        $this->revalidator->book($taqriz->book_id);
+        $this->revalidator->book($taqriz->edition?->book_id);
         $this->revalidator->taqrizchi($taqriz->taqrizchi?->slug);
     }
 }

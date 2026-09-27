@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GeneratesUniqueSlug;
+use App\Enums\ModerationStatus;
 use App\Observers\PublisherObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Spatie\Translatable\HasTranslations;
 
 #[ObservedBy(PublisherObserver::class)]
@@ -23,6 +28,7 @@ use Spatie\Translatable\HasTranslations;
 ])]
 class Publisher extends Model
 {
+    use GeneratesUniqueSlug;
     use HasTranslations;
 
     /** @var array<int, string> */
@@ -58,10 +64,40 @@ class Publisher extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** @return HasMany<Book, $this> */
-    public function books(): HasMany
+    /** @return HasMany<Edition, $this> */
+    public function editions(): HasMany
     {
-        return $this->hasMany(Book::class);
+        return $this->hasMany(Edition::class);
+    }
+
+    /**
+     * The works this publisher has printed, through their editions. Two
+     * editions of one book are one book here; see scopeWithBookCount() for
+     * counting them that way too.
+     *
+     * @return BelongsToMany<Book, $this>
+     */
+    public function books(): BelongsToMany
+    {
+        return $this->belongsToMany(Book::class, 'editions')->distinct();
+    }
+
+    /**
+     * Adds `books_count`: distinct books with an edition from this
+     * publisher. withCount('books') would count editions, because the
+     * relation's pivot table is `editions`.
+     *
+     * @param  Builder<Publisher>  $query
+     */
+    public function scopeWithBookCount(Builder $query, bool $approvedOnly = false): void
+    {
+        $query->withCount(['editions as books_count' => function (Builder $editions) use ($approvedOnly) {
+            $editions->select(DB::raw('count(distinct editions.book_id)'));
+
+            if ($approvedOnly) {
+                $editions->approved()->whereHas('book', fn (Builder $book) => $book->where('books.status', ModerationStatus::Approved));
+            }
+        }]);
     }
 
     public function getLogoUrlAttribute(): ?string

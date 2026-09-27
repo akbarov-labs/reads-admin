@@ -20,7 +20,10 @@ class AuthorResource extends JsonResource
             'deathYear' => $this->death_year,
             'portraitUrl' => $this->portrait_url,
             'websiteUrl' => $this->website_url,
+            'originalName' => $this->original_name,
             'bookCount' => $this->whenCounted('books'),
+            // A few covers for the card; see CatalogueCovers.
+            'coverUrls' => $this->when($this->cover_urls !== null, fn () => $this->cover_urls),
         ];
     }
 }

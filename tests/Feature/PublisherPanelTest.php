@@ -14,6 +14,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
+use Tests\Concerns\BuildsCatalogue;
 use Tests\TestCase;
 
 /**
@@ -25,6 +26,7 @@ use Tests\TestCase;
  */
 class PublisherPanelTest extends TestCase
 {
+    use BuildsCatalogue;
     use RefreshDatabase;
 
     private function admin(): User
@@ -83,14 +85,7 @@ class PublisherPanelTest extends TestCase
         $publisher = $this->publisher();
         $translator = $this->translatorUser()->translator;
 
-        Book::create([
-            'translator_id' => $translator->id,
-            'publisher_id' => $publisher->id,
-            'uzbek_title' => 'Chol va dengiz',
-            'original_title' => 'The Old Man and the Sea',
-            'author' => 'Ernest Hemingway',
-            'source_language' => 'en',
-        ]);
+        $this->catalogueBook(edition: ['publisher_id' => $publisher->id]);
 
         $this->actingAs($this->admin());
 
@@ -144,11 +139,11 @@ class PublisherPanelTest extends TestCase
             ->call('create')
             ->assertHasNoFormErrors();
 
-        $this->getJson('/api/publishers?locale=en')
+        $this->getJson('/api/publishers/akademnashr?locale=en')
             ->assertOk()
-            ->assertJsonPath('data.0.name', 'Akademnashr')
-            ->assertJsonPath('data.0.slug', 'akademnashr')
-            ->assertJsonPath('data.0.country', 'Uzbekistan');
+            ->assertJsonPath('data.name', 'Akademnashr')
+            ->assertJsonPath('data.slug', 'akademnashr')
+            ->assertJsonPath('data.country', 'Uzbekistan');
     }
 
     public function test_an_admin_can_edit_a_publisher(): void
@@ -177,17 +172,8 @@ class PublisherPanelTest extends TestCase
     public function test_an_admin_can_delete_a_publisher_without_taking_its_books(): void
     {
         $publisher = $this->publisher();
-        $translator = $this->translatorUser()->translator;
 
-        $book = Book::create([
-            'translator_id' => $translator->id,
-            'publisher_id' => $publisher->id,
-            'uzbek_title' => 'Chol va dengiz',
-            'original_title' => 'The Old Man and the Sea',
-            'author' => 'Ernest Hemingway',
-            'publisher' => 'Yangi asr avlodi',
-            'source_language' => 'en',
-        ]);
+        $book = $this->catalogueBook(edition: ['publisher_id' => $publisher->id]);
 
         $this->actingAs($this->admin());
 
@@ -196,11 +182,9 @@ class PublisherPanelTest extends TestCase
 
         $this->assertDatabaseMissing('publishers', ['id' => $publisher->id]);
 
-        $book->refresh();
-        $this->assertNull($book->publisher_id);
-        // The free-text column survives, so the book still names its
-        // publisher on the site even with nothing linked.
-        $this->assertSame('Yangi asr avlodi', $book->publisher);
+        // nullOnDelete: the book and its edition survive, unlinked.
+        $this->assertNotNull($book->fresh());
+        $this->assertNull($book->editions()->first()->publisher_id);
     }
 
     // ---- form rules ------------------------------------------------------

@@ -32,16 +32,16 @@ class CreateTaqriz extends CreateRecord
             ]);
         }
 
-        // One review per book per reviewer. The unique index is the real
+        // One review per edition per reviewer. The unique index is the real
         // guarantee; this turns the resulting 500 into a sentence.
         $exists = static::getModel()::query()
             ->where('taqrizchi_id', $data['taqrizchi_id'])
-            ->where('book_id', $data['book_id'] ?? null)
+            ->where('edition_id', $data['edition_id'] ?? null)
             ->exists();
 
         if ($exists) {
             throw ValidationException::withMessages([
-                'data.book_id' => 'There is already a taqriz for this book. Edit the existing one instead.',
+                'data.edition_id' => 'You have already reviewed this edition. Edit the existing taqriz instead.',
             ]);
         }
 

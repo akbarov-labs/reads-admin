@@ -2,48 +2,163 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Http\Resources\Api\CatalogBookResource;
 use App\Enums\ModerationStatus;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\BookDetailResource;
+use App\Http\Resources\Api\BookResource;
 use App\Models\Book;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class BookController extends Controller
 {
+    private const PER_PAGE = 20;
+
+    private const MAX_PER_PAGE = 100;
+
+    private const RELATED_LIMIT = 8;
+
+    private const LATEST_YEAR = '(select max(e.year) from editions e where e.book_id = books.id and e.status = ?)';
+
     /**
-     * `taqrizlar` is constrained to approved at the query, so a pending
-     * review is never loaded and so can never be rendered by mistake.
+     * The catalogue, a page at a time. Every filter takes a slug, the same
+     * one the site routes on:
      *
-     * @return array<string, mixed>
+     *   ?q=        title, original title, author name, or an exact ISBN
+     *   ?author=   ?publisher=   ?translator=   ?category=   ?series=
+     *   ?sort=     year (newest edition first, the default) | title | recent
+     *   ?page=     ?per_page= (at most 100)
      */
-    private static function relations(): array
+    public function index(Request $request): AnonymousResourceCollection
     {
-        return [
-            'authorRecord',
-            'publisherRecord',
-            'translator',
-            'taqrizlar' => fn ($query) => $query->approved()->with('taqrizchi'),
-        ];
+        $query = Book::approved()->with(BookResource::relations());
+
+        $this->filter($query, $request);
+        $this->sort($query, (string) $request->query('sort', 'year'));
+
+        $perPage = min(self::MAX_PER_PAGE, max(1, (int) $request->query('per_page', self::PER_PAGE)));
+
+        return BookResource::collection($query->paginate($perPage)->withQueryString());
     }
 
-    public function index(): AnonymousResourceCollection
-    {
-        return CatalogBookResource::collection(
-            Book::approved()->with(self::relations())->orderBy('sort_order')->orderBy('id')->get(),
-        );
-    }
-
-    public function show(Book $book): CatalogBookResource
+    public function show(Book $book): BookDetailResource
     {
         // A book awaiting moderation does not exist as far as the site is
         // concerned, including at its own URL.
-        if ($book->status !== ModerationStatus::Approved) {
+        if (! Book::approved()->whereKey($book->id)->exists()) {
             throw new NotFoundHttpException;
         }
 
-        $book->load(self::relations());
+        $book->load([
+            ...BookResource::relations(),
+            'approvedEditions' => fn ($query) => $query->with(['publisher', 'translators', 'images']),
+            // `taqrizlar` is constrained to approved at the query, so a
+            // pending review is never loaded and so can never be rendered
+            // by mistake.
+            'taqrizlar' => fn ($query) => $query->approved()->with(['taqrizchi', 'edition.publisher', 'edition.translators']),
+        ]);
 
-        return new CatalogBookResource($book);
+        return new BookDetailResource($book, $this->relatedTo($book));
+    }
+
+    private function filter(Builder $query, Request $request): void
+    {
+        if (filled($q = trim((string) $request->query('q')))) {
+            $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $q).'%';
+            $isbn = preg_replace('/[^0-9Xx]/', '', $q);
+
+            $query->where(function (Builder $match) use ($like, $isbn) {
+                $match->where('books.uzbek_title', 'like', $like)
+                    ->orWhere('books.original_title', 'like', $like)
+                    ->orWhereHas('authors', fn (Builder $a) => $a->where(fn (Builder $name) => $name->where('name', 'like', $like)->orWhere('original_name', 'like', $like)))
+                    ->orWhereHas('editions', fn (Builder $e) => $e->approved()->where('title', 'like', $like));
+
+                if (strlen($isbn) >= 10) {
+                    $match->orWhereHas('editions', fn (Builder $e) => $e->approved()->where('isbn', strtoupper($isbn)));
+                }
+            });
+        }
+
+        if (filled($slug = $request->query('author'))) {
+            $query->whereHas('authors', fn (Builder $a) => $a->where('slug', $slug));
+        }
+
+        if (filled($slug = $request->query('publisher'))) {
+            $query->whereHas('editions', fn (Builder $e) => $e->approved()->whereHas('publisher', fn (Builder $p) => $p->where('slug', $slug)));
+        }
+
+        if (filled($slug = $request->query('translator'))) {
+            $query->whereHas('editions', fn (Builder $e) => $e->approved()->whereHas('translators', fn (Builder $t) => $t->where('slug', $slug)));
+        }
+
+        if (filled($slug = $request->query('category'))) {
+            // A parent category includes its children: "Badiiy adabiyot"
+            // lists "Jahon adabiyoti" too.
+            $query->whereHas('categories', fn (Builder $c) => $c->where(fn (Builder $either) => $either->where('slug', $slug)
+                ->orWhereHas('parent', fn (Builder $parent) => $parent->where('slug', $slug))));
+        }
+
+        if (filled($slug = $request->query('series'))) {
+            $query->whereHas('series', fn (Builder $s) => $s->where('slug', $slug));
+        }
+    }
+
+    private function sort(Builder $query, string $sort): void
+    {
+        match ($sort) {
+            'title' => $query->orderBy('books.uzbek_title'),
+            'recent' => $query->orderByDesc('books.id'),
+            // Newest edition first; books with no known year go last.
+            default => $query
+                ->orderByRaw(self::LATEST_YEAR.' is null', [ModerationStatus::Approved->value])
+                ->orderByRaw(self::LATEST_YEAR.' desc', [ModerationStatus::Approved->value])
+                ->orderBy('books.sort_order')
+                ->orderBy('books.id'),
+        };
+    }
+
+    /**
+     * "What to read next", strongest signal first: books the source
+     * catalogue itself relates to this one, then the rest of its series,
+     * then more by the same author, then more of its genre.
+     *
+     * @return Collection<int, Book>
+     */
+    private function relatedTo(Book $book): Collection
+    {
+        $candidates = collect();
+        $add = function (Builder $query) use (&$candidates, $book) {
+            if ($candidates->count() >= self::RELATED_LIMIT) {
+                return;
+            }
+
+            $query->approved()
+                ->whereKeyNot([$book->id, ...$candidates->pluck('id')])
+                ->with(BookResource::relations())
+                ->limit(self::RELATED_LIMIT - $candidates->count())
+                ->get()
+                ->each(fn (Book $related) => $candidates->push($related));
+        };
+
+        $add($book->relatedBooks()->getQuery()->select('books.*'));
+
+        if ($book->series_id !== null) {
+            $add(Book::where('series_id', $book->series_id)->orderBy('series_position'));
+        }
+
+        $authorIds = $book->authors->pluck('id');
+        if ($authorIds->isNotEmpty()) {
+            $add(Book::whereHas('authors', fn (Builder $a) => $a->whereKey($authorIds))->latest('books.id'));
+        }
+
+        $genre = $book->categories->firstWhere('pivot.is_primary', true) ?? $book->categories->first();
+        if ($genre !== null) {
+            $add(Book::whereHas('categories', fn (Builder $c) => $c->whereKey($genre->id))->latest('books.id'));
+        }
+
+        return $candidates;
     }
 }

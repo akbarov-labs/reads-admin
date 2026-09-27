@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Book;
+use App\Models\Edition;
 use App\Models\LanguagePair;
 use App\Models\SocialLink;
 use App\Models\Taqrizchi;
@@ -10,30 +11,32 @@ use App\Models\Translator;
 use App\Services\SiteRevalidator;
 
 /**
- * Books, language pairs and social links all render inside somebody's public
- * page (and feed its structured data and meta description), so a write to any
- * of them makes that page stale. One observer covers all three because the
- * handling is the same: rebuild whatever owns the row.
+ * Books, editions, language pairs and social links all render inside
+ * somebody's public page (and feed its structured data and meta
+ * description), so a write to any of them makes that page stale. One
+ * observer covers them because the handling is the same: rebuild whatever
+ * owns the row.
  *
  * "Whatever owns it" is no longer always a translator. Social links belong to
- * a translator or a taqrizchi, and a book may belong to no one — it still has
- * its own page, which is what gets rebuilt in that case.
+ * a translator or a taqrizchi; a book belongs to no one but has its own page;
+ * an edition sits on its book's page and on the profile of everyone who
+ * translated it.
  */
 class ProfileContentObserver
 {
     public function __construct(private readonly SiteRevalidator $revalidator) {}
 
-    public function saved(Book|LanguagePair|SocialLink $model): void
+    public function saved(Book|Edition|LanguagePair|SocialLink $model): void
     {
         $this->revalidate($model);
     }
 
-    public function deleted(Book|LanguagePair|SocialLink $model): void
+    public function deleted(Book|Edition|LanguagePair|SocialLink $model): void
     {
         $this->revalidate($model);
     }
 
-    private function revalidate(Book|LanguagePair|SocialLink $model): void
+    private function revalidate(Book|Edition|LanguagePair|SocialLink $model): void
     {
         if ($model instanceof SocialLink) {
             $owner = $model->owner;
@@ -49,12 +52,20 @@ class ProfileContentObserver
             return;
         }
 
+        if ($model instanceof Edition) {
+            $this->revalidator->book($model->book_id);
+
+            foreach ($model->translators()->pluck('slug') as $slug) {
+                $this->revalidator->translator($slug);
+            }
+        }
+
         if ($model instanceof Book) {
             $this->revalidator->book($model->id);
         }
 
-        // A book with no translator still belongs in the catalogue listings,
-        // and translator(null) drops those collection tags.
-        $this->revalidator->translator($model->translator?->slug);
+        // translator(null) drops the collection tags, which every catalogue
+        // listing hangs off; a language pair names its translator directly.
+        $this->revalidator->translator($model instanceof LanguagePair ? $model->translator?->slug : null);
     }
 }

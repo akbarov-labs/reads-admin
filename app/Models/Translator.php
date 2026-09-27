@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GeneratesUniqueSlug;
 use App\Observers\TranslatorObserver;
 use App\Support\TranslatorSeo;
 use Carbon\CarbonInterface as Carbon;
@@ -9,9 +10,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
 
 #[ObservedBy(TranslatorObserver::class)]
@@ -32,6 +33,7 @@ use Spatie\Translatable\HasTranslations;
 ])]
 class Translator extends Model
 {
+    use GeneratesUniqueSlug;
     use HasTranslations;
 
     /**
@@ -61,14 +63,14 @@ class Translator extends Model
 
     /**
      * Newest change anywhere in the profile, used as the sitemap's
-     * <lastmod>. A new book is a change to the page, so the book timestamps
+     * <lastmod>. A new edition is a change to the page, so its timestamps
      * count even though the translator row itself did not move.
      */
     public function getContentUpdatedAtAttribute(): ?Carbon
     {
         $timestamps = collect([
             $this->updated_at,
-            $this->books->max('updated_at'),
+            $this->editions->max('updated_at'),
             $this->socialLinks->max('updated_at'),
             $this->languagePairs->max('updated_at'),
         ])->filter();
@@ -79,25 +81,6 @@ class Translator extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
-    }
-
-    /**
-     * `slug` is required and unique, but a translator created inline by a
-     * publisher (see PublisherResource\RelationManagers\BooksRelationManager)
-     * supplies only a name — nobody is filling in a "URL" field for someone
-     * who does not yet have a login to reach a profile page with. This picks
-     * one for them; an admin can change it once the profile is filled in.
-     */
-    public static function generateUniqueSlug(string $name): string
-    {
-        $base = Str::slug($name) ?: 'translator';
-        $slug = $base;
-
-        for ($suffix = 2; static::where('slug', $slug)->exists(); $suffix++) {
-            $slug = "{$base}-{$suffix}";
-        }
-
-        return $slug;
     }
 
     public function user(): BelongsTo
@@ -111,10 +94,20 @@ class Translator extends Model
         return $this->hasMany(LanguagePair::class)->orderBy('sort_order');
     }
 
-    /** @return HasMany<Book, $this> */
-    public function books(): HasMany
+    /**
+     * The editions this person worked on, each with their role on it. A
+     * translator's portfolio is this list: two translations of one book are
+     * two entries, each with its own publisher, cover and excerpt.
+     *
+     * @return BelongsToMany<Edition, $this>
+     */
+    public function editions(): BelongsToMany
     {
-        return $this->hasMany(Book::class)->orderBy('sort_order');
+        return $this->belongsToMany(Edition::class)
+            ->using(EditionTranslator::class)
+            ->withPivot(['role', 'position'])
+            ->orderBy('editions.sort_order')
+            ->orderByDesc('editions.year');
     }
 
     /** @return HasMany<Inquiry, $this> */
@@ -146,8 +139,11 @@ class Translator extends Model
         return $this->avatar_path ? '/storage/'.$this->avatar_path : null;
     }
 
+    /** Distinct books, so a work they translated for two publishers counts once. */
     public function getTotalBooksTranslatedAttribute(): int
     {
-        return $this->books()->count();
+        return $this->relationLoaded('editions')
+            ? $this->editions->pluck('book_id')->unique()->count()
+            : $this->editions()->distinct()->count('editions.book_id');
     }
 }

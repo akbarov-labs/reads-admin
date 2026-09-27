@@ -2,33 +2,30 @@
 
 namespace App\Models;
 
-use App\Enums\BookRole;
 use App\Enums\ModerationStatus;
 use App\Observers\ProfileContentObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
+/**
+ * The work: what a reader means by "a book". Everything that differs from
+ * one printing to the next — publisher, ISBN, year, cover, translators, the
+ * translator's excerpt — lives on its editions. See docs/DATA-MODEL.md.
+ */
 #[ObservedBy(ProfileContentObserver::class)]
 #[Fillable([
-    'translator_id',
-    'author_id',
-    'publisher_id',
-    'role',
     'uzbek_title',
     'original_title',
-    'author',
-    'author_image_path',
     'source_language',
-    'publisher',
-    'publisher_image_path',
-    'year',
-    'cover_path',
-    'excerpt_source_language',
-    'excerpt_source_text',
-    'excerpt_translated_text',
+    'description',
+    'series_id',
+    'series_position',
     'sort_order',
     'status',
 ])]
@@ -47,63 +44,94 @@ class Book extends Model
     protected function casts(): array
     {
         return [
-            'role' => BookRole::class,
             'status' => ModerationStatus::class,
+            'series_position' => 'float',
         ];
     }
 
+    /** @return BelongsToMany<Author, $this> */
+    public function authors(): BelongsToMany
+    {
+        return $this->belongsToMany(Author::class, 'book_author')->withPivot('position')->orderByPivot('position');
+    }
+
+    /** @return HasMany<Edition, $this> */
+    public function editions(): HasMany
+    {
+        return $this->hasMany(Edition::class)->orderBy('sort_order')->orderByDesc('year')->orderBy('id');
+    }
+
+    /** @return HasMany<Edition, $this> */
+    public function approvedEditions(): HasMany
+    {
+        return $this->editions()->where('editions.status', ModerationStatus::Approved);
+    }
+
     /**
-     * Optional: a book can reach the catalogue without anyone having
-     * translated it — a taqrizchi adding a book they want to review, or an
-     * original-language work.
+     * The edition that stands for the book in a list: approved, with a cover
+     * if any has one, then the newest. Chosen in PHP from approvedEditions —
+     * a book has a handful of editions, and eager-loading them all for a
+     * page of twenty books is cheaper than any SQL that ranks them.
      */
-    public function translator(): BelongsTo
+    public function getPrimaryEditionAttribute(): ?Edition
     {
-        return $this->belongsTo(Translator::class);
+        return $this->approvedEditions
+            ->sortBy(fn (Edition $edition) => [
+                $edition->cover_path === null ? 1 : 0,
+                -($edition->year ?? 0),
+                $edition->sort_order,
+                $edition->id,
+            ])
+            ->first();
     }
 
-    /** @return HasMany<Taqriz, $this> */
-    public function taqrizlar(): HasMany
+    /** @return BelongsToMany<Category, $this> */
+    public function categories(): BelongsToMany
     {
-        return $this->hasMany(Taqriz::class)->latest();
+        return $this->belongsToMany(Category::class)->withPivot('is_primary')->orderByPivot('is_primary', 'desc');
     }
 
-    public function authorRecord(): BelongsTo
+    /** @return BelongsTo<Series, $this> */
+    public function series(): BelongsTo
     {
-        return $this->belongsTo(Author::class, 'author_id');
+        return $this->belongsTo(Series::class);
     }
 
-    public function publisherRecord(): BelongsTo
+    /** @return BelongsToMany<Book, $this> */
+    public function relatedBooks(): BelongsToMany
     {
-        return $this->belongsTo(Publisher::class, 'publisher_id');
+        return $this->belongsToMany(Book::class, 'book_relations', 'book_id', 'related_book_id')
+            ->withPivot(['source', 'position'])
+            ->orderByPivot('position');
     }
 
-    /** @see Translator::getAvatarUrlAttribute() for why this is relative, not absolute. */
-    public function getCoverUrlAttribute(): ?string
+    /**
+     * Every review of any edition of this book, newest first.
+     *
+     * @return HasManyThrough<Taqriz, Edition, $this>
+     */
+    public function taqrizlar(): HasManyThrough
     {
-        return $this->cover_path ? '/storage/'.$this->cover_path : null;
+        return $this->hasManyThrough(Taqriz::class, Edition::class)->latest('taqrizlar.created_at');
     }
 
-    /** Relative URL for the author's photo, or null when not set. */
-    public function getAuthorImageUrlAttribute(): ?string
+    /** Authors' names as one line: "Ellen Feyn, Sherri Shnayder". */
+    public function getAuthorNamesAttribute(): ?string
     {
-        return $this->author_image_path ? '/storage/'.$this->author_image_path : null;
+        $names = $this->authors->pluck('name');
+
+        return $names->isEmpty() ? null : $names->implode(', ');
     }
 
-    /** Relative URL for the publisher's logo/image, or null when not set. */
-    public function getPublisherImageUrlAttribute(): ?string
+    /**
+     * On the public site: approved, and with at least one approved edition
+     * to show for it.
+     *
+     * @param  Builder<Book>  $query
+     */
+    public function scopeApproved(Builder $query): void
     {
-        return $this->publisher_image_path ? '/storage/'.$this->publisher_image_path : null;
-    }
-
-    /** @param  \Illuminate\Database\Eloquent\Builder<Book>  $query */
-    public function scopeApproved(\Illuminate\Database\Eloquent\Builder $query): void
-    {
-        $query->where('status', ModerationStatus::Approved);
-    }
-
-    public function hasExcerpt(): bool
-    {
-        return filled($this->excerpt_source_text) && filled($this->excerpt_translated_text);
+        $query->where('books.status', ModerationStatus::Approved)
+            ->whereHas('editions', fn (Builder $editions) => $editions->where('editions.status', ModerationStatus::Approved));
     }
 }
