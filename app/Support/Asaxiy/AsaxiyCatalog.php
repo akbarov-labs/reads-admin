@@ -17,6 +17,12 @@ use OpenSpout\Reader\XLSX\Reader;
  */
 class AsaxiyCatalog
 {
+    /** Shelves of things that are never books. */
+    private const NOT_BOOK_SHELVES = ['Pazllar', 'AMG'];
+
+    /** Shelves of Asaxiy's own gift boxes and promotional bundles. */
+    private const BUNDLE_SHELVES = ["Kitobli sovg'a to'plamlari", "Bestseller to'plamlar"];
+
     /** Asaxiy's name for "no publisher given". */
     private const NO_PUBLISHER = ['boshqanashriyotlar', 'boshqa'];
 
@@ -162,6 +168,36 @@ class AsaxiyCatalog
      * or "978… / 978…") yields the first valid one; anything with the wrong
      * number of digits is rejected rather than guessed at.
      */
+    /**
+     * Whether a listing is something Asaxiy sells that is not a book:
+     * puzzles and planners, and Asaxiy's own gift boxes and promotional
+     * bundles ("Sovg'a uchun to'plam … (Shokolad, Sovgʻabop quti)",
+     * "Beshtasi birda va super chegirma narxda!"). Told apart by the shelf
+     * the product page's breadcrumb puts it on. A bundle that carries a real
+     * ISBN is a publisher's product that happens to sit on that shelf, and
+     * stays. Multi-volume sets from publishers ("Собрание сочинений в 8
+     * томах") are books and are never on these shelves.
+     *
+     * @param  array<string, mixed>  $listing  a normalized listing, with the page's `breadcrumb`
+     */
+    public static function isNotABook(array $listing): bool
+    {
+        $shelf = UzbekText::key((string) ($listing['breadcrumb'] ?? ''));
+
+        if (in_array($shelf, array_map(UzbekText::key(...), self::NOT_BOOK_SHELVES), true)) {
+            return true;
+        }
+
+        if (in_array($shelf, array_map(UzbekText::key(...), self::BUNDLE_SHELVES), true)) {
+            return $listing['isbn'] === null;
+        }
+
+        // Without a scraped page to say which shelf it is on, the gift boxes
+        // are still recognisable by their title.
+        return $listing['isbn'] === null
+            && preg_match("/^sovg'a uchun to'plam\b/iu", UzbekText::normalizeApostrophes((string) $listing['title'])) === 1;
+    }
+
     public static function isbn(?string $value): ?string
     {
         if ($value === null) {

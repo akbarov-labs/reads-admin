@@ -196,6 +196,55 @@ class AsaxiyBooksSeederTest extends TestCase
         $this->assertSame(['Ikkinchi'], $book->relatedBooks->pluck('uzbek_title')->all());
     }
 
+    public function test_gift_boxes_bundles_and_puzzles_are_not_imported_as_books(): void
+    {
+        $this->cachePage('T1', ['breadcrumb' => 'Kitobli sovg‘a to‘plamlari']);
+        $this->cachePage('T2', ['breadcrumb' => 'Bestseller to‘plamlar']);
+        $this->cachePage('T3', ['breadcrumb' => 'Pazllar']);
+        // On a bundle shelf, but a publisher's real book with an ISBN.
+        $this->cachePage('T4', ['breadcrumb' => 'Bestseller to‘plamlar']);
+        $this->cachePage('T5', ['breadcrumb' => 'Jahon adabiyoti']);
+
+        $this->writeWorkbook([
+            $this->row(['title' => "Sovg'a uchun to'plam. Ajoyib narx va yetkazib berish bepul. (299.000, Sovgʻabop quti)", 'article' => 'T1', 'publisher' => 'Asaxiy Books']),
+            $this->row(['title' => 'Beshtasi birda va super chegirma narxda!', 'article' => 'T2', 'publisher' => 'Asaxiy Books']),
+            $this->row(['title' => 'Step Puzzle Буратино 260 pazllari', 'article' => 'T3', 'isbn' => '4602827740716']),
+            $this->row(['title' => 'Podshohning qizi (3D panorama)', 'article' => 'T4', 'isbn' => '9789943800953']),
+            $this->row(['title' => 'Собрание сочинений в 8 томах (комплект)', 'article' => 'T5', 'language' => 'Ruscha']),
+            // No scraped page: the gift box is still known by its title.
+            $this->row(['title' => "Sovg'a uchun to'plam. Yetkazib berish bepul.", 'article' => 'T6']),
+        ]);
+
+        $this->seed(AsaxiyBooksSeeder::class);
+
+        $this->assertEqualsCanonicalizing(
+            ['Podshohning qizi (3D panorama)', 'Собрание сочинений в 8 томах (комплект)'],
+            Book::pluck('uzbek_title')->all(),
+        );
+    }
+
+    public function test_bundles_imported_by_an_earlier_run_are_removed_unless_reviewed(): void
+    {
+        $this->writeWorkbook([
+            $this->row(['title' => 'Erkaklar uchun jiddiy to\'plam', 'article' => 'T1']),
+            $this->row(['title' => 'Kattalar uchun hayitlik to\'plami', 'article' => 'T2']),
+        ]);
+        $this->seed(AsaxiyBooksSeeder::class);
+        $this->assertSame(2, Book::count());
+
+        $reviewed = Edition::where('source_article', 'T2')->sole();
+        $user = \App\Models\User::create(['name' => 'Nodira', 'email' => 'nodira@example.test', 'password' => 'password', 'role' => \App\Enums\UserRole::Taqrizchi]);
+        $taqrizchi = \App\Models\Taqrizchi::create(['user_id' => $user->id, 'slug' => 'nodira', 'name' => 'Nodira']);
+        \App\Models\Taqriz::create(['edition_id' => $reviewed->id, 'taqrizchi_id' => $taqrizchi->id, 'body' => 'Matn.']);
+
+        // Now the scrape says what shelf they are on.
+        $this->cachePage('T1', ['breadcrumb' => 'Bestseller to‘plamlar']);
+        $this->cachePage('T2', ['breadcrumb' => 'Bestseller to‘plamlar']);
+        $this->seed(AsaxiyBooksSeeder::class);
+
+        $this->assertSame(['Kattalar uchun hayitlik to\'plami'], Book::pluck('uzbek_title')->all());
+    }
+
     public function test_running_it_again_duplicates_nothing_and_attaches_new_covers(): void
     {
         $this->writeWorkbook([

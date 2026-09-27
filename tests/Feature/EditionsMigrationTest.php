@@ -146,7 +146,9 @@ class EditionsMigrationTest extends TestCase
         // Folding two editions into one row would silently delete one of
         // them; the operator decides which, not the migration.
         try {
-            Artisan::call('migrate:rollback', ['--step' => 1, '--force' => true]);
+            // Back through the data migration, whatever came after it.
+            $steps = DB::table('migrations')->where('migration', '>=', '2026_09_26_000002_move_edition_data_off_books')->count();
+            Artisan::call('migrate:rollback', ['--step' => $steps, '--force' => true]);
             $this->fail('The rollback went ahead with two editions of one book.');
         } catch (RuntimeException $e) {
             $this->assertStringContainsString('1 book(s) with more than one edition', $e->getMessage());

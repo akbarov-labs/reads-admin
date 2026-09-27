@@ -72,11 +72,14 @@ class AsaxiyBooksSeeder extends Seeder
     /** @var array<string, list<string>> product url => listing paths */
     private array $shelves = [];
 
+    /** @var list<string> article numbers of listings that are not books */
+    private array $notBooks = [];
+
     /** Where asaxiy:scrape and asaxiy:categories saved their results. */
     private string $cacheDir;
 
     /** @var array<string, int> */
-    private array $created = ['books' => 0, 'editions' => 0, 'updated' => 0, 'authors' => 0, 'publishers' => 0, 'translators' => 0, 'covers' => 0, 'series' => 0, 'relations' => 0];
+    private array $created = ['books' => 0, 'editions' => 0, 'updated' => 0, 'authors' => 0, 'publishers' => 0, 'translators' => 0, 'covers' => 0, 'series' => 0, 'relations' => 0, 'removed' => 0];
 
     public function run(): void
     {
@@ -103,6 +106,7 @@ class AsaxiyBooksSeeder extends Seeder
             $this->importSeries($listings);
             $this->importEditions($listings);
             $this->importRelations($listings);
+            $this->removeNotBooks();
         });
 
         app(SiteRevalidator::class)->everything();
@@ -110,6 +114,7 @@ class AsaxiyBooksSeeder extends Seeder
         $c = $this->created;
         $this->command?->info("Books: {$c['books']} new. Editions: {$c['editions']} new, {$c['updated']} updated, {$c['covers']} with a cover.");
         $this->command?->info("Created {$c['authors']} authors, {$c['publishers']} publishers, {$c['translators']} translators, {$c['series']} series; {$c['relations']} related-book links.");
+        $this->command?->info(count($this->notBooks)." listings skipped as not books (gift boxes, bundles, puzzles, planners); {$c['removed']} of them removed from an earlier import.");
     }
 
     /**
@@ -126,6 +131,13 @@ class AsaxiyBooksSeeder extends Seeder
 
         foreach ($catalog->books() as $listing) {
             $listing += $this->pageDetails((string) $listing['source_article']);
+
+            if (AsaxiyCatalog::isNotABook($listing)) {
+                $this->notBooks[] = (string) $listing['source_article'];
+
+                continue;
+            }
+
             $id = $listing['isbn'] !== null ? 'isbn:'.$listing['isbn'] : 'article:'.$listing['source_article'];
 
             if (! isset($listings[$id])) {
@@ -578,6 +590,30 @@ class AsaxiyBooksSeeder extends Seeder
                     'source' => 'asaxiy',
                     'position' => $position,
                 ]);
+            }
+        }
+    }
+
+    /**
+     * An earlier run imported the gift boxes and bundles as books. Their
+     * editions go now, and each book goes with its last edition — unless
+     * somebody reviewed it, in which case it is a person's call, not the
+     * seeder's.
+     */
+    private function removeNotBooks(): void
+    {
+        if ($this->notBooks === []) {
+            return;
+        }
+
+        $editions = Edition::whereIn('source_article', $this->notBooks)->whereDoesntHave('taqrizlar')->get();
+
+        foreach ($editions as $edition) {
+            $edition->delete();
+            $this->created['removed']++;
+
+            if (! Edition::where('book_id', $edition->book_id)->exists()) {
+                Book::whereKey($edition->book_id)->delete();
             }
         }
     }

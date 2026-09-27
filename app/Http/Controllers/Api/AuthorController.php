@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\AuthorResource;
 use App\Models\Author;
+use App\Models\Book;
 use App\Support\CatalogueCovers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 class AuthorController extends Controller
 {
@@ -20,16 +22,27 @@ class AuthorController extends Controller
     {
         $this->applyRequestedLocale($request);
 
-        $query = Author::whereHas('books', fn ($books) => $books->approved())
-            ->withCount(['books' => fn ($books) => $books->approved()]);
+        // Each author's published-book count, worked out once for everyone
+        // and joined in; the inner join also drops authors with none. The
+        // obvious whereHas('books') + withCount('books') are correlated per
+        // author, and SQLite plans them by walking every approved book for
+        // each of ~4,000 authors — 30 s and a 502 in production.
+        $counts = DB::table('book_author')
+            ->select('book_author.author_id', DB::raw('count(*) as books_count'))
+            ->whereIn('book_author.book_id', Book::approved()->select('books.id'))
+            ->groupBy('book_author.author_id');
+
+        $query = Author::query()
+            ->joinSub($counts, 'published', 'published.author_id', '=', 'authors.id')
+            ->select('authors.*', 'published.books_count');
 
         if (filled($q = trim((string) $request->query('q')))) {
-            $query->where(fn ($match) => $match->where('name', 'like', "%{$q}%")->orWhere('original_name', 'like', "%{$q}%"));
+            $query->where(fn ($match) => $match->where('authors.name', 'like', "%{$q}%")->orWhere('authors.original_name', 'like', "%{$q}%"));
         }
 
         $request->query('sort') === 'name'
-            ? $query->orderBy('name')
-            : $query->orderByDesc('books_count')->orderBy('name');
+            ? $query->orderBy('authors.name')
+            : $query->orderByDesc('published.books_count')->orderBy('authors.name');
 
         $perPage = min(100, max(1, (int) $request->query('per_page', 20)));
 
