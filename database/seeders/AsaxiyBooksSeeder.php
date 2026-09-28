@@ -91,6 +91,14 @@ class AsaxiyBooksSeeder extends Seeder
             return;
         }
 
+        // Every listing is held in memory to de-duplicate across the whole
+        // file — about 100 MB for this catalogue, against the production
+        // image's 128 MB CLI default. A one-off batch job may have more; the
+        // container itself is capped at 384 MB.
+        if ($this->memoryLimitBytes() < 256 * 1024 * 1024) {
+            ini_set('memory_limit', '256M');
+        }
+
         $this->cacheDir = rtrim(env('ASAXIY_CACHE_DIR', storage_path('app/asaxiy')), '/');
         $listings = $this->listings(new AsaxiyCatalog($file));
         $this->command?->info(count($listings).' distinct editions in the workbook.');
@@ -232,7 +240,7 @@ class AsaxiyBooksSeeder extends Seeder
     /** @param  array<string, array<string, mixed>>  $listings */
     private function importPublishers(array $listings): void
     {
-        foreach (Publisher::all(['id', 'name']) as $publisher) {
+        foreach (DB::table('publishers')->select('id', 'name')->cursor() as $publisher) {
             $this->publishers[UzbekText::publisherKey($publisher->name)] ??= $publisher->id;
         }
 
@@ -262,7 +270,7 @@ class AsaxiyBooksSeeder extends Seeder
     /** @param  array<string, array<string, mixed>>  $listings */
     private function importAuthors(array $listings): void
     {
-        foreach (Author::all(['id', 'name', 'original_name']) as $author) {
+        foreach (DB::table('authors')->select('id', 'name', 'original_name')->cursor() as $author) {
             $this->authors[UzbekText::key($author->name)] ??= $author->id;
 
             if ($author->original_name) {
@@ -313,7 +321,7 @@ class AsaxiyBooksSeeder extends Seeder
     /** @param  array<string, array<string, mixed>>  $listings */
     private function importTranslators(array $listings): void
     {
-        foreach (Translator::all(['id', 'name']) as $translator) {
+        foreach (DB::table('translators')->select('id', 'name')->cursor() as $translator) {
             $this->translators[UzbekText::key($translator->name)] ??= $translator->id;
         }
 
@@ -342,8 +350,10 @@ class AsaxiyBooksSeeder extends Seeder
      */
     private function importSeries(array $listings): void
     {
-        foreach (Series::with('books.authors')->get() as $series) {
-            $this->series[$this->seriesKey($series->books->first()?->authors->first()?->name, $series->name)] = $series->id;
+        $firstAuthors = $this->firstAuthors();
+
+        foreach (DB::table('books')->join('series', 'series.id', '=', 'books.series_id')->select('books.id', 'series.id as series_id', 'series.name')->cursor() as $row) {
+            $this->series[$this->seriesKey($firstAuthors[$row->id] ?? null, $row->name)] ??= $row->series_id;
         }
 
         $books = [];
@@ -378,8 +388,14 @@ class AsaxiyBooksSeeder extends Seeder
         // Books already in the catalogue, under the same key new listings
         // get, so an Asaxiy edition of a book somebody entered by hand joins
         // that book instead of starting a second one.
-        foreach (Book::with('authors')->get() as $book) {
-            $this->books[$this->keyFor($book->authors->first()?->name, $book->uzbek_title)] ??= $book->id;
+        //
+        // Plain rows rather than models: nine thousand books with their
+        // authors as Eloquent objects is what pushed a re-run past PHP's
+        // 128 MB on the server.
+        $firstAuthors = $this->firstAuthors();
+
+        foreach (DB::table('books')->select('id', 'uzbek_title')->cursor() as $book) {
+            $this->books[$this->keyFor($firstAuthors[$book->id] ?? null, $book->uzbek_title)] ??= $book->id;
         }
 
         $byIsbn = Edition::whereNotNull('isbn')->pluck('id', 'isbn')->all();
@@ -616,6 +632,43 @@ class AsaxiyBooksSeeder extends Seeder
                 Book::whereKey($edition->book_id)->delete();
             }
         }
+    }
+
+    private function memoryLimitBytes(): int
+    {
+        $limit = trim((string) ini_get('memory_limit'));
+
+        if ($limit === '-1') {
+            return PHP_INT_MAX;
+        }
+
+        $number = (int) $limit;
+
+        return match (strtolower(substr($limit, -1))) {
+            'g' => $number * 1024 ** 3,
+            'm' => $number * 1024 ** 2,
+            'k' => $number * 1024,
+            default => $number,
+        };
+    }
+
+    /** @return array<int, string> book id => its first-credited author's name */
+    private function firstAuthors(): array
+    {
+        $first = [];
+
+        $rows = DB::table('book_author')
+            ->join('authors', 'authors.id', '=', 'book_author.author_id')
+            ->orderBy('book_author.book_id')
+            ->orderBy('book_author.position')
+            ->select('book_author.book_id', 'authors.name')
+            ->cursor();
+
+        foreach ($rows as $row) {
+            $first[$row->book_id] ??= $row->name;
+        }
+
+        return $first;
     }
 
     /** @param  array<string, mixed>  $listing */
