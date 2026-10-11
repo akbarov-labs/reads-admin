@@ -62,6 +62,7 @@ class Edition extends Model
             'pages' => 'integer',
             'volume_count' => 'integer',
             'volume_part' => 'integer',
+            'synced_at' => 'datetime',
         ];
     }
 

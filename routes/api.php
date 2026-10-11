@@ -3,11 +3,13 @@
 use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\AuthorController;
 use App\Http\Controllers\Api\BookController;
+use App\Http\Controllers\Api\CatalogueSyncController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PublisherController;
 use App\Http\Controllers\Api\TaqrizchiController;
 use App\Http\Controllers\Api\TaqrizController;
 use App\Http\Controllers\Api\TranslatorController;
+use App\Http\Middleware\EnsureCatalogueSyncToken;
 use Illuminate\Support\Facades\Route;
 
 // Read endpoints are public, but not unlimited: in normal operation only the
@@ -33,3 +35,12 @@ Route::middleware('throttle:120,1')->group(function () {
 // honeypot check in StoreInquiryRequest/InquiryController.
 Route::post('/translators/{translator}/inquiries', [InquiryController::class, 'store'])
     ->middleware('throttle:5,1');
+
+// The Kitoblarim bot's catalogue sync. Unlike everything above it writes, so
+// it is behind a shared token and deliberately not part of the public read
+// group. Same ceiling as the reads: the bot's initial backfill pages through
+// the feed at 500 a request and pushes one edition at a time.
+Route::prefix('sync')->middleware(['throttle:120,1', EnsureCatalogueSyncToken::class])->group(function () {
+    Route::get('/editions', [CatalogueSyncController::class, 'index']);
+    Route::put('/editions/{isbn}', [CatalogueSyncController::class, 'upsert']);
+});

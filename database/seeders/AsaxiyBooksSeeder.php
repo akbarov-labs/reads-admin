@@ -10,6 +10,7 @@ use App\Models\Edition;
 use App\Models\Publisher;
 use App\Models\Series;
 use App\Models\Translator;
+use App\Services\CatalogueRecords;
 use App\Services\SiteRevalidator;
 use App\Support\Asaxiy\AsaxiyCatalog;
 use App\Support\Asaxiy\AsaxiyPage;
@@ -685,7 +686,7 @@ class AsaxiyBooksSeeder extends Seeder
 
     private function keyFor(?string $author, string $title): string
     {
-        return UzbekText::key((string) $author).'|'.UzbekText::key($title);
+        return CatalogueRecords::bookKey($author, $title);
     }
 
     /**

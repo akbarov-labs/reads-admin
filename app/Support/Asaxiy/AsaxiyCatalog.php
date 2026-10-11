@@ -23,8 +23,8 @@ class AsaxiyCatalog
     /** Shelves of Asaxiy's own gift boxes and promotional bundles. */
     private const BUNDLE_SHELVES = ["Kitobli sovg'a to'plamlari", "Bestseller to'plamlar"];
 
-    /** Asaxiy's name for "no publisher given". */
-    private const NO_PUBLISHER = ['boshqanashriyotlar', 'boshqa'];
+    /** Asaxiy's name for "no publisher given". Public: the bot sync treats it the same way. */
+    public const NO_PUBLISHER = ['boshqanashriyotlar', 'boshqa'];
 
     /** Particles allowed in lower case inside a person's name. */
     private const NAME_PARTICLES = ["o'g'li", "o'gli", 'qizi', 'ibn', 'al', 'ad', 'as', 'at', 'an', 'az', 'ar', 'de', 'da', 'di', 'van', 'von', 'fon', 'der', 'la', 'le', 'bin', 'binti', 'va', 'и', 'de la'];
