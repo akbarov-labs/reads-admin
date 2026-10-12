@@ -45,6 +45,8 @@ class CatalogueSyncController extends Controller
             'pages' => ['nullable', 'integer', 'between:1,65535'],
             'description' => ['nullable', 'string', 'max:65000'],
             'updatedAt' => ['required', 'date'],
+            // The bot has never synced this book: only fill our blanks.
+            'fillOnly' => ['sometimes', 'boolean'],
         ]);
 
         return response()->json($this->sync->push($normalized, $data));

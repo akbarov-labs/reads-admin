@@ -105,7 +105,7 @@ class CatalogueSync
      * single spaces, and Latin script for Uzbek-language text.
      *
      * @param  array<string, mixed>  $data
-     * @return array{isbn: string, title: ?string, authors: list<string>, translators: list<string>, publisher: ?string, language: ?string, year: ?int, pages: ?int, description: ?string, updatedAt: CarbonImmutable}
+     * @return array{isbn: string, title: ?string, authors: list<string>, translators: list<string>, publisher: ?string, language: ?string, year: ?int, pages: ?int, description: ?string, updatedAt: CarbonImmutable, fillOnly: bool}
      */
     private function normalise(string $isbn, array $data): array
     {
@@ -152,6 +152,7 @@ class CatalogueSync
             'description' => $text($data['description'] ?? null),
             // Whole seconds, like the column it is compared with.
             'updatedAt' => CarbonImmutable::parse($data['updatedAt'])->setMicrosecond(0),
+            'fillOnly' => (bool) ($data['fillOnly'] ?? false),
         ];
     }
 
@@ -264,7 +265,9 @@ class CatalogueSync
     /**
      * An existing ISBN. Whichever side changed it last wins, but only with
      * values it actually has: a blank never erases anything. When the bot's
-     * copy is older it can still fill what we have left empty.
+     * copy is older it can still fill what we have left empty. The first
+     * time the bot sends a book (fillOnly), it counts as older whatever its
+     * timestamp: neither side's values were edits made against the other's.
      *
      * Cover, gallery, taqrizlar, series, shelves and the book itself (its
      * title and authors) are never touched from here.
@@ -278,7 +281,8 @@ class CatalogueSync
             return 'unchanged';
         }
 
-        $newer = $edition->updated_at === null || $incoming['updatedAt']->greaterThan($edition->updated_at);
+        $newer = ! $incoming['fillOnly']
+            && ($edition->updated_at === null || $incoming['updatedAt']->greaterThan($edition->updated_at));
         $changed = false;
 
         // Approved in the bot, so approved here.

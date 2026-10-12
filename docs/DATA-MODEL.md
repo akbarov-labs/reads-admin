@@ -143,6 +143,10 @@ series and shelves stay here.
 ```
 
 `title` and `updatedAt` are required; everything else may be null or empty.
+`"fillOnly": true` means the bot has never synced this book: its copy is
+then treated as **not newer** whatever its `updatedAt`, so it only fills
+blanks here. Timestamps from before the sync say when a row was imported,
+not which side is right; after the first sync, the newer edit wins.
 The answer is `{"outcome", "bookId", "editionId", "updatedAt"}`, where
 `updatedAt` is the edition's `updated_at` and `outcome` is one of:
 
@@ -155,7 +159,7 @@ The answer is `{"outcome", "bookId", "editionId", "updatedAt"}`, where
   year, pages, description, publisher and the edition's own title (only if it
   differs from the book's, otherwise the edition's title is cleared), and
   the translator list is replaced. A blank never erases anything.
-- `enriched`: the bot's copy is **not newer**, but this side had blanks (or
+- `enriched`: the bot's copy is **not newer** (or `fillOnly`), but this side had blanks (or
   was pending) that it could fill. Only empty columns are filled; titles
   never change.
 - `unchanged`: nothing to do.

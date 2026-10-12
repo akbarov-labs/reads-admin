@@ -355,6 +355,35 @@ class CatalogueSyncApiTest extends TestCase
         $this->assertNull(Edition::firstOrFail()->title);
     }
 
+    public function test_a_first_meeting_push_only_fills_blanks_however_new_it_is(): void
+    {
+        // The bot has never synced this book, so its timestamp says nothing
+        // about which side is right: nothing here may be overwritten.
+        $this->push(self::ISBN, ['publisher' => null, 'year' => null, 'pages' => 250, 'description' => null, 'translators' => []])
+            ->assertJsonPath('outcome', 'created');
+
+        $edition = Edition::firstOrFail();
+        $edition->update(['language' => 'Rus tili']);
+        $this->setUpdatedAt($edition, '2026-06-01 00:00:00');
+
+        $this->push(self::ISBN, [
+            'title' => 'Boshqa nom',
+            'language' => 'en',
+            'publisher' => 'Sharq',
+            'year' => 2025,
+            'pages' => 400,
+            'updatedAt' => '2026-10-11T00:00:00Z',
+            'fillOnly' => true,
+        ])->assertOk()->assertJsonPath('outcome', 'enriched');
+
+        $edition = Edition::with('publisher')->firstOrFail();
+        $this->assertSame('Sharq', $edition->publisher->name);
+        $this->assertSame(2025, $edition->year);
+        $this->assertSame(250, $edition->pages);
+        $this->assertSame('Rus tili', $edition->language);
+        $this->assertNull($edition->title);
+    }
+
     public function test_an_older_push_only_fills_blanks(): void
     {
         $this->push(self::ISBN, ['publisher' => null, 'year' => null, 'pages' => null, 'description' => null, 'translators' => []])
