@@ -41,7 +41,15 @@ return [
             'busy_timeout' => null,
             'journal_mode' => null,
             'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
+            // Production runs on this file, and SQLite takes one writer at a
+            // time. A DEFERRED transaction that reads before it writes (the
+            // catalogue sync looks an edition up, then saves it) asks for the
+            // write lock only at its first write, and if another transaction
+            // is doing the same, SQLite refuses one of them at once ("database
+            // is locked") rather than wait, since waiting could deadlock.
+            // IMMEDIATE takes the write lock when the transaction starts, so
+            // they queue on the driver's busy timeout instead.
+            'transaction_mode' => 'IMMEDIATE',
         ],
 
         'mysql' => [
