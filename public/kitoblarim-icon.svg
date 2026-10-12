@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Kitoblarim app icon: Deep Forest Green plate, Bone Paper K. -->
+  <rect width="100" height="100" rx="22.5" fill="#1F4D2E"/>
+  <g transform="translate(50 50) scale(.68) translate(-50 -50)">
+    <path d="M18.25 14H33.75A1.25 1.25 0 0 1 33.75 16.5H18.25A3.25 3.25 0 0 0 18.25 23H34Q35 23 35 24V85Q35 86 34 86H17.5A5 5 0 0 1 12.5 81V19.75A5.75 5.75 0 0 1 18.25 14Z" fill="#F6F7F4"/>
+    <path d="M37.5 41.5L63.9 15.1Q65 14 66.6 14H87.5L37.5 64Z" fill="#F6F7F4"/>
+    <path d="M41.5 64L53.5 52L87.5 86H65.5L52 72.5V86L46.75 81.5L41.5 86Z" fill="#4A7D57"/>
+  </g>
+</svg>
