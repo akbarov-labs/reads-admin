@@ -73,6 +73,18 @@ class CatalogueSyncApiTest extends TestCase
             ->assertExactJson(['items' => [], 'next' => null]);
     }
 
+    public function test_requests_without_the_token_do_not_use_up_the_bots_rate_limit(): void
+    {
+        // The bot's bucket is one for the whole sync (AppServiceProvider), so
+        // if strangers counted against it they could lock the bot out.
+        for ($i = 0; $i < 600; $i++) {
+            $status = $this->withToken('wrong')->getJson('/api/sync/editions')->status();
+            $this->assertContains($status, [401, 429]);
+        }
+
+        $this->withToken(self::TOKEN)->getJson('/api/sync/editions')->assertOk();
+    }
+
     public function test_the_sync_routes_are_not_part_of_the_public_read_api(): void
     {
         // The read group has no such path, and cannot be written to.
