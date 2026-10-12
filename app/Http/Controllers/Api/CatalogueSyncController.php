@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\CatalogueSync;
+use App\Services\ReaderFeedbackSync;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,6 +51,35 @@ class CatalogueSyncController extends Controller
         ]);
 
         return response()->json($this->sync->push($normalized, $data));
+    }
+
+    /** Every rating total the bot's readers gave, per ISBN; anonymous. */
+    public function ratings(Request $request, ReaderFeedbackSync $feedback): JsonResponse
+    {
+        $data = $request->validate([
+            'items' => ['present', 'array'],
+            'items.*.isbn' => ['required', 'string', 'max:32'],
+            'items.*.count' => ['required', 'integer', 'min:1'],
+            'items.*.total' => ['required', 'integer', 'min:1'],
+        ]);
+
+        return response()->json($feedback->ratings($data['items']));
+    }
+
+    /** Every review the bot's readers chose to publish. */
+    public function reviews(Request $request, ReaderFeedbackSync $feedback): JsonResponse
+    {
+        $data = $request->validate([
+            'items' => ['present', 'array'],
+            'items.*.id' => ['required', 'string', 'max:64'],
+            'items.*.isbn' => ['required', 'string', 'max:32'],
+            'items.*.rating' => ['nullable', 'integer', 'between:1,5'],
+            'items.*.text' => ['required', 'string', 'max:5000'],
+            'items.*.authorName' => ['nullable', 'string', 'max:60'],
+            'items.*.writtenAt' => ['required', 'date'],
+        ]);
+
+        return response()->json($feedback->reviews($data['items']));
     }
 
     /** The bot pulls what changed here, and does its first backfill the same way. */

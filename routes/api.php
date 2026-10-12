@@ -44,4 +44,6 @@ Route::post('/translators/{translator}/inquiries', [InquiryController::class, 's
 Route::prefix('sync')->middleware(['throttle:catalogue-sync', EnsureCatalogueSyncToken::class])->group(function () {
     Route::get('/editions', [CatalogueSyncController::class, 'index']);
     Route::put('/editions/{isbn}', [CatalogueSyncController::class, 'upsert']);
+    Route::put('/ratings', [CatalogueSyncController::class, 'ratings']);
+    Route::put('/reviews', [CatalogueSyncController::class, 'reviews']);
 });

@@ -110,6 +110,12 @@ class Book extends Model
      *
      * @return HasManyThrough<Taqriz, Edition, $this>
      */
+    /** Reviews from Kitoblarim bot readers (App\Models\ReaderReview). */
+    public function readerReviews(): HasMany
+    {
+        return $this->hasMany(ReaderReview::class)->latest('written_at');
+    }
+
     public function taqrizlar(): HasManyThrough
     {
         return $this->hasManyThrough(Taqriz::class, Edition::class)->latest('taqrizlar.created_at');

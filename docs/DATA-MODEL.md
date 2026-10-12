@@ -212,3 +212,27 @@ the edition reappears. If the stored edition *differs* from what was sent
 under another spelling), the hash is not stamped, so the bot picks up the
 stored version on its next pull. The bot should not push what it has just
 pulled.
+
+### Ratings and reviews from the bot
+
+The bot's readers rate a book they finished and may write a review. Both
+come here so the book's page can show them; the bot sends each list **whole**
+whenever it changes, so anything missing from a list is gone in the bot too
+(a review made private, a book taken off a shelf).
+
+`PUT /api/sync/ratings` with `{"items": [{"isbn", "count", "total"}]}`:
+the number of ratings and the sum of their stars per ISBN, with nothing
+about who rated. They are stored on the edition (`reader_rating_count`,
+`reader_rating_total`) without touching `updated_at`, since a rating is not
+an edit and the pull feed orders by it. An edition missing from the list
+goes back to none. The book's page shows `readerRating` as
+`{"average", "count"}` over its approved editions, or null.
+
+`PUT /api/sync/reviews` with `{"items": [{"id", "isbn", "rating", "text",
+"authorName", "writtenAt"}]}`: only reviews their writer chose to show
+here, signed with their first name (or null). Each becomes a
+`reader_reviews` row keyed by the bot's `id`. A new one is **pending**, and
+an admin publishes or rejects it under *Reader reviews* in the panel. A
+changed text, rating or book sends it back to pending; a new date or name
+does not. A review whose ISBN has no approved edition here is skipped. The
+book's page shows the newest 20 approved ones as `readerReviews`.
