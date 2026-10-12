@@ -114,3 +114,125 @@ Known limits: editions in different languages ("Большая игра" and
 "Katta o'yin") are not recognised as one work, and there is no merge tool
 yet. Different spellings of one foreign author ("Fyodor Dostoyevskiy",
 "F.M.Dostoyevskiy") stay separate authors until an admin merges them.
+
+
+## Syncing with the Kitoblarim bot
+
+The Kitoblarim Telegram bot keeps its own moderator-approved catalogue. Two
+endpoints keep it level with this one, both under `/api/sync`, both needing
+`Authorization: Bearer <token>`, where the token is `CATALOGUE_SYNC_TOKEN`
+(`config/catalogue.php`). With no token configured they answer
+`503 {"message":"Catalogue sync is not configured"}`; a missing or wrong
+token is `401`. They are throttled at 120 requests a minute and are not part
+of the public read API. The code is `App\Services\CatalogueSync`, which
+finds or creates authors, publishers, translators and books through
+`App\Services\CatalogueRecords`, the same keys the Asaxiy seeder uses.
+
+**What both sides share** (the *projection*): `isbn`, `title` (the edition's
+own, else the book's), `authors` (the book's, in order), `translators` (the
+edition's translator credits, in order), `publisher`, `language`, `year`,
+`pages`, `description`. Nothing else crosses: covers, galleries, taqrizlar,
+series and shelves stay here.
+
+### Push: `PUT /api/sync/editions/{isbn}`
+
+```json
+{ "title": "…", "authors": ["…"], "translators": ["…"], "publisher": "…" ,
+  "language": "uz", "year": 2019, "pages": 300, "description": "…",
+  "updatedAt": "2026-03-01T10:00:00Z" }
+```
+
+`title` and `updatedAt` are required; everything else may be null or empty.
+`"fillOnly": true` means the bot has never synced this book: its copy is
+then treated as **not newer** whatever its `updatedAt`, so it only fills
+blanks here. Timestamps from before the sync say when a row was imported,
+not which side is right; after the first sync, the newer edit wins.
+The answer is `{"outcome", "bookId", "editionId", "updatedAt"}`, where
+`updatedAt` is the edition's `updated_at` and `outcome` is one of:
+
+- `created`: no edition had this ISBN. The book is found by *first author +
+  title* (alphabet-insensitive, as for Asaxiy) or created approved; authors
+  are attached in order; publisher and translators are found or created
+  (translators as account-less shells); the edition is created approved.
+- `updated`: the edition existed and the bot's `updatedAt` is **newer** than
+  the edition's `updated_at`. The bot's non-blank values overwrite language,
+  year, pages, description, publisher and the edition's own title (only if it
+  differs from the book's, otherwise the edition's title is cleared), and
+  the translator list is replaced. A blank never erases anything.
+- `enriched`: the bot's copy is **not newer** (or `fillOnly`), but this side had blanks (or
+  was pending) that it could fill. Only empty columns are filled; titles
+  never change.
+- `unchanged`: nothing to do.
+
+Other rules:
+
+- **ISBN** is stripped to digits and `X`. It must be 13 digits, else `422`;
+  ISBN-10 is refused for now (the column holds 13 characters and the
+  catalogue has never held one).
+- **language**: `uz`, `ru`, `en` (also `tr fr de ar es zh ja kaa`) become the
+  labels already stored ("O'zbek tili", "Rus tili", "Ingliz tili" …). Any
+  other text is stored as given.
+- **Text** goes through `UzbekText::clean`, so apostrophes are normalised and
+  whitespace is collapsed (descriptions lose their line breaks, as Asaxiy's
+  do). When the language is Uzbek, Cyrillic is transliterated to Latin.
+- An existing book is never renamed and its authors never change.
+- A pending edition becomes approved by a push (a moderator approved it in
+  the bot). A **rejected** edition is left alone and answers `unchanged`.
+- The writes run without model events and the public site is pinged once,
+  for the book, when something changed.
+
+### Pull: `GET /api/sync/editions?since=&after=&limit=`
+
+Approved editions with an ISBN, on approved books, in `(updated_at, id)`
+order. `since` (ISO-8601) and `after` (an edition id) are the keyset: rows
+with `updated_at > since`, or `updated_at = since` and `id > after`. `limit`
+is 1 to 500 (default 200). Leave both off to start from the beginning (the
+bot's first backfill is the same call). Each item is the projection plus
+`genre` (the book's primary shelf), `coverUrl` (absolute, or null) and
+`updatedAt`. `next` is `{"since", "after"}` for the last row *scanned* when
+the page was full, otherwise `null`; keep calling until it is `null`. A page
+whose rows were all filtered out (below) has no items but still has a `next`.
+Send `since` URL-encoded; timestamps we return end in `Z`, so there is no `+`
+to lose.
+
+Only changes to the edition row move it in this order, so a rename of an
+author or publisher, or a change to the credit list alone, does not by
+itself bring an edition back into the feed.
+
+### The loop guard
+
+`editions` has three nullable columns for this: `sync_origin` (`bot`),
+`sync_hash` (40 characters) and `synced_at`. After a push, if the stored
+edition's projection equals what the bot sent, the SHA-1 of its canonical
+JSON is stored in `sync_hash`. The feed skips any edition whose current
+projection still hashes to its `sync_hash`, so the bot is not handed back
+what it just pushed; an admin edit to a synced field changes the hash and
+the edition reappears. If the stored edition *differs* from what was sent
+(this side was newer, kept values the bot left blank, or knows the author
+under another spelling), the hash is not stamped, so the bot picks up the
+stored version on its next pull. The bot should not push what it has just
+pulled.
+
+### Ratings and reviews from the bot
+
+The bot's readers rate a book they finished and may write a review. Both
+come here so the book's page can show them; the bot sends each list **whole**
+whenever it changes, so anything missing from a list is gone in the bot too
+(a review made private, a book taken off a shelf).
+
+`PUT /api/sync/ratings` with `{"items": [{"isbn", "count", "total"}]}`:
+the number of ratings and the sum of their stars per ISBN, with nothing
+about who rated. They are stored on the edition (`reader_rating_count`,
+`reader_rating_total`) without touching `updated_at`, since a rating is not
+an edit and the pull feed orders by it. An edition missing from the list
+goes back to none. The book's page shows `readerRating` as
+`{"average", "count"}` over its approved editions, or null.
+
+`PUT /api/sync/reviews` with `{"items": [{"id", "isbn", "rating", "text",
+"authorName", "writtenAt"}]}`: only reviews their writer chose to show
+here, signed with their first name (or null). Each becomes a
+`reader_reviews` row keyed by the bot's `id`. A new one is **pending**, and
+an admin publishes or rejects it under *Reader reviews* in the panel. A
+changed text, rating or book sends it back to pending; a new date or name
+does not. A review whose ISBN has no approved edition here is skipped. The
+book's page shows the newest 20 approved ones as `readerReviews`.

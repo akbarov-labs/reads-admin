@@ -62,6 +62,9 @@ class Edition extends Model
             'pages' => 'integer',
             'volume_count' => 'integer',
             'volume_part' => 'integer',
+            'synced_at' => 'datetime',
+            'reader_rating_count' => 'integer',
+            'reader_rating_total' => 'integer',
         ];
     }
 

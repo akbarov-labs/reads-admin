@@ -202,6 +202,25 @@ docker compose -f docker-compose.prod.yml exec app \
 tail -n 20 storage/logs/laravel.log     # silence here means it worked
 ```
 
+## Catalogue sync with the Kitoblarim bot
+
+The Telegram bot pushes the books its moderators approve to
+`PUT /api/sync/editions/{isbn}` and pulls ours from `GET /api/sync/editions`.
+One variable in the server `.env` guards both:
+
+```
+CATALOGUE_SYNC_TOKEN=<openssl rand -hex 32>
+```
+
+The bot sends it as `Authorization: Bearer <token>`, so put the same value in
+the bot's own config. Leave it blank and the endpoints answer `503 Catalogue
+sync is not configured` rather than letting anyone in. It is a write
+credential for the catalogue: treat it like `SEO_REVALIDATE_SECRET`, and
+rotate it by changing both sides and recreating the container (see "Changing
+`.env` on the server"). The migration that adds the sync columns to
+`editions` runs with the normal deploy. What the endpoints do is in
+`docs/DATA-MODEL.md`.
+
 ## Rollback
 
 Every image is also tagged with its commit SHA. To roll back:

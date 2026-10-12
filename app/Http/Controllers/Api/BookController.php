@@ -59,6 +59,9 @@ class BookController extends Controller
             // pending review is never loaded and so can never be rendered
             // by mistake.
             'taqrizlar' => fn ($query) => $query->approved()->with(['taqrizchi', 'edition.publisher', 'edition.translators']),
+            // Approved at the query too, and the newest few: a book page is
+            // not the place to read them all.
+            'readerReviews' => fn ($query) => $query->approved()->limit(20),
         ]);
 
         return new BookDetailResource($book, $this->relatedTo($book));

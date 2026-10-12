@@ -36,8 +36,24 @@ class BookDetailResource extends BookResource
             // brief ones simply for having filled in more fields.
             'averageScore' => $this->when($this->relationLoaded('taqrizlar'), fn () => $this->averageOfTaqrizlar()),
 
+            // Kitoblarim bot readers: their stars over every approved
+            // edition, anonymous, and the reviews a moderator approved.
+            'readerRating' => $this->readerRating(),
+            'readerReviews' => ReaderReviewResource::collection($this->whenLoaded('readerReviews')),
+
             'relatedBooks' => BookResource::collection(collect($this->related)),
         ]);
+    }
+
+    /** @return array{average: float, count: int}|null */
+    private function readerRating(): ?array
+    {
+        $count = (int) $this->approvedEditions->sum('reader_rating_count');
+
+        return $count === 0 ? null : [
+            'average' => round($this->approvedEditions->sum('reader_rating_total') / $count, 1),
+            'count' => $count,
+        ];
     }
 
     private function averageOfTaqrizlar(): ?float
