@@ -240,6 +240,104 @@ docker images ghcr.io/akbarov-labs/reads-admin   # see what's local
 IMAGE_TAG=<one-of-those-tags> docker compose -f docker-compose.prod.yml up -d
 ```
 
+## Backups and restore
+
+The whole catalogue (editions, moderation work, readers' reviews) lives in
+one SQLite file, `storage/app/database.sqlite` in the `app_storage` volume.
+The `backup` service in `docker-compose.prod.yml` copies it every night at
+**03:30 UTC**, and once more each time the container starts, so every deploy
+also proves the backup works.
+
+- Each copy is made with SQLite's `VACUUM INTO`, which reads the live
+  database inside one read transaction. The copy is consistent even while
+  the panel or the bot sync is writing. A plain `cp` of a live database is
+  not, so never back it up that way.
+- Before a copy is kept it must pass `PRAGMA integrity_check`. It is then
+  gzipped to `reads-admin-<UTC time>.sqlite.gz` in the `db_backups` volume.
+- Copies older than `BACKUP_RETENTION_DAYS` (default 14, set in the server
+  `.env`) are deleted. Copies made on deploy are kept too, so on busy days
+  there are more than one.
+- `app_storage` is mounted read-only in the backup container, so the backup
+  can never damage the live database.
+
+These copies sit on the same server as the database. They protect against a
+bad migration, a wrong bulk edit or a corrupted file. They don't protect
+against losing the server, so now and then pull a copy off the box (below).
+
+**Check that it runs**
+
+```bash
+cd /opt/apps/reads-admin
+docker compose -f docker-compose.prod.yml logs --tail 20 backup
+```
+
+Every run logs one line: `[backup] ... ok: /backups/reads-admin-...sqlite.gz
+(size, tables, editions)`, or `[backup] ... FAILED: <reason>`. To list the
+copies or take one now:
+
+```bash
+docker exec reads-admin-backup ls -la /backups
+docker exec reads-admin-backup /usr/local/bin/backup.sh
+```
+
+**Copy a backup off the server**
+
+```bash
+docker cp reads-admin-backup:/backups/<file>.sqlite.gz .
+# then, from your own machine:
+scp <user>@<server>:/opt/apps/reads-admin/<file>.sqlite.gz .
+```
+
+**Restore**
+
+1. Pick a copy and check it opens. The last two lines should be `ok` and
+   the edition count:
+
+   ```bash
+   cd /opt/apps/reads-admin
+   docker exec reads-admin-backup ls -t /backups
+   F=reads-admin-<UTC time>.sqlite.gz
+   docker exec reads-admin-backup sh -c "gunzip -c /backups/$F > /tmp/check.sqlite && sqlite3 /tmp/check.sqlite 'PRAGMA integrity_check; SELECT count(*) FROM editions;'"
+   ```
+
+2. Stop the app, so nothing writes while the file is replaced:
+
+   ```bash
+   docker compose -f docker-compose.prod.yml stop app
+   ```
+
+3. Swap the file. This deletes nothing. The current database, plus any
+   `-journal`/`-wal`/`-shm` file next to it, moves into a
+   `before-restore-<time>` folder, so the restore can be undone. A leftover
+   journal must not stay beside the restored file, because SQLite would try
+   to replay it onto the restored database.
+
+   ```bash
+   docker run --rm --volumes-from reads-admin-app --volumes-from reads-admin-backup alpine:3.20 sh -c "
+     set -e
+     cd /var/www/html/storage/app
+     aside=before-restore-\$(date -u +%Y%m%dT%H%M%SZ)
+     mkdir \$aside
+     for f in database.sqlite database.sqlite-journal database.sqlite-wal database.sqlite-shm; do
+       [ ! -e \$f ] || mv \$f \$aside/
+     done
+     gunzip -c /backups/$F > database.sqlite
+     ls -la . \$aside"
+   ```
+
+4. Start the app again. `entrypoint.sh` gives `storage/` back to `www-data`
+   and runs any migrations newer than the backup:
+
+   ```bash
+   docker compose -f docker-compose.prod.yml start app
+   docker compose -f docker-compose.prod.yml logs --tail 30 app
+   ```
+
+Then open the panel and check a few recent edits. Everything written after
+the backup's timestamp is gone: panel edits, reader reviews, and editions
+that the Kitoblarim bot synced in that window. Once you're sure the restore
+is right, delete the `before-restore-*` folder from `storage/app`.
+
 ## Troubleshooting
 
 **Every request 500s, log shows "Unsupported cipher or incorrect key
@@ -273,7 +371,9 @@ works on a restarting container and shows exactly which step died.
   to leave as-is; Laravel only applies new ones.
 - `storage/` is the one persistent volume — your SQLite database, uploaded
   avatars/covers, logs, and cached views survive every deploy even though
-  the image is replaced wholesale each time.
+  the image is replaced wholesale each time. The second volume,
+  `db_backups`, holds the nightly copies of the database (see "Backups and
+  restore").
 - `public/storage` (the symlink to `storage/app/public`, used for
   translator avatars/covers) is recreated on every boot by
   `entrypoint.sh` — it lives in the image, not the volume, so it wouldn't
