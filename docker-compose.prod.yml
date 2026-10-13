@@ -1,4 +1,4 @@
-# Production stack for the Contabo server. One container: PHP-FPM + nginx
+# Production stack for the Contabo server. One app container: PHP-FPM + nginx
 # together (see docker/prod/Dockerfile), using SQLite so there's no separate
 # database process.
 #
@@ -32,6 +32,75 @@ services:
       caddy: ${DOMAIN:?set DOMAIN in .env, e.g. dashboard.kitoblarim.uz}
       caddy.reverse_proxy: "{{upstreams 80}}"
 
+  # Nightly copy of the SQLite database at 03:30 UTC into the db_backups
+  # volume, plus one on every start so a broken backup surfaces at deploy
+  # time rather than the first time someone needs to restore. Restore steps:
+  # DEPLOY.md, "Backups and restore".
+  #   - The script is written inline: the deploy copies only this file to the
+  #     server, so a bind-mounted script would not be there.
+  #   - VACUUM INTO, never a file copy: it reads the live database inside one
+  #     read transaction, so the copy is consistent even mid-write.
+  #   - app_storage is mounted read-only, so nothing here can harm the live
+  #     database.
+  #   - `$$` reaches the shell as `$`; compose would expand a single one.
+  #     Busybox cron jobs don't inherit the container env, so the retention
+  #     setting is written into the crontab line at start.
+  backup:
+    image: alpine:3.20
+    container_name: reads-admin-backup
+    restart: unless-stopped
+    environment:
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - app_storage:/data:ro
+      - db_backups:/backups
+    mem_limit: 128m
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -e
+        apk add --no-cache sqlite >/dev/null
+        cat > /usr/local/bin/backup.sh <<'SCRIPT'
+        #!/bin/sh
+        set -eu
+        src=/data/app/database.sqlite
+        dir=/backups
+        keep=$${BACKUP_RETENTION_DAYS:-14}
+        stamp=$$(date -u +%Y-%m-%dT%H-%M-%SZ)
+        target="$$dir/reads-admin-$$stamp.sqlite.gz"
+        tmp="$$dir/reads-admin-$$stamp.sqlite.tmp"
+        cleanup() { rm -f "$$tmp" "$$target.partial"; }
+        trap cleanup EXIT
+        fail() { echo "[backup] $$(date -u +%FT%TZ) FAILED: $$*" >&2; exit 1; }
+
+        [ -s "$$src" ] || fail "$$src is missing or empty"
+        # .timeout waits for a writer to finish instead of failing at once.
+        sqlite3 -readonly -cmd ".timeout 60000" "$$src" "VACUUM INTO '$$tmp'" \
+          || fail "VACUUM INTO did not complete"
+        check=$$(sqlite3 "$$tmp" "PRAGMA integrity_check;") || fail "copy cannot be opened"
+        [ "$$check" = ok ] || fail "copy failed integrity_check: $$check"
+        tables=$$(sqlite3 "$$tmp" "SELECT count(*) FROM sqlite_master WHERE type='table';")
+        editions=$$(sqlite3 "$$tmp" "SELECT count(*) FROM editions;" 2>/dev/null || echo '?')
+
+        gzip -9 -c "$$tmp" > "$$target.partial"
+        gzip -t "$$target.partial" || fail "compressed copy is corrupt"
+        mv "$$target.partial" "$$target"
+        rm -f "$$tmp"
+        trap - EXIT
+        echo "[backup] $$(date -u +%FT%TZ) ok: $$target ($$(du -h "$$target" | cut -f1), $$tables tables, $$editions editions)"
+
+        # Retention. Leftovers from a killed run go too.
+        find "$$dir" -name 'reads-admin-*.sqlite.gz' -mtime "+$$keep" -exec rm -f {} +
+        find "$$dir" \( -name '*.partial' -o -name '*.sqlite.tmp' \) -mmin +60 -exec rm -f {} +
+        echo "[backup] retained: $$(find "$$dir" -name 'reads-admin-*.sqlite.gz' | wc -l) backup(s)"
+        SCRIPT
+        chmod +x /usr/local/bin/backup.sh
+        # /proc/1/fd/1 is this container's stdout, so each run lands in
+        # `docker compose logs backup`.
+        echo "30 3 * * * BACKUP_RETENTION_DAYS=$$BACKUP_RETENTION_DAYS /usr/local/bin/backup.sh >/proc/1/fd/1 2>&1" > /etc/crontabs/root
+        /usr/local/bin/backup.sh || echo '[backup] startup backup failed - check the log above'
+        exec crond -f -l 8
+
 networks:
   edge:
     external: true
@@ -40,3 +109,4 @@ networks:
 
 volumes:
   app_storage:
+  db_backups:

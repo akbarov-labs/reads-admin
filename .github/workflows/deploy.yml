@@ -125,7 +125,8 @@ jobs:
           # "docker image prune -f" removes. Tagged images go too here;
           # anything backing a running container is protected by Docker, so
           # the live app is never at risk. Never add --volumes: app_storage
-          # holds the SQLite database and would be destroyed.
+          # holds the SQLite database and db_backups its nightly copies, and
+          # both would be destroyed.
           # Guarded: under set -e a transient prune failure would abort the
           # deploy before anything is even pulled.
           df -h /
