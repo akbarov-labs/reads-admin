@@ -28,11 +28,14 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->brandName('Reads Admin')
+            // The catalogue is part of Kitoblarim (the Telegram bot), under its
+            // name, mark and Deep Forest Green.
+            ->brandName('Kitoblarim katalogi')
+            ->favicon(asset('kitoblarim-icon.svg'))
             ->login()
             ->profile()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::hex('#1F4D2E'),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
