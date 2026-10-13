@@ -33,8 +33,15 @@ return new class extends Migration
 
     public function down(): void
     {
+        // The unique index has to go before the column. MySQL drops it along
+        // with the column, but SQLite (production) refuses to drop a column
+        // an index still names, so the plain dropConstrainedForeignId() left
+        // the rollback failing there. Foreign key first: MySQL won't drop an
+        // index a foreign key still relies on.
         Schema::table('publishers', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('user_id');
+            $table->dropForeign(['user_id']);
+            $table->dropUnique(['user_id']);
+            $table->dropColumn('user_id');
         });
     }
 };
