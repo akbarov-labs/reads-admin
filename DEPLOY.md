@@ -1,8 +1,38 @@
 # Deploying to Contabo
 
-Every push to `main` builds a Docker image on GitHub, pushes it to GitHub
-Container Registry, then SSHs into your Contabo server to pull it and
-restart — the same box already running kitoblarim and my-blog behind Caddy.
+Every push to `main` builds one Docker image on GitHub and pushes it to
+GitHub Container Registry. It then goes to **staging**
+(`https://reads-admin.staging.sarvarlogs.uz`, password protected)
+automatically, and to **production** (`https://dashboard.kitoblarim.uz`)
+only when you press **Actions → Promote to production → Run workflow**.
+(The repository is private, and GitHub's free plan has no "Required
+reviewers" for private repositories, so that button is the approval step.)
+Production always runs an image that already ran on staging — new
+migrations included, since the container runs them on start.
+
+## How a deploy reaches the server
+
+CI logs in as `deployer`, a user that can only run
+`/usr/local/sbin/deploy-app reads-admin <tag>` (or `reads-admin-staging`
+with the staging key) and has no shell. Everything that decides what runs —
+the compose file, `.env`, the image name — lives on the server, owned by
+root, so a leaked CI key can only redeploy an existing image of this app.
+
+| | Production | Staging |
+|---|---|---|
+| Folder | `/opt/apps/reads-admin` | `/opt/apps/reads-admin-staging` |
+| Containers | `reads-admin-app`, `reads-admin-backup` | `reads-admin-staging-app` (no backups) |
+| Storage volume | `reads-admin_app_storage` | `reads-admin-staging_app_storage` |
+| Public site it feeds | `reads-app` | `reads-staging-app` |
+| Bot catalogue sync | on | off |
+
+The folders and their `.env` are root's: prefix the `docker compose`
+commands on this page with `sudo`.
+
+The server-wide setup and the tools are in the `akbarov-labs/reads` repo:
+`docs/server-hardening.md`, and `docs/add-app.md` for moving a project
+(oʻzbekcha: `docs/add-app.uz.md`). Moving this app is described below in
+"Moving to deployer and staging".
 
 **Footprint:** one container (nginx + PHP-FPM together, ~150–250MB RAM),
 SQLite instead of a separate MySQL server, joins the Caddy network you
@@ -71,55 +101,112 @@ This persists in `~/.docker/config.json` and survives reboots.
 
 **5. Create the `production` environment and add its secrets**
 
-The `deploy` job in `deploy.yml` targets a GitHub **environment** named
-`production` (this also gives you a deployment record + a clickable link to
-`https://dashboard.kitoblarim.uz` in the Actions run, and lets you require a
-manual approval before every deploy if you want one).
-
-Repo → Settings → Environments → New environment → name it exactly
-`production` (case-sensitive, must match `deploy.yml`) → then add these as
-**environment secrets** (not repo-level secrets):
-
-| Secret | Value |
-|---|---|
-| `CONTABO_HOST` | Server IP or hostname |
-| `CONTABO_USER` | SSH username |
-| `CONTABO_PORT` | SSH port (usually `22`) |
-| `CONTABO_SSH_KEY` | Private key (PEM) for a key whose public half is in that user's `~/.ssh/authorized_keys` |
-| `CONTABO_DEPLOY_PATH` | `/opt/apps/reads-admin` (or wherever you created it in step 2) |
-
-`GITHUB_TOKEN` (used to push to GHCR in `build-and-push`, and to pull on the
-server in `deploy`) needs nothing from you — GitHub generates and injects it
-automatically on every run. The token from step 4 is only for your own manual
-`docker` commands on the server; it is not a repository secret.
-
-Don't reuse a personal key you need elsewhere — generate a dedicated
-deploy keypair (`ssh-keygen -t ed25519 -f ~/.ssh/deploy_key_reads_admin -N ""`),
-add the `.pub` half to the server's `authorized_keys`, and put the contents
-of the private half into `CONTABO_SSH_KEY`.
-
-Optional but recommended since this server also runs kitoblarim and
-my-blog: on the `production` environment's settings page, turn on "Required
-reviewers" and add yourself. That makes every deploy pause for a manual
-click in the Actions tab after the image builds, before it ever touches the
-server.
+GitHub's side — the `staging` and `production` environments, each with its
+own `CONTABO_SSH_KEY`, plus the four `CONTABO_*` repository variables — is
+step 4 of `docs/add-app.md` in the Reads repo. `GITHUB_TOKEN` (used to push
+to GHCR and to pull on the server) needs nothing from you. The token from
+step 4 above is only for your own manual `docker` commands on the server.
 
 **6. First deploy**
 
-Push to `main` (or run the workflow manually from the Actions tab). Watch
-it in the Actions tab. Once it's green:
+Push to `main`; staging deploys. Then **Actions → Promote to production →
+Run workflow**. Once it's green:
 
 ```bash
 docker ps            # reads-admin-app should be Up
-docker compose -f docker-compose.prod.yml logs -f app
+sudo docker compose -f docker-compose.prod.yml logs -f app
 ```
 
 Visit `https://dashboard.kitoblarim.uz`.
 
 ## Everyday use
 
-Just push to `main`. That's the whole pipeline — build, push to GHCR, pull
-on the server, restart, run any new migrations automatically.
+Push to `main` → staging updates (run migrations on its copy) → look at
+it (username `staging`) → **Actions → Promote to production → Run
+workflow** → production gets the image of the latest commit on `main`, the
+one staging runs.
+
+Wait until the "Build and deploy" run is green before promoting. Don't like
+what staging shows? Don't promote: push a fix, and promote once it's on
+staging.
+
+A change to `docker-compose.prod.yml` or `docker-compose.staging.yml` is
+not shipped by CI. Copy it to the server by hand:
+
+```bash
+scp docker-compose.prod.yml sarvar@169.58.243.86:/tmp/
+ssh -t sarvar@169.58.243.86 'sudo install -m 644 -o root -g root /tmp/docker-compose.prod.yml /opt/apps/reads-admin/'
+```
+
+## Moving to deployer and staging (once)
+
+Follow `docs/add-app.md` in the Reads repo. This app is private, so its
+GitHub side needs the four `CONTABO_*` variables on this repository (step 4
+there). First add the DNS record `reads-admin.staging` → `169.58.243.86` at
+ahost.uz, so staging gets its certificate on its first deploy. On the Mac:
+
+```bash
+deploy/prepare-app reads-admin ~/dev/sites/Reads-admin
+```
+
+On the server:
+
+```bash
+sudo add-app reads-admin ghcr.io/akbarov-labs/reads-admin /home/sarvar/reads-admin
+```
+
+Then, before merging, three steps only this app needs.
+
+**1. Staging's settings.** `add-app` already pointed `DOMAIN` and `APP_URL`
+at `reads-admin.staging.sarvarlogs.uz`. The rest connect it to other apps,
+and every one must point at staging, never production:
+
+```bash
+sudo nano /opt/apps/reads-admin-staging/.env
+```
+
+```
+APP_ENV=staging
+MAIL_MAILER=log
+SEO_SITE_URL=https://reads.staging.sarvarlogs.uz
+SEO_REVALIDATE_URL=http://reads-staging-app:3000/api/revalidate
+SEO_REVALIDATE_SECRET=<new: openssl rand -hex 32>
+CATALOGUE_SYNC_TOKEN=
+```
+
+`CATALOGUE_SYNC_TOKEN` empty switches the bot sync off on staging (503): the
+real bot keeps syncing into production only.
+
+**2. Staging's database: a copy of production's.** Once, before staging's
+first deploy:
+
+```bash
+sudo docker volume create \
+  --label com.docker.compose.project=reads-admin-staging \
+  --label com.docker.compose.volume=app_storage \
+  reads-admin-staging_app_storage
+sudo docker run --rm \
+  -v reads-admin_app_storage:/from:ro \
+  -v reads-admin-staging_app_storage:/to \
+  alpine cp -a /from/. /to/
+```
+
+Copy it again whenever you want fresh data on staging (stop
+`reads-admin-staging-app` first). Production's volumes keep their names
+after the move: compose names them after the folder, still `reads-admin`.
+
+**3. Staging Reads uses staging admin.** Until now staging Reads read
+production's catalogue with its inquiry form off. In
+`sudo nano /opt/apps/reads-staging/.env`:
+
+```
+API_URL=http://reads-admin-staging-app:80/api
+REVALIDATE_SECRET=<the same value as SEO_REVALIDATE_SECRET above>
+```
+
+and delete the `INQUIRIES_DISABLED=true` line: test inquiries now land in
+staging admin's copy. Then re-run Reads' latest staging deploy in its
+Actions tab, after this app's staging is up.
 
 ## Creating an admin account
 
@@ -223,11 +310,13 @@ rotate it by changing both sides and recreating the container (see "Changing
 
 ## Rollback
 
-Every image is also tagged with its commit SHA. To roll back:
+Every image is also tagged with its commit SHA (first 7 characters). The
+easy way back: **Actions → Promote to production → Run workflow** with an
+older commit's SHA in the box. By hand on the server:
 
 ```bash
 cd /opt/apps/reads-admin
-IMAGE_TAG=<previous-commit-sha> docker compose -f docker-compose.prod.yml up -d
+sudo IMAGE_TAG=<previous-commit-sha> docker compose -f docker-compose.prod.yml up -d
 ```
 
 Note that `IMAGE_TAG` defaults to `latest`, which the server never pulls

@@ -5,9 +5,12 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
-concurrency:
-  group: deploy-production
-  cancel-in-progress: false
+# Build once, then promote: every push to main becomes one image, which goes
+# to staging automatically. Production gets it only when someone runs
+# promote.yml ("Promote to production") by hand — this repository is
+# private, and GitHub's free plan offers no Required reviewers for it.
+# Production therefore always runs an image that already ran on staging —
+# migrations included, since the container runs them on start.
 
 jobs:
   build-and-push:
@@ -52,94 +55,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  deploy:
+  deploy-staging:
     needs: build-and-push
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/deploy-to.yml
     permissions:
-      contents: read
-      # So GITHUB_TOKEN can authenticate `docker login` on the VPS below —
-      # jobs don't inherit permissions from other jobs in the same workflow.
       packages: read
-    environment:
-      name: production
-      url: https://dashboard.kitoblarim.uz
-    steps:
-      # The runner already has authenticated access to this private repo, so
-      # it is the right place to read the server's config files from — the
-      # server itself has no GitHub credentials and does not need any.
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # appleboy/ssh-action downloads a prebuilt drone-ssh binary from GitHub
-      # Releases on every run, which intermittently 503s and fails the job
-      # for reasons unrelated to this repo. Use plain ssh instead — no
-      # runtime binary download, nothing to flake on.
-      - name: Set up SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.CONTABO_SSH_KEY }}
-
-      - name: Trust VPS host key
-        env:
-          CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
-          CONTABO_PORT: ${{ secrets.CONTABO_PORT }}
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -p "${CONTABO_PORT:-22}" -H "$CONTABO_HOST" >> ~/.ssh/known_hosts
-
-      # Everything else ships inside the image: the server never builds
-      # PHP/Composer/npm. docker-compose.prod.yml is the only repo file the
-      # server needs — compose reads it from disk at start-up.
-      #
-      # Copied from the runner rather than pulled by the server: the server
-      # has no GitHub credential and does not need one just to read one file.
-      #
-      # .env is deliberately NOT copied: it lives only on the server and
-      # holds the secrets (APP_KEY, etc.) — see .env.production.example.
-      - name: Sync server config
-        env:
-          CONTABO_USER: ${{ secrets.CONTABO_USER }}
-          CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
-          CONTABO_PORT: ${{ secrets.CONTABO_PORT }}
-          CONTABO_DEPLOY_PATH: ${{ secrets.CONTABO_DEPLOY_PATH }}
-        run: |
-          ssh -p "${CONTABO_PORT:-22}" "$CONTABO_USER@$CONTABO_HOST" "mkdir -p '$CONTABO_DEPLOY_PATH'"
-          scp -P "${CONTABO_PORT:-22}" docker-compose.prod.yml "$CONTABO_USER@$CONTABO_HOST:$CONTABO_DEPLOY_PATH/docker-compose.prod.yml"
-
-      - name: Pull new image and restart on the VPS
-        env:
-          CONTABO_USER: ${{ secrets.CONTABO_USER }}
-          CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
-          CONTABO_PORT: ${{ secrets.CONTABO_PORT }}
-          CONTABO_DEPLOY_PATH: ${{ secrets.CONTABO_DEPLOY_PATH }}
-          GHCR_TOKEN: ${{ github.token }}
-          IMAGE_TAG: ${{ needs.build-and-push.outputs.tag }}
-          GH_ACTOR: ${{ github.actor }}
-        run: |
-          ssh -p "${CONTABO_PORT:-22}" "$CONTABO_USER@$CONTABO_HOST" bash -s <<EOF
-          set -e
-          cd "$CONTABO_DEPLOY_PATH"
-          # Reclaim disk FIRST, before anything that writes. Every deploy
-          # pushes a uniquely tagged image, so the previous one keeps its
-          # :sha tag forever and is never *dangling* — the only thing plain
-          # "docker image prune -f" removes. Tagged images go too here;
-          # anything backing a running container is protected by Docker, so
-          # the live app is never at risk. Never add --volumes: app_storage
-          # holds the SQLite database and db_backups its nightly copies, and
-          # both would be destroyed.
-          # Guarded: under set -e a transient prune failure would abort the
-          # deploy before anything is even pulled.
-          df -h /
-          docker image prune -af || true
-          docker builder prune -af || true
-          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
-          export IMAGE_TAG=$IMAGE_TAG
-          docker compose -f docker-compose.prod.yml pull app
-          docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
-          # The superseded image is unreferenced now that the new container
-          # is up, so this second pass is what actually reclaims it.
-          docker image prune -af || true
-          df -h /
-          echo "--- running image ---"
-          docker compose -f docker-compose.prod.yml images app
-          EOF
+    with:
+      environment: staging
+      image_tag: ${{ needs.build-and-push.outputs.tag }}
+    secrets: inherit

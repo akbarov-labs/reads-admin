@@ -1,0 +1,82 @@
+name: Deploy to an environment
+
+# One deploy, to whichever environment the caller names (deploy.yml calls it
+# for staging, then production). Kept separate so both run exactly the same
+# steps — the only difference is which environment's variables and key are
+# used, and that is GitHub's doing, not ours.
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "GitHub environment: staging or production"
+        required: true
+        type: string
+      image_tag:
+        description: "Image tag (short commit SHA) built by deploy.yml"
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      # So GITHUB_TOKEN can pull the image on the VPS.
+      packages: read
+    environment:
+      name: ${{ inputs.environment }}
+      # Set SITE_URL as a variable on each environment to get a link to the
+      # deployed site in the Actions run.
+      url: ${{ vars.SITE_URL }}
+    # One deploy per environment at a time; never cancel one halfway.
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      # CI logs in as `deployer`, whose key can run exactly one thing on the
+      # server: /usr/local/sbin/deploy-app <app> <tag> (forced command, see
+      # deploy/server/deploy-app and docs/add-app.md in akbarov-labs/reads). Each
+      # environment has its own key, pinned to its own app — the staging key
+      # can only ever deploy reads-admin-staging. Whatever we send as the
+      # "command" below arrives as the tag; the server checks it.
+      #
+      # No checkout and no third-party action here: nothing but this
+      # script ever touches the SSH key. The compose file is not copied
+      # either — it lives on the server, owned by root, because whoever
+      # controls it controls the machine.
+      #
+      # Server address, user and host key are Actions *variables* (not
+      # secrets — none of them is private). This repository is private, and
+      # GitHub's free plan shares org variables with public ones only, so
+      # they are set on this repository. An environment can override them, e.g. when
+      # staging moves to its own server. Only the key is a secret, and it is
+      # this repo's own, per environment.
+      - name: Deploy on the VPS
+        env:
+          CONTABO_USER: ${{ vars.CONTABO_USER }}
+          CONTABO_HOST: ${{ vars.CONTABO_HOST }}
+          CONTABO_PORT: ${{ vars.CONTABO_PORT }}
+          CONTABO_SSH_KEY: ${{ secrets.CONTABO_SSH_KEY }}
+          # The server's real host key, saved once — not ssh-keyscan on every
+          # run, which would trust whoever answers.
+          CONTABO_KNOWN_HOSTS: ${{ vars.CONTABO_KNOWN_HOSTS }}
+          GHCR_TOKEN: ${{ github.token }}
+          GH_ACTOR: ${{ github.actor }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          DEPLOY_ENV: ${{ inputs.environment }}
+        run: |
+          for v in CONTABO_USER CONTABO_HOST CONTABO_KNOWN_HOSTS CONTABO_SSH_KEY; do
+            if [ -z "${!v}" ]; then
+              echo "::error::$v is not set for the $DEPLOY_ENV environment (see docs/add-app.md in akbarov-labs/reads)"
+              exit 1
+            fi
+          done
+          install -d -m 700 ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          printf '%s\n' "$CONTABO_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$CONTABO_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # Registry login for the pull goes over stdin, never argv.
+          printf '%s\n%s\n' "$GH_ACTOR" "$GHCR_TOKEN" | ssh \
+            -i ~/.ssh/deploy_key -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -p "${CONTABO_PORT:-22}" "$CONTABO_USER@$CONTABO_HOST" "$IMAGE_TAG"

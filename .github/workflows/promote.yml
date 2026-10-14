@@ -1,0 +1,46 @@
+name: Promote to production
+
+# Production deploys only when someone runs this by hand: Actions →
+# "Promote to production" → Run workflow. This repository is private, and
+# on GitHub's free plan private repositories have no "Required reviewers",
+# so this button is the approval step. deploy.yml puts every build on
+# staging; this takes the image staging already runs to production.
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Commit SHA to promote (7 characters is enough). Leave empty for the latest commit on main — what staging runs once deploy.yml is green."
+        required: false
+        type: string
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - id: tag
+        env:
+          INPUT_TAG: ${{ inputs.image_tag }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          sha=${INPUT_TAG:-$HEAD_SHA}
+          if ! [[ $sha =~ ^[0-9a-f]{7,40}$ ]]; then
+            echo "::error::'$sha' is not a commit SHA"
+            exit 1
+          fi
+          # deploy.yml tags images with the first 7 characters.
+          tag=${sha::7}
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Promoting $tag to production" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-production:
+    needs: resolve
+    uses: ./.github/workflows/deploy-to.yml
+    permissions:
+      packages: read
+    with:
+      environment: production
+      image_tag: ${{ needs.resolve.outputs.tag }}
+    secrets: inherit
