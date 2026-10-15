@@ -1,0 +1,46 @@
+# Staging copy of docker-compose.prod.yml, for the same server. Lives at
+# /opt/apps/reads-admin-staging/docker-compose.staging.yml, root-owned, next
+# to staging's own .env (set up by `sudo add-app`; see DEPLOY.md).
+#
+# Same image as production — CI deploys each build here first, and
+# production gets that exact tag only when someone runs "Promote to
+# production". What differs:
+#
+# - its own container name, reads-admin-staging-app: staging Reads reaches
+#   it by that name over reads_net, exactly as production Reads reaches
+#   reads-admin-app;
+# - its own storage volume (reads-admin-staging_app_storage, named after
+#   this folder), so staging's SQLite database is a copy, never production's;
+# - no backup service: staging's data is a throwaway copy of production's;
+# - a login prompt in front of every page (Caddy basic auth). Staging
+#   Reads talks to it over reads_net, not through Caddy, so it never sees
+#   the prompt.
+#
+# add-app replaces STAGING_AUTH_HASH with the real password hash.
+
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/akbarov-labs/reads-admin}:${IMAGE_TAG:-latest}
+    container_name: reads-admin-staging-app
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - app_storage:/var/www/html/storage
+    mem_limit: 384m
+    networks:
+      - edge
+      - reads_net
+    labels:
+      caddy: ${DOMAIN:?set DOMAIN in .env, e.g. reads-admin.staging.sarvarlogs.uz}
+      # Username "staging"; the password is whatever add-app hashed.
+      caddy.basic_auth.staging: STAGING_AUTH_HASH
+      caddy.reverse_proxy: "{{upstreams 80}}"
+
+networks:
+  edge:
+    external: true
+  reads_net:
+    external: true
+
+volumes:
+  app_storage:
