@@ -350,8 +350,19 @@ also proves the backup works.
   can never damage the live database.
 
 These copies sit on the same server as the database. They protect against a
-bad migration, a wrong bulk edit or a corrupted file. They don't protect
-against losing the server, so now and then pull a copy off the box (below).
+bad migration, a wrong bulk edit or a corrupted file, not against losing the
+server. For that, the server's `offsite-backup` job copies them every night
+at 04:30 UTC, encrypted, to Backblaze B2, together with the uploaded
+portraits and avatars (`storage/app/public`):
+
+| Off-site path | What | Kept |
+|---|---|---|
+| `dumps/reads-admin/` | the nightly `.sqlite.gz` copies | 30 days |
+| `files/reads-admin/` | `storage/app/public`, mirrored | as long as the file exists |
+
+It is set up once for the whole server: `docs/offsite-backups.md` in the
+Reads repo (oʻzbekcha: `offsite-backups.uz.md`), including a restore drill
+of this app's database from the Mac.
 
 **Check that it runs**
 
@@ -369,18 +380,24 @@ docker exec reads-admin-backup ls -la /backups
 docker exec reads-admin-backup /usr/local/bin/backup.sh
 ```
 
-**Copy a backup off the server**
+**Check the off-site copies**
 
 ```bash
-docker cp reads-admin-backup:/backups/<file>.sqlite.gz .
-# then, from your own machine:
-scp <user>@<server>:/opt/apps/reads-admin/<file>.sqlite.gz .
+sudo offsite-backup list dumps/reads-admin
 ```
 
 **Restore**
 
 1. Pick a copy and check it opens. The last two lines should be `ok` and
-   the edition count:
+   the edition count. If the server was lost (or the copy is older than
+   14 days), first fetch it from off-site into the backups volume:
+
+   ```bash
+   sudo offsite-backup list dumps/reads-admin
+   sudo offsite-backup fetch dumps/reads-admin/reads-admin-<UTC time>.sqlite.gz "$(sudo docker volume inspect -f '{{.Mountpoint}}' reads-admin_db_backups)"
+   ```
+
+   Then:
 
    ```bash
    cd /opt/apps/reads-admin
@@ -421,6 +438,15 @@ scp <user>@<server>:/opt/apps/reads-admin/<file>.sqlite.gz .
    docker compose -f docker-compose.prod.yml start app
    docker compose -f docker-compose.prod.yml logs --tail 30 app
    ```
+
+On a new server, also bring back the uploaded portraits and avatars:
+
+```bash
+sudo offsite-backup fetch files/reads-admin "$(sudo docker volume inspect -f '{{.Mountpoint}}' reads-admin_app_storage)/app/public"
+sudo docker compose -f docker-compose.prod.yml restart app
+```
+
+(The restart lets `entrypoint.sh` give the fetched files to `www-data`.)
 
 Then open the panel and check a few recent edits. Everything written after
 the backup's timestamp is gone: panel edits, reader reviews, and editions
