@@ -239,8 +239,19 @@ the number of ratings and the sum of their stars per ISBN, with nothing
 about who rated. They are stored on the edition (`reader_rating_count`,
 `reader_rating_total`) without touching `updated_at`, since a rating is not
 an edit and the pull feed orders by it. An edition missing from the list
-goes back to none. The book's page shows `readerRating` as
-`{"average", "count"}` over its approved editions, or null.
+goes back to none. An item may also carry `stars`, five counts from one
+star to five (`reader_rating_stars`); a bot that sends none leaves it null.
+The book's page shows `readerRating` as `{"average", "count", "stars"}`
+over its approved editions (`stars` null until an edition has a split), or
+null.
+
+`PUT /api/sync/readers` with `{"items": [{"isbn", "want", "reading",
+"read"}]}`: how many of the bot's readers want to read each ISBN (its want
+and wishlist shelves), are reading it and have read it, counted once per
+reader. Stored on the edition (`reader_want_count`, `reader_reading_count`,
+`reader_read_count`) the same way as ratings, and gone when left out. The
+book's page shows `readers` as `{"want", "reading", "read"}` over its
+approved editions, or null when all are zero.
 
 `PUT /api/sync/reviews` with `{"items": [{"id", "isbn", "rating", "text",
 "authorName", "writtenAt"}]}`: only reviews their writer chose to show
