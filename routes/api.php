@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\PublisherController;
+use App\Http\Controllers\Api\QuoteController;
 use App\Http\Controllers\Api\SitemapController;
 use App\Http\Controllers\Api\TaqrizchiController;
 use App\Http\Controllers\Api\TaqrizController;
@@ -33,6 +34,7 @@ Route::middleware('throttle:120,1')->group(function () {
     Route::get('/taqrizlar/{taqriz}', [TaqrizController::class, 'show']);
     Route::get('/collections', [CollectionController::class, 'index']);
     Route::get('/collections/{collection}', [CollectionController::class, 'show']);
+    Route::get('/quotes/today', [QuoteController::class, 'today']);
     // Ids, slugs and dates for the site's sitemap, in one response.
     Route::get('/sitemap', [SitemapController::class, 'index']);
 });
@@ -51,5 +53,6 @@ Route::prefix('sync')->middleware(['throttle:catalogue-sync', EnsureCatalogueSyn
     Route::get('/editions', [CatalogueSyncController::class, 'index']);
     Route::put('/editions/{isbn}', [CatalogueSyncController::class, 'upsert']);
     Route::put('/ratings', [CatalogueSyncController::class, 'ratings']);
+    Route::put('/readers', [CatalogueSyncController::class, 'readers']);
     Route::put('/reviews', [CatalogueSyncController::class, 'reviews']);
 });

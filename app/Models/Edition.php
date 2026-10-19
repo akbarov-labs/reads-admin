@@ -84,6 +84,10 @@ class Edition extends Model
             'synced_at' => 'datetime',
             'reader_rating_count' => 'integer',
             'reader_rating_total' => 'integer',
+            'reader_rating_stars' => 'array',
+            'reader_want_count' => 'integer',
+            'reader_reading_count' => 'integer',
+            'reader_read_count' => 'integer',
         ];
     }
 
