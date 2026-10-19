@@ -166,6 +166,25 @@ class BookApiTest extends TestCase
         }
     }
 
+    public function test_a_search_puts_the_title_typed_first_however_new_the_others_are(): void
+    {
+        $this->catalogueBook(['uzbek_title' => 'Taym mashin 1984'], ['isbn' => '9789943000001', 'year' => 2026]);
+        $this->catalogueBook(['uzbek_title' => '1984 (Grafik roman)'], ['isbn' => '9789943000002', 'year' => 2025]);
+        $this->catalogueBook(['uzbek_title' => '1984'], ['isbn' => '9789943000003', 'year' => 2020]);
+
+        $this->getJson('/api/books?q=1984')
+            ->assertJsonCount(3, 'data')
+            ->assertJsonPath('data.0.uzbekTitle', '1984')
+            ->assertJsonPath('data.1.uzbekTitle', '1984 (Grafik roman)')
+            ->assertJsonPath('data.2.uzbekTitle', 'Taym mashin 1984');
+
+        // Whatever the case it was typed in.
+        $this->getJson('/api/books?q=1984 (grafik ROMAN)')->assertJsonPath('data.0.uzbekTitle', '1984 (Grafik roman)');
+
+        // An order the caller asked for is kept.
+        $this->getJson('/api/books?q=1984&sort=year')->assertJsonPath('data.0.uzbekTitle', 'Taym mashin 1984');
+    }
+
     public function test_an_isbn_search_finds_the_edition_however_it_is_typed(): void
     {
         $this->catalogueBook(edition: ['isbn' => '9789943231986']);
