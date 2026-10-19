@@ -36,7 +36,7 @@ class AuthorController extends Controller
             ->joinSub($counts, 'published', 'published.author_id', '=', 'authors.id')
             ->select('authors.*', 'published.books_count');
 
-        if (filled($q = trim((string) $request->query('q')))) {
+        if (filled($q = $this->searchTerm($request))) {
             $query->where(fn ($match) => $match->where('authors.name', 'like', "%{$q}%")->orWhere('authors.original_name', 'like', "%{$q}%"));
         }
 

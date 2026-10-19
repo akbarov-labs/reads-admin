@@ -22,7 +22,7 @@ class PublisherController extends Controller
         $query = Publisher::whereHas('editions', fn ($editions) => $editions->approved()->whereHas('book', fn ($book) => $book->approved()))
             ->withBookCount(approvedOnly: true);
 
-        if (filled($q = trim((string) $request->query('q')))) {
+        if (filled($q = $this->searchTerm($request))) {
             $query->where('name', 'like', "%{$q}%");
         }
 

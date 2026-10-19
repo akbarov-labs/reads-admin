@@ -29,7 +29,8 @@ class BookController extends Controller
      *
      *   ?q=        title, original title, author name, or an exact ISBN
      *   ?author=   ?publisher=   ?translator=   ?category=   ?series=
-     *   ?sort=     year (newest edition first, the default) | title | recent
+     *   ?sort=     year (newest edition first, the default) | title | recent;
+     *              a search with no sort of its own puts the closest title first
      *   ?page=     ?per_page= (at most 100)
      */
     public function index(Request $request): AnonymousResourceCollection
@@ -37,6 +38,11 @@ class BookController extends Controller
         $query = Book::approved()->with(BookResource::relations());
 
         $this->filter($query, $request);
+
+        if (filled($q = $this->searchTerm($request)) && ! $request->filled('sort')) {
+            $this->byRelevance($query, $q);
+        }
+
         $this->sort($query, (string) $request->query('sort', 'year'));
 
         $perPage = min(self::MAX_PER_PAGE, max(1, (int) $request->query('per_page', self::PER_PAGE)));
@@ -69,8 +75,8 @@ class BookController extends Controller
 
     private function filter(Builder $query, Request $request): void
     {
-        if (filled($q = trim((string) $request->query('q')))) {
-            $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $q).'%';
+        if (filled($q = $this->searchTerm($request))) {
+            $like = '%'.self::escapeLike($q).'%';
             $isbn = preg_replace('/[^0-9Xx]/', '', $q);
 
             $query->where(function (Builder $match) use ($like, $isbn) {
@@ -107,6 +113,33 @@ class BookController extends Controller
         if (filled($slug = $request->query('series'))) {
             $query->whereHas('series', fn (Builder $s) => $s->where('slug', $slug));
         }
+    }
+
+    /**
+     * The title typed in full, then a title that starts with it, then one
+     * that contains it; a match only on an author, an edition's own title
+     * or an ISBN comes after. So "1984" is Orwell's before "Taym mashin
+     * 1984", however new the latter. Ties keep the usual order.
+     */
+    private function byRelevance(Builder $query, string $q): void
+    {
+        $prefix = self::escapeLike($q).'%';
+        $anywhere = '%'.self::escapeLike($q).'%';
+
+        $query->orderByRaw(
+            'case
+                when books.uzbek_title = ? or books.original_title = ? then 0
+                when books.uzbek_title like ? or books.original_title like ? then 1
+                when books.uzbek_title like ? or books.original_title like ? then 2
+                else 3
+            end',
+            [$q, $q, $prefix, $prefix, $anywhere, $anywhere],
+        );
+    }
+
+    private static function escapeLike(string $text): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $text);
     }
 
     private function sort(Builder $query, string $sort): void
