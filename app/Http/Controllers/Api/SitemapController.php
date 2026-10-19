@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\ModerationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
+use App\Models\Collection;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -45,10 +46,16 @@ class SitemapController extends Controller
             ->get(['publishers.slug', 'publishers.updated_at'])
             ->map(fn ($publisher) => ['slug' => $publisher->slug, 'updatedAt' => $this->iso($publisher->updated_at)]);
 
+        $collections = Collection::published()
+            ->orderBy('id')
+            ->get(['slug', 'updated_at'])
+            ->map(fn (Collection $collection) => ['slug' => $collection->slug, 'updatedAt' => $collection->updated_at?->toIso8601String()]);
+
         return response()->json([
             'books' => $books->values(),
             'authors' => $authors->values(),
             'publishers' => $publishers->values(),
+            'collections' => $collections->values(),
         ]);
     }
 

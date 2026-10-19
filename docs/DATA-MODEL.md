@@ -71,6 +71,21 @@ approved, with a cover if any has one, then the newest (`Book::primary_edition`)
 now one **edition** the translator worked on (`editionId` says which), so two
 translations of one book by the same person show as two portfolio entries.
 
+### Collections
+
+`collections` are editors' lists around translation ("Yil tarjimalari"),
+made under *Collections* in the panel: a title and description in each
+language, a slug, a position, and *Published*. `collection_items` holds
+the books in order, each optionally with the edition (translation) the list
+means and a line on why it is there. Only published collections and
+published books reach the site.
+
+`GET /api/collections` lists them in `position` order with `bookCount` and
+up to four `coverUrls`. `GET /api/collections/{slug}` adds `items[]`:
+`{note, book, edition: {publisher, year, translators} | null}`, `book`
+being the usual book card. An unpublished one is a 404. `GET /api/sitemap`
+lists published ones under `collections`.
+
 ### Quotes
 
 `quotes` are lines from a book that an admin enters under *Quotes* in the
