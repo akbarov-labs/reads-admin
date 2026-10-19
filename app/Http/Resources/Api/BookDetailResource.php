@@ -40,6 +40,8 @@ class BookDetailResource extends BookResource
             // edition, anonymous, and the reviews a moderator approved.
             'readerRating' => $this->readerRating(),
             'readerReviews' => ReaderReviewResource::collection($this->whenLoaded('readerReviews')),
+            // Published lines from the book, newest first.
+            'quotes' => QuoteResource::collection($this->whenLoaded('quotes')),
 
             'relatedBooks' => BookResource::collection(collect($this->related)),
         ]);

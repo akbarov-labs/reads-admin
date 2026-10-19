@@ -68,6 +68,7 @@ class BookController extends Controller
             // Approved at the query too, and the newest few: a book page is
             // not the place to read them all.
             'readerReviews' => fn ($query) => $query->approved()->limit(20),
+            'quotes' => fn ($query) => $query->approved()->with('edition.translators')->limit(10),
         ]);
 
         return new BookDetailResource($book, $this->relatedTo($book));

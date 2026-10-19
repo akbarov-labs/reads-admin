@@ -110,6 +110,12 @@ class Book extends Model
      *
      * @return HasManyThrough<Taqriz, Edition, $this>
      */
+    /** @return HasMany<Quote, $this> */
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(Quote::class)->latest('quotes.id');
+    }
+
     /** Reviews from Kitoblarim bot readers (App\Models\ReaderReview). */
     public function readerReviews(): HasMany
     {
