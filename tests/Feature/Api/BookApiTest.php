@@ -192,6 +192,17 @@ class BookApiTest extends TestCase
         $this->getJson('/api/books?q=978-9943-23-198-6')->assertJsonCount(1, 'data');
     }
 
+    public function test_a_search_finds_o_apostrophe_however_the_apostrophe_is_typed(): void
+    {
+        $this->catalogueBook(['uzbek_title' => "O'tkan kunlar"]);
+
+        foreach (["O'tkan kunlar", 'O‘tkan kunlar', 'Oʻtkan kunlar', 'O`tkan', 'O’tkan'] as $typed) {
+            $this->getJson('/api/books?q='.urlencode($typed))
+                ->assertJsonCount(1, 'data')
+                ->assertJsonPath('data.0.uzbekTitle', "O'tkan kunlar");
+        }
+    }
+
     public function test_pending_books_and_editions_stay_off_the_site(): void
     {
         $this->catalogueBook(['status' => ModerationStatus::Pending]);

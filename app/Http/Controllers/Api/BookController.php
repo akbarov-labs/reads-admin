@@ -39,7 +39,7 @@ class BookController extends Controller
 
         $this->filter($query, $request);
 
-        if (filled($q = trim((string) $request->query('q'))) && ! $request->filled('sort')) {
+        if (filled($q = $this->searchTerm($request)) && ! $request->filled('sort')) {
             $this->byRelevance($query, $q);
         }
 
@@ -75,7 +75,7 @@ class BookController extends Controller
 
     private function filter(Builder $query, Request $request): void
     {
-        if (filled($q = trim((string) $request->query('q')))) {
+        if (filled($q = $this->searchTerm($request))) {
             $like = '%'.self::escapeLike($q).'%';
             $isbn = preg_replace('/[^0-9Xx]/', '', $q);
 
