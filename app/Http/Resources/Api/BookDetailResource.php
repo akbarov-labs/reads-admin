@@ -39,21 +39,46 @@ class BookDetailResource extends BookResource
             // Kitoblarim bot readers: their stars over every approved
             // edition, anonymous, and the reviews a moderator approved.
             'readerRating' => $this->readerRating(),
+            // How many of them want to read it, are reading it, have read it.
+            'readers' => $this->readers(),
             'readerReviews' => ReaderReviewResource::collection($this->whenLoaded('readerReviews')),
 
             'relatedBooks' => BookResource::collection(collect($this->related)),
         ]);
     }
 
-    /** @return array{average: float, count: int}|null */
+    /** @return array{average: float, count: int, stars: list<int>|null}|null */
     private function readerRating(): ?array
     {
         $count = (int) $this->approvedEditions->sum('reader_rating_count');
 
-        return $count === 0 ? null : [
+        if ($count === 0) {
+            return null;
+        }
+
+        // Ones first, summed over the editions that sent a split; null until one has.
+        $splits = $this->approvedEditions->pluck('reader_rating_stars')->filter();
+
+        return [
             'average' => round($this->approvedEditions->sum('reader_rating_total') / $count, 1),
             'count' => $count,
+            'stars' => $splits->isEmpty() ? null : array_map(
+                fn (int $star) => (int) $splits->sum(fn (array $split) => $split[$star] ?? 0),
+                range(0, 4),
+            ),
         ];
+    }
+
+    /** @return array{want: int, reading: int, read: int}|null */
+    private function readers(): ?array
+    {
+        $readers = [
+            'want' => (int) $this->approvedEditions->sum('reader_want_count'),
+            'reading' => (int) $this->approvedEditions->sum('reader_reading_count'),
+            'read' => (int) $this->approvedEditions->sum('reader_read_count'),
+        ];
+
+        return array_sum($readers) === 0 ? null : $readers;
     }
 
     private function averageOfTaqrizlar(): ?float

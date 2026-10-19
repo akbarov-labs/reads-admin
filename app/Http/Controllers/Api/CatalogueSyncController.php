@@ -61,9 +61,26 @@ class CatalogueSyncController extends Controller
             'items.*.isbn' => ['required', 'string', 'max:32'],
             'items.*.count' => ['required', 'integer', 'min:1'],
             'items.*.total' => ['required', 'integer', 'min:1'],
+            // How the stars split, ones first; older bots leave it out.
+            'items.*.stars' => ['sometimes', 'array', 'size:5'],
+            'items.*.stars.*' => ['integer', 'min:0'],
         ]);
 
         return response()->json($feedback->ratings($data['items']));
+    }
+
+    /** How many of the bot's readers want to read, are reading and have read each ISBN. */
+    public function readers(Request $request, ReaderFeedbackSync $feedback): JsonResponse
+    {
+        $data = $request->validate([
+            'items' => ['present', 'array'],
+            'items.*.isbn' => ['required', 'string', 'max:32'],
+            'items.*.want' => ['required', 'integer', 'min:0'],
+            'items.*.reading' => ['required', 'integer', 'min:0'],
+            'items.*.read' => ['required', 'integer', 'min:0'],
+        ]);
+
+        return response()->json($feedback->readers($data['items']));
     }
 
     /** Every review the bot's readers chose to publish. */

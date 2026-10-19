@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\AuthorController;
 use App\Http\Controllers\Api\BookController;
 use App\Http\Controllers\Api\CatalogueSyncController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\PublisherController;
 use App\Http\Controllers\Api\SitemapController;
 use App\Http\Controllers\Api\TaqrizchiController;
@@ -48,5 +48,6 @@ Route::prefix('sync')->middleware(['throttle:catalogue-sync', EnsureCatalogueSyn
     Route::get('/editions', [CatalogueSyncController::class, 'index']);
     Route::put('/editions/{isbn}', [CatalogueSyncController::class, 'upsert']);
     Route::put('/ratings', [CatalogueSyncController::class, 'ratings']);
+    Route::put('/readers', [CatalogueSyncController::class, 'readers']);
     Route::put('/reviews', [CatalogueSyncController::class, 'reviews']);
 });

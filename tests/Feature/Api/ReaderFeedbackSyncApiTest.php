@@ -94,6 +94,73 @@ class ReaderFeedbackSyncApiTest extends TestCase
         $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.readerRating', null);
     }
 
+    public function test_the_star_split_is_summed_over_editions_and_null_until_sent(): void
+    {
+        $book = $this->catalogueBook(edition: ['isbn' => self::ISBN]);
+        $this->edition($book, ['isbn' => self::OTHER_ISBN]);
+
+        // An older bot sends no split.
+        $this->ratings([['isbn' => self::ISBN, 'count' => 3, 'total' => 13]])->assertOk();
+        $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.readerRating.stars', null);
+
+        $this->ratings([
+            ['isbn' => self::ISBN, 'count' => 3, 'total' => 13, 'stars' => [0, 0, 0, 2, 1]],
+            ['isbn' => self::OTHER_ISBN, 'count' => 2, 'total' => 6, 'stars' => [1, 0, 0, 0, 1]],
+        ])->assertOk()->assertJsonPath('updated', 2);
+
+        $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.readerRating.stars', [1, 0, 0, 2, 2]);
+
+        // Resent unchanged, nothing is written.
+        $this->ratings([
+            ['isbn' => self::ISBN, 'count' => 3, 'total' => 13, 'stars' => [0, 0, 0, 2, 1]],
+            ['isbn' => self::OTHER_ISBN, 'count' => 2, 'total' => 6, 'stars' => [1, 0, 0, 0, 1]],
+        ])->assertJsonPath('updated', 0);
+
+        $this->ratings([['isbn' => self::ISBN, 'count' => 1, 'total' => 5, 'stars' => [1, 2, 3]]])->assertUnprocessable();
+    }
+
+    // ------------------------------------------------------------------
+    // Readers
+    // ------------------------------------------------------------------
+
+    public function test_reader_counts_land_without_touching_updated_at_and_sum_over_editions(): void
+    {
+        $book = $this->catalogueBook(edition: ['isbn' => self::ISBN]);
+        $other = $this->edition($book, ['isbn' => self::OTHER_ISBN]);
+        $this->setUpdatedAt($other, '2026-03-01 10:00:00');
+
+        $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.readers', null);
+
+        $this->readers([
+            ['isbn' => self::ISBN, 'want' => 400, 'reading' => 40, 'read' => 18],
+            ['isbn' => self::OTHER_ISBN, 'want' => 74, 'reading' => 3, 'read' => 2],
+            ['isbn' => '9780000000002', 'want' => 1, 'reading' => 0, 'read' => 0],
+        ])->assertOk()->assertExactJson(['updated' => 2, 'unknown' => 1]);
+
+        $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.readers', ['want' => 474, 'reading' => 43, 'read' => 20]);
+        $this->assertSame('2026-03-01 10:00:00', $other->refresh()->updated_at->format('Y-m-d H:i:s'));
+    }
+
+    public function test_reader_counts_left_out_of_the_list_are_gone_and_ratings_are_kept(): void
+    {
+        $book = $this->catalogueBook(edition: ['isbn' => self::ISBN]);
+        $this->ratings([['isbn' => self::ISBN, 'count' => 2, 'total' => 9]])->assertOk();
+        $this->readers([['isbn' => self::ISBN, 'want' => 5, 'reading' => 1, 'read' => 2]])->assertOk();
+
+        $this->readers([])->assertOk()->assertJsonPath('updated', 1);
+
+        $this->getJson("/api/books/{$book->id}")
+            ->assertJsonPath('data.readers', null)
+            ->assertJsonPath('data.readerRating.count', 2);
+    }
+
+    public function test_reader_counts_need_the_token_and_a_valid_body(): void
+    {
+        $this->putJson('/api/sync/readers', ['items' => []])->assertUnauthorized();
+        $this->readers([['isbn' => self::ISBN, 'want' => -1, 'reading' => 0, 'read' => 0]])->assertUnprocessable();
+        $this->readers([['isbn' => self::ISBN, 'want' => 1]])->assertUnprocessable();
+    }
+
     // ------------------------------------------------------------------
     // Reviews
     // ------------------------------------------------------------------
@@ -221,6 +288,12 @@ class ReaderFeedbackSyncApiTest extends TestCase
     private function ratings(array $items): TestResponse
     {
         return $this->withToken(self::TOKEN)->putJson('/api/sync/ratings', ['items' => $items]);
+    }
+
+    /** @param  list<array<string, mixed>>  $items */
+    private function readers(array $items): TestResponse
+    {
+        return $this->withToken(self::TOKEN)->putJson('/api/sync/readers', ['items' => $items]);
     }
 
     /** @param  list<array<string, mixed>>  $items */

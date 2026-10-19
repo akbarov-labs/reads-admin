@@ -23,11 +23,11 @@ class ReaderFeedbackSync
     public function __construct(private readonly SiteRevalidator $revalidator) {}
 
     /**
-     * Rating totals per ISBN. An edition the list leaves out goes back to no
-     * ratings. The columns are written without touching updated_at: a rating
-     * is not an edit of the edition, and the bot's feed orders by it.
+     * Rating totals per ISBN, and how the stars split from one to five when
+     * the bot sends that (`stars`, ones first). An edition the list leaves
+     * out goes back to no ratings.
      *
-     * @param  list<array{isbn: string, count: int, total: int}>  $items
+     * @param  list<array{isbn: string, count: int, total: int, stars?: list<int>}>  $items
      * @return array{updated: int, unknown: int}
      */
     public function ratings(array $items): array
@@ -35,30 +35,79 @@ class ReaderFeedbackSync
         $wanted = [];
 
         foreach ($items as $item) {
-            $isbn = CatalogueSync::normalizeIsbn((string) $item['isbn']);
-
-            if ($isbn !== null) {
-                $wanted[$isbn] = [(int) $item['count'], (int) $item['total']];
+            if ($isbn = CatalogueSync::normalizeIsbn((string) $item['isbn'])) {
+                $wanted[$isbn] = [
+                    'reader_rating_count' => (int) $item['count'],
+                    'reader_rating_total' => (int) $item['total'],
+                    'reader_rating_stars' => isset($item['stars']) ? array_map(intval(...), array_values($item['stars'])) : null,
+                ];
             }
         }
 
+        return $this->writeTotals($wanted, [
+            'reader_rating_count' => 0,
+            'reader_rating_total' => 0,
+            'reader_rating_stars' => null,
+        ]);
+    }
+
+    /**
+     * How many of the bot's readers want to read each ISBN, are reading it
+     * and have read it. An edition the list leaves out goes back to none.
+     *
+     * @param  list<array{isbn: string, want: int, reading: int, read: int}>  $items
+     * @return array{updated: int, unknown: int}
+     */
+    public function readers(array $items): array
+    {
+        $wanted = [];
+
+        foreach ($items as $item) {
+            if ($isbn = CatalogueSync::normalizeIsbn((string) $item['isbn'])) {
+                $wanted[$isbn] = [
+                    'reader_want_count' => (int) $item['want'],
+                    'reader_reading_count' => (int) $item['reading'],
+                    'reader_read_count' => (int) $item['read'],
+                ];
+            }
+        }
+
+        return $this->writeTotals($wanted, [
+            'reader_want_count' => 0,
+            'reader_reading_count' => 0,
+            'reader_read_count' => 0,
+        ]);
+    }
+
+    /**
+     * Writes per-ISBN totals onto editions: the values sent, or `$empty` for
+     * an edition that has some and was left out. The columns are written
+     * without touching updated_at: a count is not an edit of the edition,
+     * and the bot's feed orders by it.
+     *
+     * @param  array<string, array<string, mixed>>  $wanted  isbn => column => value
+     * @param  array<string, mixed>  $empty  column => the value for "no readers"
+     * @return array{updated: int, unknown: int}
+     */
+    private function writeTotals(array $wanted, array $empty): array
+    {
         $found = [];
         $changedBooks = [];
         $updated = 0;
+        $columns = array_keys($empty);
 
-        $apply = function (Collection $editions) use ($wanted, &$found, &$changedBooks, &$updated) {
+        $apply = function (Collection $editions) use ($wanted, $empty, $columns, &$found, &$changedBooks, &$updated) {
             foreach ($editions as $edition) {
                 $found[$edition->isbn] = true;
-                [$count, $total] = $wanted[$edition->isbn] ?? [0, 0];
+                $values = $wanted[$edition->isbn] ?? $empty;
 
-                if ($edition->reader_rating_count === $count && $edition->reader_rating_total === $total) {
+                if (collect($columns)->every(fn (string $column) => $edition->getAttribute($column) == $values[$column])) {
                     continue;
                 }
 
-                Edition::whereKey($edition->id)->toBase()->update([
-                    'reader_rating_count' => $count,
-                    'reader_rating_total' => $total,
-                ]);
+                Edition::whereKey($edition->id)->toBase()->update(
+                    array_map(fn ($value) => is_array($value) ? json_encode($value) : $value, $values),
+                );
                 $updated++;
 
                 if ($edition->status === ModerationStatus::Approved) {
@@ -67,16 +116,20 @@ class ReaderFeedbackSync
             }
         };
 
-        $columns = ['id', 'book_id', 'isbn', 'status', 'reader_rating_count', 'reader_rating_total'];
+        $select = ['id', 'book_id', 'isbn', 'status', ...$columns];
 
-        DB::transaction(function () use ($wanted, $apply, $columns) {
+        DB::transaction(function () use ($wanted, $empty, $apply, $select) {
             foreach (array_chunk(array_keys($wanted), 500) as $chunk) {
-                $apply(Edition::query()->whereIn('isbn', $chunk)->get($columns));
+                $apply(Edition::query()->whereIn('isbn', $chunk)->get($select));
             }
 
-            // Ratings that are no longer in the bot.
-            $apply(Edition::query()->where('reader_rating_count', '>', 0)->get($columns)
-                ->reject(fn ($edition) => isset($wanted[$edition->isbn])));
+            // Editions with something the bot no longer sends.
+            $holding = Edition::query()->where(function ($query) use ($empty) {
+                foreach ($empty as $column => $none) {
+                    $none === null ? $query->orWhereNotNull($column) : $query->orWhere($column, '>', 0);
+                }
+            });
+            $apply($holding->get($select)->reject(fn ($edition) => isset($wanted[$edition->isbn])));
         });
 
         $this->ping(array_keys($changedBooks));
