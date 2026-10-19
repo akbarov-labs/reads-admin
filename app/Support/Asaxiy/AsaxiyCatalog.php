@@ -2,6 +2,7 @@
 
 namespace App\Support\Asaxiy;
 
+use App\Models\Edition;
 use App\Support\UzbekText;
 use DateTimeInterface;
 use Generator;
@@ -441,9 +442,7 @@ class AsaxiyCatalog
     /** Four digits in a plausible range; "20221", "256" and friends are typos, not years. */
     private static function year(?string $value): ?int
     {
-        $year = $value !== null && preg_match('/^\d{4}$/', $value) ? (int) $value : null;
-
-        return $year !== null && $year >= 1800 && $year <= (int) date('Y') + 1 ? $year : null;
+        return Edition::plausibleYear($value !== null && preg_match('/^\d{4}$/', $value) ? (int) $value : null);
     }
 
     private static function smallInt(?string $value): ?int

@@ -129,6 +129,19 @@ class CatalogueSyncApiTest extends TestCase
         $this->assertSame(40, strlen($edition->sync_hash));
     }
 
+    public function test_a_year_no_printing_can_carry_arrives_as_no_year_and_never_replaces_a_real_one(): void
+    {
+        // 978-9943-… once came through as the year 9943.
+        $this->push(self::ISBN, ['year' => 9943])->assertOk()->assertJsonPath('outcome', 'created');
+        $this->assertNull(Edition::firstOrFail()->year);
+
+        $this->push(self::ISBN, ['year' => 2024, 'updatedAt' => '2026-04-01T00:00:00Z'])->assertOk();
+        $this->assertSame(2024, Edition::firstOrFail()->year);
+
+        $this->push(self::ISBN, ['year' => 1500, 'updatedAt' => '2026-05-01T00:00:00Z'])->assertOk();
+        $this->assertSame(2024, Edition::firstOrFail()->year);
+    }
+
     public function test_the_response_reports_the_stored_edition_and_its_updated_at(): void
     {
         $response = $this->push(self::ISBN)->assertOk();

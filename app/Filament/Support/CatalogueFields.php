@@ -227,8 +227,8 @@ class CatalogueFields
                 ->unique(ignoreRecord: true),
             Forms\Components\TextInput::make('year')
                 ->numeric()
-                ->minValue(1000)
-                ->maxValue(9999),
+                ->minValue(Edition::FIRST_YEAR)
+                ->maxValue(fn (): int => Edition::lastYear()),
             Forms\Components\TextInput::make('language')
                 ->label('Language of this edition')
                 ->placeholder("O'zbek tili"),
