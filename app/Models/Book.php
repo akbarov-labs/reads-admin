@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ModerationStatus;
 use App\Observers\ProfileContentObserver;
+use App\Support\UzbekText;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -82,6 +83,33 @@ class Book extends Model
                 $edition->sort_order,
                 $edition->id,
             ])
+            ->first();
+    }
+
+    /** A shop's listing line, not a word about the book: "… do'konida. Buyurtma bering, yetkazib beramiz". */
+    private const SHOP_TEXT = "/do'kon|buyurtma|yetkazib|магазин|заказ|доставк/iu";
+
+    /** Shorter than this, an edition's text is a note about the printing ("Yangi nashr … tahrir qilingan"). */
+    private const SHORTEST_ABOUT = 100;
+
+    /**
+     * What the book page says about the book: its own description, or else
+     * the fullest one an approved edition carries — that is where the Asaxiy
+     * import and the bot put them, so almost no book has its own. A shop's
+     * sales line and a short note about one printing are not descriptions of
+     * the book, and are skipped.
+     */
+    public function getAboutAttribute(): ?string
+    {
+        if (filled($this->description)) {
+            return $this->description;
+        }
+
+        return $this->approvedEditions
+            ->map(fn (Edition $edition) => trim((string) $edition->description))
+            ->filter(fn (string $text) => mb_strlen($text) >= self::SHORTEST_ABOUT
+                && preg_match(self::SHOP_TEXT, UzbekText::normalizeApostrophes($text)) !== 1)
+            ->sortByDesc(fn (string $text) => mb_strlen($text))
             ->first();
     }
 
