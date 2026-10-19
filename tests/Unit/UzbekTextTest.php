@@ -36,6 +36,16 @@ class UzbekTextTest extends TestCase
         ];
     }
 
+    public function test_a_doubled_apostrophe_inside_a_word_is_one(): void
+    {
+        $this->assertSame("Ayol – mo'tabar zot", UzbekText::clean("Ayol – mo''tabar zot"));
+        $this->assertSame("No'mon Abdulmajid", UzbekText::clean('No‘’mon Abdulmajid'));
+        $this->assertSame("Mo'jiza", UzbekText::normalizeApostrophes("Mo'''jiza"));
+        // A pair used as quote marks is not inside a word.
+        $this->assertSame("''Kitob'' haqida", UzbekText::normalizeApostrophes("''Kitob'' haqida"));
+        $this->assertSame("Qur'oni Karim", UzbekText::normalizeApostrophes("Qur'oni Karim"));
+    }
+
     public function test_spellings_of_one_publisher_share_a_key(): void
     {
         $key = UzbekText::publisherKey('Hilol nashr');

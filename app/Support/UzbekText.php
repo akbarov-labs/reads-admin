@@ -53,10 +53,17 @@ class UzbekText
         return $text !== null && preg_match('/[ўқғҳЎҚҒҲ]/u', $text) === 1;
     }
 
-    /** o‘ oʻ o’ o` o´ → o' — the spelling the rest of the catalogue already uses. */
+    /**
+     * o‘ oʻ o’ o` o´ → o' — the spelling the rest of the catalogue already
+     * uses. Doubled inside a word ("mo''jiza", often o‘’ typed twice over)
+     * it is still one apostrophe; a pair standing in for quote marks around
+     * a word (''Kitob'') is left alone.
+     */
     public static function normalizeApostrophes(string $text): string
     {
-        return str_replace(['‘', '’', 'ʻ', 'ʼ', '`', '´', 'ʹ', '′'], "'", $text);
+        $text = str_replace(['‘', '’', 'ʻ', 'ʼ', '`', '´', 'ʹ', '′'], "'", $text);
+
+        return preg_replace("/(?<=\p{L})'{2,}(?=\p{L})/u", "'", $text);
     }
 
     public static function toLatin(string $text): string
