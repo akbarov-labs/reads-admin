@@ -211,6 +211,29 @@ class BookApiTest extends TestCase
         $this->getJson('/api/books')->assertJsonCount(0, 'data');
     }
 
+    public function test_a_book_without_its_own_description_shows_the_fullest_from_an_edition(): void
+    {
+        $about = "\"1984\" Jorj Oruell qalamiga mansub siyosiy antiutopik roman bo'lib, totalitar tuzumda yashayotgan Uinston Smitning taqdiri haqida hikoya qiladi.";
+        $book = $this->catalogueBook(edition: ['isbn' => '9789910679629', 'description' => $about]);
+        $this->edition($book, ['isbn' => '9789943231467', 'description' => "Yangi nashr ingliz tilidan qayta tahrir qilingan va imlo xatolari to'g'rilangan."]);
+        $this->edition($book, ['isbn' => '9789943231962', 'description' => str_repeat('1984: (Jorj Oruell) - Qamar kitoblar do‘konida. Buyurtma bering, yetkazib beramiz. ', 3)]);
+        $this->edition($book, ['isbn' => '9789943231970', 'description' => str_repeat('Rad etilgan nashr matni. ', 10), 'status' => ModerationStatus::Rejected]);
+
+        $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.description', $about);
+
+        // Its own description, when it has one, wins.
+        $book->update(['description' => 'Kitobning oʻz tavsifi.']);
+        $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.description', 'Kitobning oʻz tavsifi.');
+    }
+
+    public function test_a_book_whose_editions_only_carry_shop_text_or_notes_has_no_description(): void
+    {
+        $book = $this->catalogueBook(edition: ['isbn' => '9789943231962', 'description' => str_repeat('Kitob do‘konimizda. Buyurtma bering! ', 5)]);
+        $this->edition($book, ['isbn' => '9789943231467', 'description' => 'Yangi nashr, tahrir qilingan.']);
+
+        $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.description', null);
+    }
+
     public function test_a_single_book_lists_every_approved_edition_with_its_credits(): void
     {
         $first = $this->translatorWithAccount('ilhom', 'Ilhom');

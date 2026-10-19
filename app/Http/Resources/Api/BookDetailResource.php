@@ -23,7 +23,8 @@ class BookDetailResource extends BookResource
     public function toArray(Request $request): array
     {
         return array_merge(parent::toArray($request), [
-            'description' => $this->description,
+            // Its own, or the fullest an edition carries (Book::getAboutAttribute).
+            'description' => $this->about,
             'editions' => EditionResource::collection($this->approvedEditions),
 
             // Approved only — the controller constrains the eager load, so
