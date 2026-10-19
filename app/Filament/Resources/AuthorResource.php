@@ -4,8 +4,10 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AuthorResource\Pages;
 use App\Models\Author;
+use App\Services\AuthorMerger;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -119,12 +121,59 @@ class AuthorResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                self::mergeAction(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * The same person entered twice ("Toxir Malik" beside "Tohir Malik"):
+     * this row's books and whatever the other lacks move to the author
+     * picked, and this one is deleted. Its name and link keep leading there
+     * (AuthorMerger). `php artisan authors:duplicates` lists likely pairs.
+     */
+    private static function mergeAction(): Tables\Actions\Action
+    {
+        return Tables\Actions\Action::make('merge')
+            ->label('Merge into…')
+            ->icon('heroicon-o-arrows-pointing-in')
+            ->color('warning')
+            ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false)
+            ->modalHeading(fn (Author $record): string => "Merge “{$record->name}” into another author")
+            ->modalDescription('Its books, and any details the kept author has left blank, move to the author you pick. This row is then deleted; its name and its page link keep leading to the kept author. This cannot be undone.')
+            ->modalSubmitActionLabel('Merge')
+            ->form([
+                Forms\Components\Select::make('into')
+                    ->label('Keep this author')
+                    ->searchable()
+                    ->required()
+                    ->getSearchResultsUsing(fn (string $search): array => Author::withCount('books')
+                        ->where(fn (Builder $match) => $match->where('name', 'like', "%{$search}%")->orWhere('original_name', 'like', "%{$search}%"))
+                        ->orderByDesc('books_count')
+                        ->limit(50)
+                        ->get()
+                        ->mapWithKeys(fn (Author $author) => [$author->id => "{$author->name} ({$author->books_count} books, /{$author->slug})"])
+                        ->all())
+                    ->getOptionLabelUsing(fn ($value): ?string => Author::find($value)?->name),
+            ])
+            ->action(function (Author $record, array $data): void {
+                $into = Author::find($data['into']);
+
+                if ($into === null || $into->is($record)) {
+                    Notification::make()->danger()->title('Pick another author to keep.')->send();
+
+                    return;
+                }
+
+                $name = $record->name;
+                app(AuthorMerger::class)->merge($record, $into);
+
+                Notification::make()->success()->title("“{$name}” is now part of “{$into->name}”.")->send();
+            });
     }
 
     public static function getEloquentQuery(): Builder

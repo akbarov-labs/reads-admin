@@ -24,10 +24,15 @@ trait GeneratesUniqueSlug
 
         $slug = $base;
 
-        for ($suffix = 2; static::where('slug', $slug)->exists(); $suffix++) {
+        for ($suffix = 2; static::slugTaken($slug); $suffix++) {
             $slug = "{$base}-{$suffix}";
         }
 
         return $slug;
+    }
+
+    protected static function slugTaken(string $slug): bool
+    {
+        return static::where('slug', $slug)->exists();
     }
 }

@@ -111,9 +111,23 @@ What the seeder normalises (`App\Support\UzbekText`, `App\Support\Asaxiy\AsaxiyC
   series is created only when at least two books share it.
 
 Known limits: editions in different languages ("Большая игра" and
-"Katta o'yin") are not recognised as one work, and there is no merge tool
-yet. Different spellings of one foreign author ("Fyodor Dostoyevskiy",
-"F.M.Dostoyevskiy") stay separate authors until an admin merges them.
+"Katta o'yin") are not recognised as one work, and there is no book merge
+tool yet. Different spellings of one author ("Tohir Malik", "Toxir Malik")
+stay separate authors until an admin merges them.
+
+### Merging authors
+
+`php artisan authors:duplicates` lists names that look like one person
+spelt two ways (h/x, a doubled letter). They are guesses: an admin checks
+each, then uses **Book authors → Merge into…** on the duplicate.
+`AuthorMerger` moves its books (keeping their credit position, and crediting
+a book once if both were on it), fills the kept author's blank fields, and
+deletes it.
+
+What it leaves behind is an `author_aliases` row: the old name and slug.
+`CatalogueRecords` (the bot sync) and this import match names against
+aliases, so the duplicate is not made again, and `/api/authors/{old-slug}`
+answers with the kept author, whose current slug the site redirects to.
 
 
 ## Syncing with the Kitoblarim bot

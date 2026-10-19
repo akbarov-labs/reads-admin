@@ -279,7 +279,12 @@ class AsaxiyBooksSeeder extends Seeder
             }
         }
 
-        $taken = Author::pluck('slug')->flip()->all();
+        // A spelling merged into another author (AuthorMerger) stays merged.
+        foreach (DB::table('author_aliases')->select('author_id', 'name')->cursor() as $alias) {
+            $this->authors[UzbekText::key($alias->name)] ??= $alias->author_id;
+        }
+
+        $taken = Author::pluck('slug')->flip()->all() + DB::table('author_aliases')->whereNotNull('slug')->pluck('slug')->flip()->all();
         $originals = [];
 
         foreach ($listings as $listing) {
