@@ -43,6 +43,8 @@ class BookDetailResource extends BookResource
             // How many of them want to read it, are reading it, have read it.
             'readers' => $this->readers(),
             'readerReviews' => ReaderReviewResource::collection($this->whenLoaded('readerReviews')),
+            // Published lines from the book, newest first.
+            'quotes' => QuoteResource::collection($this->whenLoaded('quotes')),
 
             'relatedBooks' => BookResource::collection(collect($this->related)),
         ]);

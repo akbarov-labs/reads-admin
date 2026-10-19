@@ -71,6 +71,17 @@ approved, with a cover if any has one, then the newest (`Book::primary_edition`)
 now one **edition** the translator worked on (`editionId` says which), so two
 translations of one book by the same person show as two portfolio entries.
 
+### Quotes
+
+`quotes` are lines from a book that an admin enters under *Quotes* in the
+panel: the book, the edition when it is a translation (its translators sign
+the quote), the text and the page. A quote is published when saved, and
+"Hidden" takes it off the site without deleting it. `GET /api/books/{id}`
+adds the newest ten as `quotes[]` (`id`, `body`, `page`, `translators`).
+`GET /api/quotes/today` is the home page's quote of the day, with its
+`book`: every published quote of a published book takes its turn, one a
+day in the order they were added (`Quote::ofTheDay`), or `data: null`.
+
 ## Importing from Asaxiy
 
 ```sh

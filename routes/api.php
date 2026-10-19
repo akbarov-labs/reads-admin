@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CatalogueSyncController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\PublisherController;
+use App\Http\Controllers\Api\QuoteController;
 use App\Http\Controllers\Api\SitemapController;
 use App\Http\Controllers\Api\TaqrizchiController;
 use App\Http\Controllers\Api\TaqrizController;
@@ -30,6 +31,7 @@ Route::middleware('throttle:120,1')->group(function () {
     Route::get('/taqrizchilar', [TaqrizchiController::class, 'index']);
     Route::get('/taqrizchilar/{taqrizchi}', [TaqrizchiController::class, 'show']);
     Route::get('/taqrizlar/{taqriz}', [TaqrizController::class, 'show']);
+    Route::get('/quotes/today', [QuoteController::class, 'today']);
     // Ids, slugs and dates for the site's sitemap, in one response.
     Route::get('/sitemap', [SitemapController::class, 'index']);
 });
