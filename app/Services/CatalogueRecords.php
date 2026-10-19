@@ -39,7 +39,8 @@ class CatalogueRecords
 
     public function author(string $name): Author
     {
-        $id = $this->idFor('authors', ['name', 'original_name'], $name, UzbekText::key(...));
+        $id = $this->idFor('authors', ['name', 'original_name'], $name, UzbekText::key(...))
+            ?? $this->mergedAuthorId($name);
 
         if ($id !== null) {
             return Author::findOrFail($id);
@@ -133,22 +134,30 @@ class CatalogueRecords
             return array_map(intval(...), $exact);
         }
 
-        $id = $this->idFor('authors', ['name', 'original_name'], $name, UzbekText::key(...));
+        $id = $this->idFor('authors', ['name', 'original_name'], $name, UzbekText::key(...))
+            ?? $this->mergedAuthorId($name);
 
         return $id === null ? [] : [$id];
+    }
+
+    /** The author a spelling was merged into (AuthorMerger), so the duplicate is not made again. */
+    private function mergedAuthorId(string $name): ?int
+    {
+        return $this->idFor('author_aliases', ['name'], $name, UzbekText::key(...), 'author_id');
     }
 
     /**
      * @param  list<string>  $columns  every spelling the table keeps
      * @param  callable(string): string  $key
+     * @param  string  $idColumn  the id to answer with, when it is not the row's own
      */
-    private function idFor(string $table, array $columns, string $name, callable $key): ?int
+    private function idFor(string $table, array $columns, string $name, callable $key, string $idColumn = 'id'): ?int
     {
         $exact = DB::table($table)->where(function ($match) use ($columns, $name) {
             foreach ($columns as $column) {
                 $match->orWhere($column, $name);
             }
-        })->orderBy('id')->value('id');
+        })->orderBy('id')->value($idColumn);
 
         if ($exact !== null) {
             return (int) $exact;
@@ -163,10 +172,10 @@ class CatalogueRecords
         if (! isset($this->index[$table])) {
             $this->index[$table] = [];
 
-            foreach (DB::table($table)->select(['id', ...$columns])->orderBy('id')->cursor() as $row) {
+            foreach (DB::table($table)->select(array_unique(['id', $idColumn, ...$columns]))->orderBy('id')->cursor() as $row) {
                 foreach ($columns as $column) {
                     if (filled($row->{$column})) {
-                        $this->index[$table][$key($row->{$column})] ??= $row->id;
+                        $this->index[$table][$key($row->{$column})] ??= (int) $row->{$idColumn};
                     }
                 }
             }
