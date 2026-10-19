@@ -54,6 +54,25 @@ class Edition extends Model
         'status' => ModerationStatus::Approved->value,
     ];
 
+    /** No printing in this catalogue is older; an earlier "year" is a typo. */
+    public const FIRST_YEAR = 1800;
+
+    /**
+     * The year itself when a printing can really carry it, otherwise null:
+     * "9943" lifted from an ISBN or a mistyped "20221" is not a year, and a
+     * blank sorts and displays better than a wrong one.
+     */
+    public static function plausibleYear(?int $year): ?int
+    {
+        return $year !== null && $year >= self::FIRST_YEAR && $year <= self::lastYear() ? $year : null;
+    }
+
+    /** Publishers print next year's date from the autumn on. */
+    public static function lastYear(): int
+    {
+        return (int) date('Y') + 1;
+    }
+
     protected function casts(): array
     {
         return [

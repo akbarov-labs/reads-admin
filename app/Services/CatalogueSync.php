@@ -147,7 +147,9 @@ class CatalogueSync
             'translators' => $names($data['translators'] ?? []),
             'publisher' => $publisher,
             'language' => $language,
-            'year' => isset($data['year']) ? (int) $data['year'] : null,
+            // An implausible year arrives as no year, so it never replaces
+            // a real one (a blank never erases anything, see merge()).
+            'year' => isset($data['year']) ? Edition::plausibleYear((int) $data['year']) : null,
             'pages' => isset($data['pages']) ? (int) $data['pages'] : null,
             'description' => $text($data['description'] ?? null),
             // Whole seconds, like the column it is compared with.
