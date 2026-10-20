@@ -44,14 +44,16 @@ Route::middleware('throttle:120,1')->group(function () {
 Route::post('/translators/{translator}/inquiries', [InquiryController::class, 'store'])
     ->middleware('throttle:5,1');
 
-// The Kitoblarim bot's catalogue sync. Unlike everything above it writes, so
-// it is behind a shared token and deliberately not part of the public read
-// group. Its own rate-limit bucket (AppServiceProvider): the bot's first
+// The bots' catalogue sync (the Kitoblarim bot's, and the Kitob Marafoni
+// bot's, each with its own token). Unlike everything above it writes, so
+// it is behind the bots' tokens and deliberately not part of the public
+// read group. Its own rate-limit bucket (AppServiceProvider): the bot's first
 // backfill pages through the feed at 500 a request and pushes one edition at
 // a time.
 Route::prefix('sync')->middleware(['throttle:catalogue-sync', EnsureCatalogueSyncToken::class])->group(function () {
     Route::get('/editions', [CatalogueSyncController::class, 'index']);
     Route::put('/editions/{isbn}', [CatalogueSyncController::class, 'upsert']);
+    Route::post('/books', [CatalogueSyncController::class, 'book']);
     Route::put('/ratings', [CatalogueSyncController::class, 'ratings']);
     Route::put('/readers', [CatalogueSyncController::class, 'readers']);
     Route::put('/reviews', [CatalogueSyncController::class, 'reviews']);

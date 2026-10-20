@@ -11,7 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 /**
- * The Kitoblarim bot's two doors into the catalogue. Behind the shared-token
+ * The bots' doors into the catalogue: the Kitoblarim bot's, and the Kitob
+ * Marafoni bot's (which also uses upsert). Behind the shared-token
  * middleware (routes/api.php), never in the public read group.
  */
 class CatalogueSyncController extends Controller
@@ -51,6 +52,20 @@ class CatalogueSyncController extends Controller
         ]);
 
         return response()->json($this->sync->push($normalized, $data));
+    }
+
+    /** The marathon bot pushes a book with no ISBN; it waits for an editor here. */
+    public function book(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:250'],
+            'authors' => ['nullable', 'array', 'max:20'],
+            'authors.*' => ['nullable', 'string', 'max:255'],
+            'language' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:65000'],
+        ]);
+
+        return response()->json($this->sync->pushBook($data));
     }
 
     /** Every rating total the bot's readers gave, per ISBN; anonymous. */

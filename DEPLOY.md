@@ -308,6 +308,16 @@ rotate it by changing both sides and recreating the container (see "Changing
 `editions` runs with the normal deploy. What the endpoints do is in
 `docs/DATA-MODEL.md`.
 
+The Kitob Marafoni bot (book marathons) uses the same endpoints, plus
+`POST /api/sync/books` for books without an ISBN, with a token of its own:
+
+```
+CATALOGUE_MARATHON_TOKEN=<openssl rand -hex 32, a different value>
+```
+
+Blank shuts that bot out (401) without affecting the Kitoblarim bot; the
+endpoints only answer 503 when both tokens are blank.
+
 ## Rollback
 
 Every image is also tagged with its commit SHA (first 7 characters). The
