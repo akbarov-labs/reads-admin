@@ -59,6 +59,17 @@ class UzbekTextTest extends TestCase
         $this->assertSame(UzbekText::publisherKey('Nihol'), UzbekText::publisherKey('Nihol nashr'));
     }
 
+    public function test_every_way_of_typing_a_title_has_one_search_key(): void
+    {
+        foreach (["O'tkan kunlar", 'Oʻtkan kunlar', 'O‘tkan  kunlar', 'O`tkan kunlar', 'ЎТКАН КУНЛАР', 'Ўткан кунлар', 'otkan kunlar', "O'tkan kunlar!"] as $spelling) {
+            $this->assertSame('otkan kunlar', UzbekText::searchKey($spelling), $spelling);
+        }
+
+        $this->assertSame('lev tolstoy', UzbekText::searchKey('Лев Толстой'));
+        $this->assertSame('chol va dengiz the old man and the sea', UzbekText::searchKey('Chol va dengiz', null, 'The Old Man and the Sea'));
+        $this->assertNull(UzbekText::searchKey('  — ', null));
+    }
+
     public function test_isbn_is_normalised_or_rejected(): void
     {
         $this->assertSame('9789943231986', AsaxiyCatalog::isbn('978-9943-23-198-6'));

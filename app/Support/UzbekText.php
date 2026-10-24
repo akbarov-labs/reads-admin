@@ -117,6 +117,20 @@ class UzbekText
         return implode('', self::words($text));
     }
 
+    /**
+     * What search compares, word by word: "Oʻtkan kunlar", "ЎТКАН КУНЛАР"
+     * and "otkan kunlar" all become "otkan kunlar". Stored per row in
+     * `search_key` (see SearchKeys) and applied to the query the same way,
+     * because SQLite's LIKE folds case for ASCII only and has no notion of
+     * the two alphabets. Null when nothing searchable is left.
+     */
+    public static function searchKey(?string ...$parts): ?string
+    {
+        $key = implode(' ', self::words(implode(' ', array_filter($parts))));
+
+        return $key === '' ? null : $key;
+    }
+
     /** Same publisher regardless of alphabet, case, punctuation, or "nashr" / "Books" suffixes. */
     public static function publisherKey(string $text): string
     {

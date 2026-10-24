@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\PublisherController;
 use App\Http\Controllers\Api\QuoteController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SitemapController;
 use App\Http\Controllers\Api\TaqrizchiController;
 use App\Http\Controllers\Api\TaqrizController;
@@ -35,6 +36,10 @@ Route::middleware('throttle:public-read')->group(function () {
     Route::get('/collections', [CollectionController::class, 'index']);
     Route::get('/collections/{collection}', [CollectionController::class, 'show']);
     Route::get('/quotes/today', [QuoteController::class, 'today']);
+    // The search box's grouped suggestions. The site forwards each
+    // visitor's address and sends no token, so every visitor has a
+    // stranger's 120 a minute and nobody's typing eats the site's bucket.
+    Route::get('/search', SearchController::class);
     // Ids, slugs and dates for the site's sitemap, in one response.
     Route::get('/sitemap', [SitemapController::class, 'index']);
 });

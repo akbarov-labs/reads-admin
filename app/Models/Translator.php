@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\GeneratesUniqueSlug;
+use App\Models\Concerns\HasSearchKey;
 use App\Observers\TranslatorObserver;
 use App\Support\TranslatorSeo;
 use Carbon\CarbonInterface as Carbon;
@@ -34,6 +35,7 @@ use Spatie\Translatable\HasTranslations;
 class Translator extends Model
 {
     use GeneratesUniqueSlug;
+    use HasSearchKey;
     use HasTranslations;
 
     /**

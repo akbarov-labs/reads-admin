@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\GeneratesUniqueSlug;
+use App\Models\Concerns\HasSearchKey;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -23,6 +24,7 @@ use Spatie\Translatable\HasTranslations;
 class Author extends Model
 {
     use GeneratesUniqueSlug;
+    use HasSearchKey;
     use HasTranslations;
 
     /** @var array<int, string> */

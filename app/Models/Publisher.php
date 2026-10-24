@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\GeneratesUniqueSlug;
 use App\Enums\ModerationStatus;
+use App\Models\Concerns\HasSearchKey;
 use App\Observers\PublisherObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -29,6 +30,7 @@ use Spatie\Translatable\HasTranslations;
 class Publisher extends Model
 {
     use GeneratesUniqueSlug;
+    use HasSearchKey;
     use HasTranslations;
 
     /** @var array<int, string> */
