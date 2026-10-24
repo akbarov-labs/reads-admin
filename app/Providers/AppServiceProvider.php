@@ -59,5 +59,16 @@ class AppServiceProvider extends ServiceProvider
                 ? Limit::perMinute(3000)->by('public-read-site')
                 : Limit::perMinute(120)->by('public-read:'.$request->ip());
         });
+
+        // The site's writes (the click log). Token-guarded like the bot's
+        // sync, with the same small per-IP bucket for anyone without it.
+        RateLimiter::for('site-writes', function (Request $request) {
+            $secret = (string) config('seo.revalidate.secret');
+            $given = (string) $request->bearerToken();
+
+            return $secret !== '' && $given !== '' && hash_equals($secret, $given)
+                ? Limit::perMinute(1200)->by('site-writes')
+                : Limit::perMinute(30)->by('site-writes-stranger:'.$request->ip());
+        });
     }
 }

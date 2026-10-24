@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CatalogueSyncController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\InquiryController;
+use App\Http\Controllers\Api\OutboundClickController;
 use App\Http\Controllers\Api\PublisherController;
 use App\Http\Controllers\Api\QuoteController;
 use App\Http\Controllers\Api\SearchController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Api\TaqrizchiController;
 use App\Http\Controllers\Api\TaqrizController;
 use App\Http\Controllers\Api\TranslatorController;
 use App\Http\Middleware\EnsureCatalogueSyncToken;
+use App\Http\Middleware\EnsureSiteToken;
 use Illuminate\Support\Facades\Route;
 
 // Read endpoints are public, but not unlimited: 120 a minute per IP takes
@@ -48,6 +50,11 @@ Route::middleware('throttle:public-read')->group(function () {
 // honeypot check in StoreInquiryRequest/InquiryController.
 Route::post('/translators/{translator}/inquiries', [InquiryController::class, 'store'])
     ->middleware('throttle:5,1');
+
+// The site's click log: a reader it sent on to a store. Only the site writes
+// here, with the secret it already sends on its reads.
+Route::post('/clicks', [OutboundClickController::class, 'store'])
+    ->middleware(['throttle:site-writes', EnsureSiteToken::class]);
 
 // The Kitoblarim bot's catalogue sync. Unlike everything above it writes, so
 // it is behind a shared token and deliberately not part of the public read
