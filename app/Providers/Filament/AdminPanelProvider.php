@@ -52,6 +52,7 @@ class AdminPanelProvider extends PanelProvider
                 Stats\ClicksPerDayChart::class,
                 Stats\TopBooksTable::class,
                 Stats\TopStoresTable::class,
+                Stats\TopAnnouncementsTable::class,
                 Stats\TopSearchesTable::class,
                 Stats\NoResultSearchesTable::class,
             ])

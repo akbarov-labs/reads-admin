@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable([
     'kind',
     'book_id',
+    'announcement_id',
     'target',
     'locale',
     'visitor_hash',
@@ -36,6 +37,11 @@ class OutboundClick extends Model
     public function book(): BelongsTo
     {
         return $this->belongsTo(Book::class);
+    }
+
+    public function announcement(): BelongsTo
+    {
+        return $this->belongsTo(Announcement::class);
     }
 
     /**

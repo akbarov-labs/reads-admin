@@ -26,6 +26,8 @@ use Spatie\Translatable\HasTranslations;
     'established_year',
     'logo_path',
     'website_url',
+    'telegram_channel',
+    'order_contact',
 ])]
 class Publisher extends Model
 {
@@ -64,6 +66,12 @@ class Publisher extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** @return HasMany<Announcement, $this> */
+    public function announcements(): HasMany
+    {
+        return $this->hasMany(Announcement::class);
     }
 
     /** @return HasMany<Edition, $this> */
