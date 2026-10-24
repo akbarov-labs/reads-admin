@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Clicks;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -43,6 +44,14 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            // The Store clicks page's widgets. Kept out of Filament/Widgets so
+            // the main dashboard does not show them, so registered by hand.
+            ->livewireComponents([
+                Clicks\ClickStatsOverview::class,
+                Clicks\ClicksPerDayChart::class,
+                Clicks\TopBooksTable::class,
+                Clicks\TopStoresTable::class,
+            ])
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn () => (Auth::user()?->isTranslator() || Auth::user()?->isPublisher())
