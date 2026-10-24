@@ -14,6 +14,7 @@ use App\Services\CatalogueRecords;
 use App\Services\SiteRevalidator;
 use App\Support\Asaxiy\AsaxiyCatalog;
 use App\Support\Asaxiy\AsaxiyPage;
+use App\Support\SearchKeys;
 use App\Support\UzbekText;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Model;
@@ -117,6 +118,10 @@ class AsaxiyBooksSeeder extends Seeder
             $this->importRelations($listings);
             $this->removeNotBooks();
         });
+
+        // Rows are saved with their keys, but an original name filled in
+        // by a bulk update further up is not.
+        SearchKeys::rebuild();
 
         app(SiteRevalidator::class)->everything();
 

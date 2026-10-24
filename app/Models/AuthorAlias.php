@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasSearchKey;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['author_id', 'name', 'slug'])]
 class AuthorAlias extends Model
 {
+    use HasSearchKey;
+
     /** @return BelongsTo<Author, $this> */
     public function author(): BelongsTo
     {

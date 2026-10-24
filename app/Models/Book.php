@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ModerationStatus;
+use App\Models\Concerns\HasSearchKey;
 use App\Observers\ProfileContentObserver;
 use App\Support\UzbekText;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -32,6 +33,8 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 ])]
 class Book extends Model
 {
+    use HasSearchKey;
+
     /**
      * Mirrors the database default so a freshly built model reports its real
      * state before it has been saved and read back.
