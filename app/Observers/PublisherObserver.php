@@ -9,13 +9,14 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * @see TranslatorObserver — same shape. A publisher may keep their own
- * details current but cannot move their public URL or reassign the account
- * the row belongs to.
+ * details current but cannot move their public URL, reassign the account
+ * the row belongs to, or change which Telegram channel's posts count as
+ * theirs.
  */
 class PublisherObserver
 {
     /** @var array<int, string> */
-    private const ADMIN_ONLY = ['slug', 'user_id'];
+    private const ADMIN_ONLY = ['slug', 'user_id', 'telegram_channel'];
 
     public function __construct(private readonly SiteRevalidator $revalidator) {}
 

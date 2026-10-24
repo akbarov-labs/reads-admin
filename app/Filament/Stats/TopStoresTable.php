@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Clicks;
+namespace App\Filament\Stats;
 
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -9,7 +9,7 @@ use Filament\Widgets\TableWidget;
 /** How many readers each store got, and for how many different books. */
 class TopStoresTable extends TableWidget
 {
-    use FiltersClicks;
+    use FiltersStats;
 
     protected static ?string $heading = 'Top stores';
 

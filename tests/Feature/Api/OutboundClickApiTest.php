@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Enums\OutboundClickKind;
 use App\Models\Book;
 use App\Models\OutboundClick;
+use App\Support\SiteStats;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -70,10 +71,10 @@ class OutboundClickApiTest extends TestCase
     {
         $morning = CarbonImmutable::parse('2026-10-24 06:00', 'Asia/Tashkent');
 
-        $a = OutboundClick::visitorHash('203.0.113.9', 'UA', $morning);
-        $b = OutboundClick::visitorHash('203.0.113.9', 'UA', $morning->setTime(23, 30));
-        $c = OutboundClick::visitorHash('203.0.113.9', 'UA', $morning->addDay());
-        $d = OutboundClick::visitorHash('203.0.113.10', 'UA', $morning);
+        $a = SiteStats::visitorHash('203.0.113.9', 'UA', $morning);
+        $b = SiteStats::visitorHash('203.0.113.9', 'UA', $morning->setTime(23, 30));
+        $c = SiteStats::visitorHash('203.0.113.9', 'UA', $morning->addDay());
+        $d = SiteStats::visitorHash('203.0.113.10', 'UA', $morning);
 
         $this->assertSame($a, $b);
         $this->assertNotSame($a, $c);
@@ -130,7 +131,7 @@ class OutboundClickApiTest extends TestCase
         $this->assertSame(1, OutboundClick::betweenDays('2026-10-24', '2026-10-24')->count());
         $this->assertSame(
             ['2026-10-23', '2026-10-24'],
-            OutboundClick::query()->selectRaw(OutboundClick::daySql().' as day')->orderBy('day')->pluck('day')->all(),
+            OutboundClick::query()->selectRaw(SiteStats::daySql().' as day')->orderBy('day')->pluck('day')->all(),
         );
     }
 }
