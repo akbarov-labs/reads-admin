@@ -146,6 +146,11 @@ class AsaxiyBooksSeeder extends Seeder
         foreach ($catalog->books() as $listing) {
             $listing += $this->pageDetails((string) $listing['source_article']);
 
+            // The page's description still has its paragraphs; the
+            // workbook's is one line with the structure guessed back.
+            $listing['description'] = AsaxiyCatalog::description($listing['page_description'], $listing['uzbek']) ?? $listing['description'];
+            unset($listing['page_description']);
+
             if (AsaxiyCatalog::isNotABook($listing)) {
                 $this->notBooks[] = (string) $listing['source_article'];
 
@@ -180,8 +185,8 @@ class AsaxiyBooksSeeder extends Seeder
 
     /**
      * What asaxiy:scrape saved about the listing that the workbook does not
-     * have: the genre crumb, the related books, and how many gallery photos
-     * there are.
+     * have: the genre crumb, the related books, how many gallery photos
+     * there are, and the description as the page laid it out.
      *
      * @return array<string, mixed>
      */
@@ -194,6 +199,7 @@ class AsaxiyBooksSeeder extends Seeder
             'breadcrumb' => $page['breadcrumb'] ?? null,
             'related' => $page['related'] ?? [],
             'gallery_count' => count($page['gallery'] ?? []),
+            'page_description' => $page['description'] ?? null,
         ];
     }
 

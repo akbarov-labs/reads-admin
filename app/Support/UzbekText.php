@@ -111,6 +111,25 @@ class UzbekText
         return $text === '' ? null : $text;
     }
 
+    /**
+     * clean() for running text — a description — where a line break is
+     * part of what was written: spaces collapse within each line, and
+     * paragraphs stay apart by at most one blank line.
+     */
+    public static function cleanParagraphs(?string $text): ?string
+    {
+        if ($text === null) {
+            return null;
+        }
+
+        $text = preg_replace('/[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{FEFF}]/u', '', $text);
+        $text = preg_replace('/\r\n?|[\x{2028}\x{2029}]/u', "\n", self::normalizeApostrophes($text));
+        $text = preg_replace(['/[^\S\n]+/u', '/ ?\n ?/', '/\n{3,}/'], [' ', "\n", "\n\n"], $text);
+        $text = trim($text);
+
+        return $text === '' ? null : $text;
+    }
+
     /** Same person or book regardless of alphabet, case, spacing or punctuation. */
     public static function key(string $text): string
     {

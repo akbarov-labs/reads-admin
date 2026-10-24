@@ -5,7 +5,8 @@ namespace App\Support\Asaxiy;
 /**
  * Reads what an asaxiy.uz product page says about a book: the
  * "Xususiyatlar" table, the genre in the breadcrumb, the cover and gallery
- * photos, and the "Tavsiya" block of related books.
+ * photos, the "Tavsiya" block of related books, and the description with
+ * its paragraphs and lists (the workbook has it on one line).
  *
  * Kept free of HTTP so it can be tested against saved HTML, and so the
  * scraper can cache the parsed result instead of the 600 KB page.
@@ -51,6 +52,7 @@ class AsaxiyPage
      *     cover: ?string,
      *     gallery: list<string>,
      *     related: list<string>,
+     *     description: ?string,
      * }
      */
     public static function parse(string $html): array
@@ -62,6 +64,7 @@ class AsaxiyPage
             'cover' => self::cover($html),
             'gallery' => self::gallery($html),
             'related' => self::related($html),
+            'description' => self::description($html),
         ];
     }
 
@@ -165,6 +168,31 @@ class AsaxiyPage
             fn (string $path) => 'https://asaxiy.uz'.$path,
             array_filter($m[1], fn (string $path) => ! str_starts_with($path, '/product/knigi')),
         )));
+    }
+
+    /**
+     * "Mahsulot ta'rifi": the block the page collapses behind its
+     * "Ko'proq ko'rish" button, which is left out.
+     */
+    private static function description(string $html): ?string
+    {
+        if (! preg_match('/<div[^>]*\bid="description-content"[^>]*>/', $html, $open, PREG_OFFSET_CAPTURE)) {
+            return null;
+        }
+
+        $start = $open[0][1] + strlen($open[0][0]);
+        $depth = 1;
+        preg_match_all('/<(\/?)div\b[^>]*>/i', $html, $tags, PREG_OFFSET_CAPTURE, $start);
+
+        foreach ($tags[1] as $i => [$slash]) {
+            $depth += $slash === '' ? 1 : -1;
+
+            if ($depth === 0) {
+                return AsaxiyDescription::fromHtml(substr($html, $start, $tags[0][$i][1] - $start));
+            }
+        }
+
+        return null;
     }
 
     private static function text(string $html): string
