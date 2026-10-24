@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Filament\Clicks;
+namespace App\Filament\Stats;
 
-use App\Models\OutboundClick;
+use App\Support\SiteStats;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use Filament\Widgets\ChartWidget;
 
 class ClicksPerDayChart extends ChartWidget
 {
-    use FiltersClicks;
+    use FiltersStats;
 
     protected static ?string $heading = 'Clicks per day';
 
@@ -36,7 +36,7 @@ class ClicksPerDayChart extends ChartWidget
 
         $counts = $this->clicks()
             ->toBase()
-            ->selectRaw(OutboundClick::daySql().' as day, target, count(*) as clicks')
+            ->selectRaw(SiteStats::daySql().' as day, target, count(*) as clicks')
             ->groupBy('day', 'target')
             ->get()
             ->groupBy('target');

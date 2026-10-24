@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Filament\Resources\PublisherResource\Pages;
 use App\Filament\Resources\PublisherResource\RelationManagers\EditionsRelationManager;
 use App\Models\Publisher;
+use App\Services\Telegram\TelegramChannel;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -74,6 +75,20 @@ class PublisherResource extends Resource
                     // actually stops a publisher moving their own URL.
                     ->disabled(fn () => ! (auth()->user()?->isAdmin() ?? false)),
                 Forms\Components\TextInput::make('website_url')->url()->maxLength(255),
+                Forms\Components\TextInput::make('telegram_channel')
+                    ->label('Telegram channel')
+                    ->prefix('@')
+                    ->helperText('The public channel where new books and pre-orders are announced. Its post links can be pasted into Announcements.')
+                    ->rule('regex:'.TelegramChannel::USERNAME)
+                    ->dehydrateStateUsing(fn (?string $state) => TelegramChannel::username($state))
+                    // Which posts count as this publisher's: an admin's call.
+                    ->disabled(fn () => ! (auth()->user()?->isAdmin() ?? false)),
+                Forms\Components\TextInput::make('order_contact')
+                    ->label('Telegram for orders')
+                    ->prefix('@')
+                    ->helperText('The account readers write to when they press "Order" on an announcement. The message is pre-filled and names kitoblarim.uz.')
+                    ->rule('regex:'.TelegramChannel::USERNAME)
+                    ->dehydrateStateUsing(fn (?string $state) => TelegramChannel::username($state)),
                 Forms\Components\FileUpload::make('logo_path')->label('Logo')->image()->acceptedFileTypes(TranslatorResource::SAFE_IMAGE_TYPES)->maxSize(4096)->disk('public')->directory('publishers'),
             ])->columns(2),
             Forms\Components\Section::make('Localized information')->schema([
