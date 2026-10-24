@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\OutboundClickKind;
 use App\Http\Controllers\Controller;
 use App\Models\OutboundClick;
+use App\Support\SiteStats;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\RateLimiter;
@@ -32,7 +33,7 @@ class OutboundClickController extends Controller
             'user_agent' => ['nullable', 'string', 'max:512'],
         ]);
 
-        $hash = OutboundClick::visitorHash($data['ip'] ?? null, $data['user_agent'] ?? null);
+        $hash = SiteStats::visitorHash($data['ip'] ?? null, $data['user_agent'] ?? null);
 
         // Accepted either way: the site does nothing with the answer, and a
         // script hammering one link learns nothing from it.

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthorController;
 use App\Http\Controllers\Api\BookController;
+use App\Http\Controllers\Api\BookViewController;
 use App\Http\Controllers\Api\CatalogueSyncController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CollectionController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Api\OutboundClickController;
 use App\Http\Controllers\Api\PublisherController;
 use App\Http\Controllers\Api\QuoteController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\SearchQueryController;
 use App\Http\Controllers\Api\SitemapController;
 use App\Http\Controllers\Api\TaqrizchiController;
 use App\Http\Controllers\Api\TaqrizController;
@@ -51,10 +53,14 @@ Route::middleware('throttle:public-read')->group(function () {
 Route::post('/translators/{translator}/inquiries', [InquiryController::class, 'store'])
     ->middleware('throttle:5,1');
 
-// The site's click log: a reader it sent on to a store. Only the site writes
-// here, with the secret it already sends on its reads.
-Route::post('/clicks', [OutboundClickController::class, 'store'])
-    ->middleware(['throttle:site-writes', EnsureSiteToken::class]);
+// The site's own statistics: a reader it sent on to a store, a book page
+// opened, a search. Only the site writes here, with the secret it already
+// sends on its reads.
+Route::middleware(['throttle:site-writes', EnsureSiteToken::class])->group(function () {
+    Route::post('/clicks', [OutboundClickController::class, 'store']);
+    Route::post('/views', [BookViewController::class, 'store']);
+    Route::post('/searches', [SearchQueryController::class, 'store']);
+});
 
 // The Kitoblarim bot's catalogue sync. Unlike everything above it writes, so
 // it is behind a shared token and deliberately not part of the public read

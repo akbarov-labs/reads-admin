@@ -2,11 +2,15 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Clicks\ClicksPerDayChart;
-use App\Filament\Clicks\ClickStatsOverview;
-use App\Filament\Clicks\TopBooksTable;
-use App\Filament\Clicks\TopStoresTable;
+use App\Filament\Stats\ClicksPerDayChart;
+use App\Filament\Stats\NoResultSearchesTable;
+use App\Filament\Stats\SiteStatsOverview;
+use App\Filament\Stats\TopBooksTable;
+use App\Filament\Stats\TopSearchesTable;
+use App\Filament\Stats\TopStoresTable;
+use App\Filament\Stats\ViewsAndSearchesChart;
 use App\Models\OutboundClick;
+use App\Support\SiteStats as Stats;
 use Carbon\CarbonImmutable;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -16,25 +20,27 @@ use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * How many readers the site sent to each store, for which books, and when:
- * the numbers to show a store or a publisher what Kitoblarim sends them.
+ * The site's own numbers, same day: which books readers open, which they
+ * go on to look for in a store (and which store), and what they search for,
+ * found or not. The store figures are the ones to show a store or a
+ * publisher what Kitoblarim sends them.
  *
  * A second dashboard rather than widgets on the first, so its filters
  * (dates, store, language) apply to every chart and table on it at once.
  * Its widgets live outside app/Filament/Widgets so the main dashboard does
  * not pick them up; AdminPanelProvider registers them with Livewire.
  */
-class ClickStats extends Dashboard
+class SiteStats extends Dashboard
 {
     use HasFiltersForm;
 
-    protected static string $routePath = 'clicks';
+    protected static string $routePath = 'stats';
 
-    protected static ?string $title = 'Store clicks';
+    protected static ?string $title = 'Site stats';
 
-    protected static ?string $navigationLabel = 'Store clicks';
+    protected static ?string $navigationLabel = 'Site stats';
 
-    protected static ?string $navigationIcon = 'heroicon-o-cursor-arrow-rays';
+    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
 
     protected static ?int $navigationSort = 90;
 
@@ -48,12 +54,12 @@ class ClickStats extends Dashboard
 
     public static function defaultFrom(): string
     {
-        return CarbonImmutable::now(OutboundClick::TIMEZONE)->subDays(self::DEFAULT_DAYS - 1)->toDateString();
+        return CarbonImmutable::now(Stats::TIMEZONE)->subDays(self::DEFAULT_DAYS - 1)->toDateString();
     }
 
     public static function defaultUntil(): string
     {
-        return CarbonImmutable::now(OutboundClick::TIMEZONE)->toDateString();
+        return CarbonImmutable::now(Stats::TIMEZONE)->toDateString();
     }
 
     public function filtersForm(Form $form): Form
@@ -70,6 +76,7 @@ class ClickStats extends Dashboard
                 ->default(self::defaultUntil()),
             Select::make('target')
                 ->label('Store')
+                ->helperText('Narrows store clicks only')
                 ->placeholder('All stores')
                 ->options(fn () => OutboundClick::query()->distinct()->orderBy('target')->pluck('target', 'target')->all()),
             Select::make('locale')
@@ -82,10 +89,13 @@ class ClickStats extends Dashboard
     public function getWidgets(): array
     {
         return [
-            ClickStatsOverview::class,
+            SiteStatsOverview::class,
+            ViewsAndSearchesChart::class,
             ClicksPerDayChart::class,
             TopBooksTable::class,
             TopStoresTable::class,
+            TopSearchesTable::class,
+            NoResultSearchesTable::class,
         ];
     }
 
