@@ -90,6 +90,8 @@ class AsaxiyCatalog
      */
     public static function normalize(array $raw): ?array
     {
+        // The description keeps its line breaks; description() tidies it.
+        $description = $raw['description'] ?? null;
         $raw = array_map(UzbekText::clean(...), $raw);
         $languages = self::languages($raw['language'] ?? null, $raw);
 
@@ -131,7 +133,7 @@ class AsaxiyCatalog
             'translators' => $translators,
             'series' => self::series($title),
             'publisher' => self::publisher($raw['publisher'] ?? null, $uzbek),
-            'description' => self::description($latin($raw['description'] ?? null)),
+            'description' => self::description($description, $uzbek),
             'language' => $languages === [] ? null : implode(', ', array_map(fn ($l) => "{$l} tili", $languages)),
             'uzbek' => $uzbek,
             'script' => self::script($raw['script'] ?? null),
@@ -357,13 +359,10 @@ class AsaxiyCatalog
         return $title;
     }
 
-    private static function description(?string $text): ?string
+    /** The listing's description, in Latin script for an Uzbek edition. */
+    public static function description(?string $text, bool $uzbek = false): ?string
     {
-        if ($text === null) {
-            return null;
-        }
-
-        return UzbekText::clean(preg_replace("/^(Mahsulot ta'rifi|Tavsif|Описание)\s*/u", '', $text));
+        return AsaxiyDescription::tidy($text !== null && $uzbek ? UzbekText::toLatin($text) : $text);
     }
 
     private static function publisher(?string $name, bool $uzbekBook): ?string

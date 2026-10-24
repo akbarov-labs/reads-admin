@@ -196,6 +196,21 @@ class AsaxiyBooksSeederTest extends TestCase
         $this->assertSame(['Ikkinchi'], $book->relatedBooks->pluck('uzbek_title')->all());
     }
 
+    public function test_a_description_gets_its_paragraphs_from_the_page_or_has_them_restored(): void
+    {
+        $this->cachePage('T1', ['description' => "Китоб ҳақида.\n\nИккинчи қисм."]);
+
+        $this->writeWorkbook([
+            $this->row(['title' => 'Birinchi', 'isbn' => '9789943231986', 'article' => 'T1', 'description' => "Mahsulot ta'rifi Китоб ҳақида. Иккинчи қисм. Ko'proq ko'rish"]),
+            $this->row(['title' => 'Ikkinchi', 'isbn' => '9789943231672', 'article' => 'T2', 'description' => "Mahsulot ta'rifi Asaxiy Books loyihasida yana bir PREMYERA - “Ikkinchi” kitobi sotuvda! Kitobda: • bir; • ikki. Ko'proq ko'rish"]),
+        ]);
+
+        $this->seed(AsaxiyBooksSeeder::class);
+
+        $this->assertSame("Kitob haqida.\n\nIkkinchi qism.", Edition::where('isbn', '9789943231986')->sole()->description, 'the page, made Latin');
+        $this->assertSame("Kitobda:\n• bir;\n• ikki.", Edition::where('isbn', '9789943231672')->sole()->description, 'the workbook, restored');
+    }
+
     public function test_gift_boxes_bundles_and_puzzles_are_not_imported_as_books(): void
     {
         $this->cachePage('T1', ['breadcrumb' => 'Kitobli sovg‘a to‘plamlari']);

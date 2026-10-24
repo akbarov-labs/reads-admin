@@ -112,8 +112,9 @@ class CatalogueSync
         $language = $this->language($data['language'] ?? null);
         $uzbek = $language === self::UZBEK;
 
-        $text = function (mixed $value) use ($uzbek): ?string {
-            $value = is_string($value) ? UzbekText::clean($value) : null;
+        // A description keeps its paragraphs; everything else is one line.
+        $text = function (mixed $value, bool $paragraphs = false) use ($uzbek): ?string {
+            $value = ! is_string($value) ? null : ($paragraphs ? UzbekText::cleanParagraphs($value) : UzbekText::clean($value));
 
             return $value !== null && $uzbek && UzbekText::hasCyrillic($value) ? UzbekText::toLatin($value) : $value;
         };
@@ -151,7 +152,7 @@ class CatalogueSync
             // a real one (a blank never erases anything, see merge()).
             'year' => isset($data['year']) ? Edition::plausibleYear((int) $data['year']) : null,
             'pages' => isset($data['pages']) ? (int) $data['pages'] : null,
-            'description' => $text($data['description'] ?? null),
+            'description' => $text($data['description'] ?? null, paragraphs: true),
             // Whole seconds, like the column it is compared with.
             'updatedAt' => CarbonImmutable::parse($data['updatedAt'])->setMicrosecond(0),
             'fillOnly' => (bool) ($data['fillOnly'] ?? false),

@@ -166,7 +166,7 @@ class CatalogueSyncApiTest extends TestCase
 
         $this->assertSame("O'tkan kunlar", $edition->book->uzbek_title);
         $this->assertSame("G'afur G'ulom", $edition->publisher->name);
-        $this->assertSame("O'zbek romani haqida", $edition->description);
+        $this->assertSame("O'zbek romani\nhaqida", $edition->description, 'a description keeps its line breaks');
     }
 
     public function test_cyrillic_is_made_latin_for_uzbek_editions_only(): void
