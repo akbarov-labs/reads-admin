@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\AuthorController;
 use App\Http\Controllers\Api\BookController;
 use App\Http\Controllers\Api\BookViewController;
@@ -40,6 +41,9 @@ Route::middleware('throttle:public-read')->group(function () {
     Route::get('/collections', [CollectionController::class, 'index']);
     Route::get('/collections/{collection}', [CollectionController::class, 'show']);
     Route::get('/quotes/today', [QuoteController::class, 'today']);
+    // Publishers' new books and pre-orders on the site today.
+    Route::get('/announcements', [AnnouncementController::class, 'index']);
+    Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show']);
     // The search box's grouped suggestions. The site forwards each
     // visitor's address and sends no token, so every visitor has a
     // stranger's 120 a minute and nobody's typing eats the site's bucket.

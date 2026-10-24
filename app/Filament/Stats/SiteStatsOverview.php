@@ -2,6 +2,7 @@
 
 namespace App\Filament\Stats;
 
+use App\Enums\OutboundClickKind;
 use App\Models\SearchQuery;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -46,6 +47,8 @@ class SiteStatsOverview extends StatsOverviewWidget
                 ->description($listings > 0 ? $this->percent((int) $searches->empty, $listings).' of listing searches' : 'On the books listing')
                 ->color((int) $searches->empty > 0 ? 'warning' : null),
             Stat::make('Busiest store', $this->targets()[0] ?? '—'),
+            Stat::make('Publisher orders', number_format($this->clicks(OutboundClickKind::PublisherOrder)->count()))
+                ->description('Order buttons pressed on announcements'),
         ];
     }
 

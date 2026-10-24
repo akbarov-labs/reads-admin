@@ -2,9 +2,11 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\OutboundClickKind;
 use App\Filament\Stats\ClicksPerDayChart;
 use App\Filament\Stats\NoResultSearchesTable;
 use App\Filament\Stats\SiteStatsOverview;
+use App\Filament\Stats\TopAnnouncementsTable;
 use App\Filament\Stats\TopBooksTable;
 use App\Filament\Stats\TopSearchesTable;
 use App\Filament\Stats\TopStoresTable;
@@ -78,7 +80,7 @@ class SiteStats extends Dashboard
                 ->label('Store')
                 ->helperText('Narrows store clicks only')
                 ->placeholder('All stores')
-                ->options(fn () => OutboundClick::query()->distinct()->orderBy('target')->pluck('target', 'target')->all()),
+                ->options(fn () => OutboundClick::query()->where('kind', OutboundClickKind::Store)->distinct()->orderBy('target')->pluck('target', 'target')->all()),
             Select::make('locale')
                 ->label('Site language')
                 ->placeholder('All languages')
@@ -94,6 +96,7 @@ class SiteStats extends Dashboard
             ClicksPerDayChart::class,
             TopBooksTable::class,
             TopStoresTable::class,
+            TopAnnouncementsTable::class,
             TopSearchesTable::class,
             NoResultSearchesTable::class,
         ];

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Stats;
 
+use App\Enums\OutboundClickKind;
 use App\Filament\Pages\SiteStats;
 use App\Models\BookView;
 use App\Models\OutboundClick;
@@ -35,12 +36,18 @@ trait FiltersStats
         return $this->filters['locale'] ?? null;
     }
 
-    /** @return Builder<OutboundClick> */
-    protected function clicks(): Builder
+    /**
+     * Clicks of one kind: store clicks unless asked otherwise. The store
+     * filter narrows store clicks only.
+     *
+     * @return Builder<OutboundClick>
+     */
+    protected function clicks(OutboundClickKind $kind = OutboundClickKind::Store): Builder
     {
         return OutboundClick::query()
+            ->where('kind', $kind)
             ->betweenDays($this->from(), $this->until())
-            ->when($this->filters['target'] ?? null, fn (Builder $query, string $target) => $query->where('target', $target))
+            ->when($kind === OutboundClickKind::Store ? ($this->filters['target'] ?? null) : null, fn (Builder $query, string $target) => $query->where('target', $target))
             ->when($this->locale(), fn (Builder $query, string $locale) => $query->where('locale', $locale));
     }
 
