@@ -15,11 +15,11 @@ use App\Http\Controllers\Api\TranslatorController;
 use App\Http\Middleware\EnsureCatalogueSyncToken;
 use Illuminate\Support\Facades\Route;
 
-// Read endpoints are public, but not unlimited: in normal operation only the
-// Next.js site calls them, a handful of times per ISR window. A ceiling this
-// far above that costs legitimate traffic nothing while taking scraping and
-// cheap floods off the table.
-Route::middleware('throttle:120,1')->group(function () {
+// Read endpoints are public, but not unlimited: 120 a minute per IP takes
+// scraping and cheap floods off the table. The Next.js site, which sends
+// every visitor's and crawler's cache misses from one IP, has a bucket of its
+// own (`public-read` in AppServiceProvider).
+Route::middleware('throttle:public-read')->group(function () {
     Route::get('/translators', [TranslatorController::class, 'index']);
     Route::get('/translators/{translator}', [TranslatorController::class, 'show']);
     Route::get('/authors', [AuthorController::class, 'index']);
