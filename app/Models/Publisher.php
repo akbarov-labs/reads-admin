@@ -50,10 +50,14 @@ class Publisher extends Model
      * purely numeric value falls back to the primary key, so both forms
      * resolve and neither can be mistaken for the other — a slug is never
      * all digits, because slugs are generated from names.
+     *
+     * The slug of a publisher merged into this one finds this one too; the
+     * response carries the current slug, and the site redirects to it.
      */
     public function resolveRouteBinding($value, $field = null): ?self
     {
-        $bySlug = $this->where('slug', $value)->first();
+        $bySlug = $this->where('slug', $value)->first()
+            ?? $this->whereHas('aliases', fn ($alias) => $alias->where('slug', $value))->first();
 
         if ($bySlug !== null) {
             return $bySlug;
@@ -78,6 +82,18 @@ class Publisher extends Model
     public function editions(): HasMany
     {
         return $this->hasMany(Edition::class);
+    }
+
+    /** @return HasMany<PublisherAlias, $this> */
+    public function aliases(): HasMany
+    {
+        return $this->hasMany(PublisherAlias::class);
+    }
+
+    /** A merged publisher's old slug still leads to its page, so nobody new gets it. */
+    protected static function slugTaken(string $slug): bool
+    {
+        return static::where('slug', $slug)->exists() || PublisherAlias::where('slug', $slug)->exists();
     }
 
     /**

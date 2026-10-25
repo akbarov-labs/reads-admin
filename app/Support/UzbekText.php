@@ -36,6 +36,13 @@ class UzbekText
         'ltd', 'inc', 'llc',
     ];
 
+    /**
+     * Publisher words written glued to the name ("Hilolnashr", "Factorbooks"),
+     * longest first. Not "uyi" or "ltd": too short to be told from the end of
+     * a real word.
+     */
+    private const PUBLISHER_SUFFIXES = ['nashriyoti', 'nashriyot', 'nashri', 'nashr', 'publishing', 'books', 'book'];
+
     /** Misspellings seen in the Asaxiy export that no general rule catches. */
     private const PUBLISHER_ALIASES = [
         'maatbachi' => 'matbaachi',
@@ -150,12 +157,24 @@ class UzbekText
         return $key === '' ? null : $key;
     }
 
-    /** Same publisher regardless of alphabet, case, punctuation, or "nashr" / "Books" suffixes. */
+    /**
+     * Same publisher regardless of alphabet, case, punctuation, or "nashr" /
+     * "Books" suffixes, written apart or glued on: "Hilol-nashr",
+     * "Hilolnashr" and "Hilol nashriyoti" are all "hilol".
+     */
     public static function publisherKey(string $text): string
     {
         $words = self::words($text);
         $significant = array_values(array_diff($words, self::PUBLISHER_NOISE));
         $key = implode('', $significant ?: $words);
+
+        foreach (self::PUBLISHER_SUFFIXES as $suffix) {
+            // At least three letters of name left: "Nashr" alone stays a name.
+            if (str_ends_with($key, $suffix) && strlen($key) - strlen($suffix) >= 3) {
+                $key = substr($key, 0, -strlen($suffix));
+                break;
+            }
+        }
 
         return self::PUBLISHER_ALIASES[$key] ?? $key;
     }

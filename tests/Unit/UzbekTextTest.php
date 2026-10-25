@@ -50,13 +50,24 @@ class UzbekTextTest extends TestCase
     {
         $key = UzbekText::publisherKey('Hilol nashr');
 
-        foreach (['HILOL-Nashr', 'Ҳилол-нашр', 'Hilol-nashr', 'hilol nashriyoti'] as $spelling) {
+        foreach (['HILOL-Nashr', 'Ҳилол-нашр', 'Hilol-nashr', 'hilol nashriyoti', 'Hilolnashr', 'Hilolnashriyoti'] as $spelling) {
             $this->assertSame($key, UzbekText::publisherKey($spelling), $spelling);
         }
 
         $this->assertNotSame($key, UzbekText::publisherKey('Hilol media'));
         $this->assertSame(UzbekText::publisherKey("G'afur G'ulom"), UzbekText::publisherKey('G`afur G`ulom'));
         $this->assertSame(UzbekText::publisherKey('Nihol'), UzbekText::publisherKey('Nihol nashr'));
+    }
+
+    public function test_a_publisher_word_glued_to_the_name_is_still_dropped(): void
+    {
+        $this->assertSame(UzbekText::publisherKey('Factor Books'), UzbekText::publisherKey('Factorbooks'));
+        $this->assertSame(UzbekText::publisherKey('Kitobdor'), UzbekText::publisherKey('Kitobdornashr'));
+        $this->assertSame(UzbekText::publisherKey('Tavfiq nashr'), UzbekText::publisherKey('Tavfiqnashr'));
+
+        // Too little left to be a name of its own.
+        $this->assertSame('nashr', UzbekText::publisherKey('Nashr'));
+        $this->assertNotSame(UzbekText::publisherKey('Abook'), UzbekText::publisherKey('A'));
     }
 
     public function test_every_way_of_typing_a_title_has_one_search_key(): void
