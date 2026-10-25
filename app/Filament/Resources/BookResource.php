@@ -6,6 +6,7 @@ use App\Enums\BookProblem;
 use App\Enums\ModerationStatus;
 use App\Filament\Resources\BookResource\Pages;
 use App\Filament\Resources\BookResource\RelationManagers\EditionsRelationManager;
+use App\Filament\Support\PendingNavigationBadge;
 use App\Models\Author;
 use App\Models\Book;
 use App\Models\Series;
@@ -25,11 +26,15 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class BookResource extends Resource
 {
+    use PendingNavigationBadge;
+
     protected static ?string $model = Book::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
 
     protected static ?string $navigationLabel = 'Books';
+
+    protected static ?string $navigationGroup = 'Catalogue';
 
     protected static ?int $navigationSort = 1;
 

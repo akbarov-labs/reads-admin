@@ -7,6 +7,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -44,6 +45,15 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            // Dashboard, Site stats and Inquiries sit above the groups. Then
+            // the catalogue itself, the reviews that need moderating, and
+            // what editors put on the site's pages. Each resource names its
+            // group and its place in it ($navigationGroup, $navigationSort).
+            ->navigationGroups([
+                NavigationGroup::make('Catalogue'),
+                NavigationGroup::make('Reviews'),
+                NavigationGroup::make('On the site'),
+            ])
             // The Site stats page's widgets. Kept out of Filament/Widgets so
             // the main dashboard does not show them, so registered by hand.
             ->livewireComponents([

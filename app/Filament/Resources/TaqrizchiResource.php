@@ -24,9 +24,13 @@ class TaqrizchiResource extends Resource
 {
     protected static ?string $model = Taqrizchi::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
+    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
     protected static ?string $navigationLabel = 'Taqrizchilar';
+
+    protected static ?string $navigationGroup = 'Reviews';
+
+    protected static ?int $navigationSort = 3;
 
     /** @see TaqrizResource::$slug — "taqrizchis" for the same reason. */
     protected static ?string $slug = 'taqrizchilar';

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\ModerationStatus;
 use App\Filament\Resources\AnnouncementResource\Pages;
+use App\Filament\Support\PendingNavigationBadge;
 use App\Models\Announcement;
 use App\Models\Book;
 use Filament\Forms;
@@ -22,11 +23,17 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class AnnouncementResource extends Resource
 {
+    use PendingNavigationBadge;
+
     protected static ?string $model = Announcement::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-megaphone';
 
     protected static ?string $navigationLabel = 'Announcements';
+
+    protected static ?string $navigationGroup = 'On the site';
+
+    protected static ?int $navigationSort = 3;
 
     public static function shouldRegisterNavigation(): bool
     {

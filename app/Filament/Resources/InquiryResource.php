@@ -22,6 +22,18 @@ class InquiryResource extends Resource
 
     protected static ?string $navigationLabel = 'Inquiries';
 
+    protected static ?int $navigationSort = 3;
+
+    /**
+     * Admins see every translator's inquiries here. A translator reaches
+     * their own from the dashboard widget (their sidebar is hidden), and a
+     * taqrizchi or publisher has none, so the entry is the admin's alone.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([

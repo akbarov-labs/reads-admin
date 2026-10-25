@@ -44,7 +44,7 @@ class SiteStats extends Dashboard
 
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
 
-    protected static ?int $navigationSort = 90;
+    protected static ?int $navigationSort = 2;
 
     /** The window shown before anyone picks dates: the last 30 days. */
     public const DEFAULT_DAYS = 30;
