@@ -68,7 +68,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn () => (Auth::user()?->isTranslator() || Auth::user()?->isPublisher())
+                fn () => (Auth::user()?->isTranslator() || Auth::user()?->isPublisher() || Auth::user()?->isLibrary())
                     ? new HtmlString(<<<'HTML'
                         <style>
                             .fi-sidebar, .fi-topbar-open-sidebar-btn { display: none !important; }
@@ -76,7 +76,7 @@ class AdminPanelProvider extends PanelProvider
                         HTML)
                     : '',
             )
-            // The sidebar (hidden for translators and publishers, above)
+            // The sidebar (hidden for translators, publishers and libraries, above)
             // normally carries the only logo/home link back to the
             // dashboard — this keeps that path available in the topbar
             // regardless of role.

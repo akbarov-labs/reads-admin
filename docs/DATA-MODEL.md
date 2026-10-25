@@ -97,6 +97,25 @@ adds the newest ten as `quotes[]` (`id`, `body`, `page`, `translators`).
 `book`: every published quote of a published book takes its turn, one a
 day in the order they were added (`Quote::ofTheDay`), or `data: null`.
 
+### Libraries
+
+Only published libraries (`libraries.is_published`), and only their books
+that are on the site.
+
+`GET /api/books/{id}` adds `libraries[]`: `{slug, name, region, district,
+copiesTotal, copiesAvailable, updatedAt, stale}`, those with a free copy
+first. `updatedAt` is when the library last confirmed its list
+(`holdings_updated_at`); `stale` is true after `Library::STALE_AFTER_DAYS`.
+
+`GET /api/libraries` lists them by name, `?region=` and `?district=` to
+narrow, each with `bookCount`. `GET /api/libraries/{slug}` adds the
+localized `description`, `hours` and `membership`, and `phone`,
+`telegramUrl`, `instagramUrl`, `websiteUrl`, `latitude`, `longitude`.
+`GET /api/libraries/{slug}/books` is paginated (`?page`, `?per_page` ≤ 100,
+`?q` over title and author, `?available=1`): `{book, copiesTotal,
+copiesAvailable}`, `book` being the usual card. `GET /api/sitemap` lists
+them under `libraries`.
+
 ## Importing from Asaxiy
 
 ```sh

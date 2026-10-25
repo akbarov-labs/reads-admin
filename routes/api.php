@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CatalogueSyncController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\InquiryController;
+use App\Http\Controllers\Api\LibraryController;
 use App\Http\Controllers\Api\OutboundClickController;
 use App\Http\Controllers\Api\PublisherController;
 use App\Http\Controllers\Api\QuoteController;
@@ -41,6 +42,9 @@ Route::middleware('throttle:public-read')->group(function () {
     Route::get('/collections', [CollectionController::class, 'index']);
     Route::get('/collections/{collection}', [CollectionController::class, 'show']);
     Route::get('/quotes/today', [QuoteController::class, 'today']);
+    Route::get('/libraries', [LibraryController::class, 'index']);
+    Route::get('/libraries/{library:slug}', [LibraryController::class, 'show']);
+    Route::get('/libraries/{library:slug}/books', [LibraryController::class, 'books']);
     // Publishers' new books and pre-orders on the site today.
     Route::get('/announcements', [AnnouncementController::class, 'index']);
     Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show']);

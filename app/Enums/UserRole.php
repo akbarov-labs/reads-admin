@@ -10,6 +10,7 @@ enum UserRole: string implements HasLabel
     case Translator = 'translator';
     case Taqrizchi = 'taqrizchi';
     case Publisher = 'publisher';
+    case Library = 'library';
 
     public function getLabel(): string
     {
@@ -18,6 +19,7 @@ enum UserRole: string implements HasLabel
             self::Translator => 'Translator',
             self::Taqrizchi => 'Taqrizchi',
             self::Publisher => 'Publisher',
+            self::Library => 'Library',
         };
     }
 }

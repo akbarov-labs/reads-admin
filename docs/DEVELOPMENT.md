@@ -82,7 +82,7 @@ per-resource visibility rules make one panel behave like several:
 The admin's sidebar opens with Dashboard, Site stats and Inquiries, then three
 groups, in the order `AdminPanelProvider::navigationGroups()` gives them:
 
-- **Catalogue:** Books, Authors, Translators, Publishers.
+- **Catalogue:** Books, Authors, Translators, Publishers, Libraries.
 - **Reviews:** Taqrizlar, Reader reviews, Taqrizchilar.
 - **On the site:** Collections, Quotes, Announcements.
 
@@ -97,11 +97,11 @@ admin-only; the other roles' dashboards keep their profile widgets.
 
 ## User roles
 
-`users.role` is a `UserRole` enum (`app/Enums/UserRole.php`) with four
-cases: `admin`, `translator`, `taqrizchi`, `publisher`. It defaults to
+`users.role` is a `UserRole` enum (`app/Enums/UserRole.php`) with five
+cases: `admin`, `translator`, `taqrizchi`, `publisher`, `library`. It defaults to
 `translator` at the database level. A role only grants panel access once the
 matching profile row exists and points at that user (`translator.user_id`,
-`taqrizchilar.user_id`, or `publishers.user_id`) — creating a `User` alone is
+`taqrizchilar.user_id`, `publishers.user_id`, or `libraries.user_id`) — creating a `User` alone is
 not enough.
 
 Only admin accounts are created via artisan (see `DEPLOY.md`,
@@ -197,6 +197,38 @@ Every edition form has a searchable `publisher_id` select with inline create
 `PublisherPolicy::create()` being open to everyone is for. `PublisherObserver`
 only guards `slug`/`user_id` on an *existing* row, so a non-admin creating a
 publisher inline gets its generated slug.
+
+### Libraries
+
+`libraries` are kutubxonalar readers can borrow from: name, slug, `region`
+(one of `App\Support\Regions::REGIONS`) and `district` (a fixed list in
+Tashkent city, typed elsewhere), address, contacts, localized `description`,
+`hours` and `membership`, and `is_published`. `library_holdings` is one row
+per book a library holds (`unique(library_id, book_id)`, `edition_id` when
+known) with `copies_total` and `copies_available`. Only the count is kept,
+never who borrowed a copy.
+
+An admin creates a library together with its owner's login (role
+`library`). The owner's sidebar is hidden like a publisher's;
+`LibraryProfileWidget` leads to their library's edit page, which opens on
+the Books tab with "Lent out" and "Returned" on every row. `slug`,
+`user_id` and `is_published` are admin-only (`LibraryObserver`). Any change
+to a holding stamps `libraries.holdings_updated_at`, which the site shows as
+"yangilandi … oldin", and after `Library::STALE_AFTER_DAYS` as possibly out
+of date.
+
+**Importing a list.** "Import books from Excel" on the library's page
+(`ImportHoldings`) reads an .xlsx or .csv (`,`, `;` or tab) into
+`library_imports` / `library_import_rows` (`LibraryImporter::read()`).
+Columns are found by header in uz/ru/en (Nomi, Muallif, ISBN, Soni,
+Mavjud); a file without headers is read in that order. Each line goes
+through `LibraryBookMatcher`: ISBN (ISBN-10 converted), then an exact title
+on `search_key` with the author as tie-breaker, both accepted at once; then
+up to three suggestions, which the owner confirms, changes or skips. Lines
+are never turned into new books. "Apply to my list"
+(`LibraryImporter::apply()`) writes the accepted lines in one transaction
+without model events and pings the site once; reading a new file drops an
+import that was never applied.
 
 ### Authors
 

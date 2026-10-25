@@ -42,6 +42,16 @@ class SiteRevalidator
         $this->ping(['type' => 'book', 'id' => (string) $id]);
     }
 
+    /**
+     * A library's own page. Like every ping it also drops the site's
+     * collection tags, the books' pages among them, so one ping after a
+     * holdings import updates every book it touched.
+     */
+    public function library(?string $slug): void
+    {
+        $this->ping(['type' => 'library', 'slug' => $slug]);
+    }
+
     public function everything(): void
     {
         $this->ping([]);

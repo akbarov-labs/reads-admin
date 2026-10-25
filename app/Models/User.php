@@ -50,6 +50,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(Publisher::class);
     }
 
+    public function library(): HasOne
+    {
+        return $this->hasOne(Library::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
@@ -68,6 +73,11 @@ class User extends Authenticatable implements FilamentUser
     public function isPublisher(): bool
     {
         return $this->role === UserRole::Publisher;
+    }
+
+    public function isLibrary(): bool
+    {
+        return $this->role === UserRole::Library;
     }
 
     /**
@@ -89,6 +99,10 @@ class User extends Authenticatable implements FilamentUser
 
         if ($this->isTaqrizchi()) {
             return $this->taqrizchi()->exists();
+        }
+
+        if ($this->isLibrary()) {
+            return $this->library()->exists();
         }
 
         return $this->isPublisher() && $this->publisher()->exists();
