@@ -147,6 +147,12 @@ class Book extends Model
         return $this->hasMany(Quote::class)->latest('quotes.id');
     }
 
+    /** @return HasMany<LibraryHolding, $this> */
+    public function libraryHoldings(): HasMany
+    {
+        return $this->hasMany(LibraryHolding::class);
+    }
+
     /** Reviews from Kitoblarim bot readers (App\Models\ReaderReview). */
     public function readerReviews(): HasMany
     {
