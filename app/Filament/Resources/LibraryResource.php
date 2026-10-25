@@ -214,6 +214,7 @@ class LibraryResource extends Resource
             'index' => Pages\ListLibraries::route('/'),
             'create' => Pages\CreateLibrary::route('/create'),
             'edit' => Pages\EditLibrary::route('/{record}/edit'),
+            'import' => Pages\ImportHoldings::route('/{record}/import'),
         ];
     }
 }

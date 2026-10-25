@@ -217,6 +217,19 @@ to a holding stamps `libraries.holdings_updated_at`, which the site shows as
 "yangilandi … oldin", and after `Library::STALE_AFTER_DAYS` as possibly out
 of date.
 
+**Importing a list.** "Import books from Excel" on the library's page
+(`ImportHoldings`) reads an .xlsx or .csv (`,`, `;` or tab) into
+`library_imports` / `library_import_rows` (`LibraryImporter::read()`).
+Columns are found by header in uz/ru/en (Nomi, Muallif, ISBN, Soni,
+Mavjud); a file without headers is read in that order. Each line goes
+through `LibraryBookMatcher`: ISBN (ISBN-10 converted), then an exact title
+on `search_key` with the author as tie-breaker, both accepted at once; then
+up to three suggestions, which the owner confirms, changes or skips. Lines
+are never turned into new books. "Apply to my list"
+(`LibraryImporter::apply()`) writes the accepted lines in one transaction
+without model events and pings the site once; reading a new file drops an
+import that was never applied.
+
 ### Authors
 
 `authors` is the normalized catalogue of literary authors. Fields are:

@@ -74,6 +74,12 @@ class Library extends Model
         return $this->hasMany(LibraryHolding::class);
     }
 
+    /** @return HasMany<LibraryImport, $this> */
+    public function imports(): HasMany
+    {
+        return $this->hasMany(LibraryImport::class);
+    }
+
     /** @return BelongsToMany<Book, $this> */
     public function books(): BelongsToMany
     {

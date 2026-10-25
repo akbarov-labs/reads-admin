@@ -57,8 +57,7 @@ class EditLibrary extends EditRecord
                 ->label('Import books from Excel')
                 ->icon('heroicon-m-arrow-up-tray')
                 ->color('gray')
-                ->url(fn () => LibraryResource::getUrl('import', ['record' => $this->record]))
-                ->visible(fn () => LibraryResource::hasPage('import')),
+                ->url(fn () => LibraryResource::getUrl('import', ['record' => $this->record])),
             Actions\DeleteAction::make()->visible(fn () => auth()->user()?->isAdmin() ?? false),
         ];
     }

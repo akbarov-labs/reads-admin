@@ -29,6 +29,10 @@ class HoldingsRelationManager extends RelationManager
 
     protected static ?string $icon = 'heroicon-m-book-open';
 
+    // The tab the page opens on, so it renders with the page rather than
+    // popping in a moment later.
+    protected static bool $isLazy = false;
+
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
         return (string) $ownerRecord->holdings()->count();
