@@ -503,6 +503,74 @@ class CatalogueSyncApiTest extends TestCase
     }
 
     // ------------------------------------------------------------------
+    // Genre → shelf
+    // ------------------------------------------------------------------
+
+    public function test_a_genre_puts_a_book_on_no_shelf_on_its_shelf_as_the_primary_one(): void
+    {
+        $fiction = Category::create(['slug' => 'badiiy-adabiyot', 'name' => 'Badiiy adabiyot']);
+        Category::create(['slug' => 'diniy-adabiyot', 'name' => 'Diniy adabiyot']);
+
+        $bookId = $this->push(self::ISBN, ['genre' => 'Badiiy adabiyotlar'])->assertJsonPath('outcome', 'created')->json('bookId');
+
+        $this->assertSame([[$fiction->id, 1]], $this->shelvesOf($bookId));
+
+        // Not part of what the loop guard hashes: the feed still has nothing.
+        $this->pull()->assertExactJson(['items' => [], 'next' => null]);
+
+        // Once a book is on a shelf, a later genre never moves it.
+        $this->push(self::ISBN, ['genre' => 'Diniy adabiyotlar', 'updatedAt' => '2099-01-01T00:00:00Z']);
+        $this->assertSame([[$fiction->id, 1]], $this->shelvesOf($bookId));
+    }
+
+    public function test_a_genre_named_like_a_shelf_needs_no_alias_and_an_unknown_one_is_ignored(): void
+    {
+        $uzbek = Category::create(['slug' => 'ozbek-adabiyoti', 'name' => "O'zbek adabiyoti"]);
+
+        $named = $this->push(self::ISBN, ['genre' => 'OʻZBEK  adabiyoti'])->json('bookId');
+        $unknown = $this->push('9789943231979', ['title' => 'Boshqa kitob', 'genre' => 'Ilmiy-ommabop'])->assertOk()->json('bookId');
+        $none = $this->push('9789943231962', ['title' => 'Uchinchi kitob', 'genre' => null])->assertOk()->json('bookId');
+
+        $this->assertSame([[$uzbek->id, 1]], $this->shelvesOf($named));
+        $this->assertSame([], $this->shelvesOf($unknown));
+        $this->assertSame([], $this->shelvesOf($none));
+    }
+
+    public function test_a_book_already_on_a_shelf_or_a_rejected_edition_is_left_alone(): void
+    {
+        $fiction = Category::create(['slug' => 'badiiy-adabiyot', 'name' => 'Badiiy adabiyot']);
+        $history = Category::create(['slug' => 'tarix', 'name' => 'Tarix']);
+
+        $shelved = $this->catalogueBook(['uzbek_title' => 'Mehrobdan chayon'], ['isbn' => self::ISBN], [$this->author('Abdulla Qodiriy')]);
+        $shelved->categories()->attach($history->id, ['is_primary' => false]);
+        $rejected = $this->catalogueBook(['uzbek_title' => 'Rad etilgan'], ['isbn' => '9789943231979', 'status' => ModerationStatus::Rejected]);
+
+        $this->push(self::ISBN, ['genre' => 'Badiiy adabiyotlar'])->assertOk();
+        $this->push('9789943231979', ['title' => 'Rad etilgan', 'genre' => 'Badiiy adabiyotlar'])->assertOk();
+
+        $this->assertSame([[$history->id, 0]], $this->shelvesOf($shelved->id));
+        $this->assertSame([], $this->shelvesOf($rejected->id));
+        $this->assertSame(0, DB::table('book_category')->where('category_id', $fiction->id)->count());
+    }
+
+    public function test_a_push_that_only_shelves_the_book_still_pings_the_site(): void
+    {
+        Category::create(['slug' => 'tarix', 'name' => 'Tarix']);
+        $bookId = $this->push(self::ISBN)->json('bookId');
+
+        config(['seo.revalidate.url' => 'http://site.test/api/revalidate', 'seo.revalidate.secret' => 'secret']);
+        Http::fake();
+
+        $this->push(self::ISBN, ['genre' => 'Tarix va Siyosat'])
+            ->assertOk()
+            ->assertJsonPath('outcome', 'unchanged')
+            ->assertJsonMissingPath('shelved');
+
+        $this->assertCount(1, $this->shelvesOf($bookId));
+        Http::assertSentCount(1);
+    }
+
+    // ------------------------------------------------------------------
     // Pull
     // ------------------------------------------------------------------
 
@@ -724,6 +792,13 @@ class CatalogueSyncApiTest extends TestCase
     private function pull(string $query = ''): TestResponse
     {
         return $this->withToken(self::TOKEN)->getJson('/api/sync/editions'.($query === '' ? '' : "?{$query}"));
+    }
+
+    /** @return list<array{0: int, 1: int}> [category ID, is_primary] per shelf */
+    private function shelvesOf(int $bookId): array
+    {
+        return DB::table('book_category')->where('book_id', $bookId)->orderBy('category_id')->get()
+            ->map(fn ($row) => [(int) $row->category_id, (int) $row->is_primary])->all();
     }
 
     /** Straight to the column: Eloquent would stamp "now" over it. */

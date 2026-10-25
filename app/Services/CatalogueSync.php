@@ -7,6 +7,7 @@ use App\Enums\ModerationStatus;
 use App\Models\Book;
 use App\Models\Edition;
 use App\Support\Asaxiy\AsaxiyCatalog;
+use App\Support\BotGenres;
 use App\Support\UzbekText;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
@@ -91,9 +92,12 @@ class CatalogueSync
             $result = $this->write($isbn, $incoming);
         }
 
+        ['shelved' => $shelved] = $result;
+        unset($result['shelved']);
+
         // One ping for the book, after the commit. The writes ran without
         // model events (see write()) so a push is not several pings.
-        if ($result['outcome'] !== 'unchanged') {
+        if ($result['outcome'] !== 'unchanged' || $shelved) {
             $this->revalidator->book($result['bookId']);
         }
 
@@ -105,7 +109,7 @@ class CatalogueSync
      * single spaces, and Latin script for Uzbek-language text.
      *
      * @param  array<string, mixed>  $data
-     * @return array{isbn: string, title: ?string, authors: list<string>, translators: list<string>, publisher: ?string, language: ?string, year: ?int, pages: ?int, description: ?string, updatedAt: CarbonImmutable, fillOnly: bool}
+     * @return array{isbn: string, title: ?string, authors: list<string>, translators: list<string>, publisher: ?string, language: ?string, year: ?int, pages: ?int, description: ?string, genre: ?string, updatedAt: CarbonImmutable, fillOnly: bool}
      */
     private function normalise(string $isbn, array $data): array
     {
@@ -153,6 +157,8 @@ class CatalogueSync
             'year' => isset($data['year']) ? Edition::plausibleYear((int) $data['year']) : null,
             'pages' => isset($data['pages']) ? (int) $data['pages'] : null,
             'description' => $text($data['description'] ?? null, paragraphs: true),
+            // Only ever a shelf, never stored as text (see shelve()).
+            'genre' => is_string($data['genre'] ?? null) ? UzbekText::clean($data['genre']) : null,
             // Whole seconds, like the column it is compared with.
             'updatedAt' => CarbonImmutable::parse($data['updatedAt'])->setMicrosecond(0),
             'fillOnly' => (bool) ($data['fillOnly'] ?? false),
@@ -175,7 +181,7 @@ class CatalogueSync
 
     /**
      * @param  array<string, mixed>  $incoming
-     * @return array{outcome: string, bookId: int, editionId: int, updatedAt: string}
+     * @return array{outcome: string, bookId: int, editionId: int, updatedAt: string, shelved: bool}
      */
     private function write(string $isbn, array $incoming): array
     {
@@ -197,6 +203,8 @@ class CatalogueSync
             // Rejected here: nothing was written, and the feed never serves
             // it, so there is nothing to guard.
             $agreed = $edition->status !== ModerationStatus::Rejected;
+
+            $shelved = $agreed && $this->shelve($edition->book, $incoming['genre']);
 
             // Stamp the loop guard only when the bot and this app now agree.
             // If the stored edition differs from what was sent — this side
@@ -220,8 +228,28 @@ class CatalogueSync
                 'bookId' => $edition->book_id,
                 'editionId' => $edition->id,
                 'updatedAt' => self::iso($edition->updated_at),
+                'shelved' => $shelved,
             ];
         }));
+    }
+
+    /**
+     * Puts a book Reads has on no shelf yet on the shelf of the bot's genre,
+     * as its primary one. A book already on a shelf keeps exactly what it
+     * has: shelves are curated here. The genre is not part of the
+     * projection, so this leaves the loop guard alone.
+     */
+    private function shelve(Book $book, ?string $genre): bool
+    {
+        $shelf = $genre !== null ? (new BotGenres)->shelf($genre) : null;
+
+        if ($shelf === null || $book->categories()->exists()) {
+            return false;
+        }
+
+        $book->categories()->attach($shelf->id, ['is_primary' => true]);
+
+        return true;
     }
 
     /**
@@ -272,8 +300,8 @@ class CatalogueSync
      * time the bot sends a book (fillOnly), it counts as older whatever its
      * timestamp: neither side's values were edits made against the other's.
      *
-     * Cover, gallery, taqrizlar, series, shelves and the book itself (its
-     * title and authors) are never touched from here.
+     * Cover, gallery, taqrizlar, series and the book itself (its title and
+     * authors) are never touched from here; shelves only through shelve().
      *
      * @param  array<string, mixed>  $incoming
      */
