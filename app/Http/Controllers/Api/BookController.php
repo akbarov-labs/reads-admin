@@ -70,6 +70,7 @@ class BookController extends Controller
             // not the place to read them all.
             'readerReviews' => fn ($query) => $query->approved()->limit(20),
             'quotes' => fn ($query) => $query->approved()->with('edition.translators')->limit(10),
+            'libraryHoldings' => fn ($query) => $query->whereHas('library', fn ($library) => $library->published())->with('library'),
         ]);
 
         return new BookDetailResource($book, $this->relatedTo($book));
