@@ -108,11 +108,43 @@ class Book extends Model
             return $this->description;
         }
 
+        $edition = $this->aboutEdition();
+
+        return $edition ? trim((string) $edition->description) : null;
+    }
+
+    /**
+     * Where the text in `about` was copied from, so the page can credit it:
+     * the Asaxiy listing of the edition it came from. Null for the book's
+     * own description and for text from anywhere else.
+     *
+     * @return array{name: string, url: string}|null
+     */
+    public function getAboutSourceAttribute(): ?array
+    {
+        if (filled($this->description)) {
+            return null;
+        }
+
+        $url = (string) $this->aboutEdition()?->source_url;
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+
+        return $host === 'asaxiy.uz' || str_ends_with($host, '.asaxiy.uz')
+            ? ['name' => 'Asaxiy', 'url' => $url]
+            : null;
+    }
+
+    /** The approved edition whose description stands in for the book's own. */
+    private function aboutEdition(): ?Edition
+    {
         return $this->approvedEditions
-            ->map(fn (Edition $edition) => trim((string) $edition->description))
-            ->filter(fn (string $text) => mb_strlen($text) >= self::SHORTEST_ABOUT
-                && preg_match(self::SHOP_TEXT, UzbekText::normalizeApostrophes($text)) !== 1)
-            ->sortByDesc(fn (string $text) => mb_strlen($text))
+            ->filter(function (Edition $edition) {
+                $text = trim((string) $edition->description);
+
+                return mb_strlen($text) >= self::SHORTEST_ABOUT
+                    && preg_match(self::SHOP_TEXT, UzbekText::normalizeApostrophes($text)) !== 1;
+            })
+            ->sortByDesc(fn (Edition $edition) => mb_strlen(trim((string) $edition->description)))
             ->first();
     }
 

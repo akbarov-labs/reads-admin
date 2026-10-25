@@ -25,6 +25,8 @@ class BookDetailResource extends BookResource
         return array_merge(parent::toArray($request), [
             // Its own, or the fullest an edition carries (Book::getAboutAttribute).
             'description' => $this->about,
+            // Credit for a description copied from a shop listing, or null.
+            'descriptionSource' => $this->about_source,
             'editions' => EditionResource::collection($this->approvedEditions),
 
             // Approved only — the controller constrains the eager load, so
