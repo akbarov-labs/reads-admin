@@ -54,7 +54,8 @@ class CatalogueRecords
 
     public function publisher(string $name): Publisher
     {
-        $id = $this->idFor('publishers', ['name'], $name, UzbekText::publisherKey(...));
+        $id = $this->idFor('publishers', ['name'], $name, UzbekText::publisherKey(...))
+            ?? $this->idFor('publisher_aliases', ['name'], $name, UzbekText::publisherKey(...), 'publisher_id');
 
         if ($id !== null) {
             return Publisher::findOrFail($id);

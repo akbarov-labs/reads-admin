@@ -256,7 +256,12 @@ class AsaxiyBooksSeeder extends Seeder
             $this->publishers[UzbekText::publisherKey($publisher->name)] ??= $publisher->id;
         }
 
-        $taken = Publisher::pluck('slug')->flip()->all();
+        // A spelling merged into another publisher (PublisherMerger) stays merged.
+        foreach (DB::table('publisher_aliases')->select('publisher_id', 'name')->cursor() as $alias) {
+            $this->publishers[UzbekText::publisherKey($alias->name)] ??= $alias->publisher_id;
+        }
+
+        $taken = Publisher::pluck('slug')->flip()->all() + DB::table('publisher_aliases')->whereNotNull('slug')->pluck('slug')->flip()->all();
 
         foreach ($this->spellings(array_column($listings, 'publisher'), UzbekText::publisherKey(...)) as $key => $name) {
             if (isset($this->publishers[$key])) {
