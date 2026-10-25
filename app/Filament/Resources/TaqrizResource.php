@@ -7,6 +7,7 @@ use App\Enums\ModerationStatus;
 use App\Enums\TaqrizStatus;
 use App\Filament\Resources\TaqrizResource\Pages;
 use App\Filament\Support\CatalogueFields;
+use App\Filament\Support\PendingNavigationBadge;
 use App\Models\Edition;
 use App\Models\Taqriz;
 use Filament\Forms;
@@ -19,11 +20,17 @@ use Illuminate\Database\Eloquent\Builder;
 
 class TaqrizResource extends Resource
 {
+    use PendingNavigationBadge;
+
     protected static ?string $model = Taqriz::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-star';
 
     protected static ?string $navigationLabel = 'Taqrizlar';
+
+    protected static ?string $navigationGroup = 'Reviews';
+
+    protected static ?int $navigationSort = 1;
 
     /**
      * Filament derives the URL from the class name, which gives "taqrizs" —

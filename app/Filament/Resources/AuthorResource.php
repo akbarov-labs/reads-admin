@@ -17,9 +17,13 @@ class AuthorResource extends Resource
 {
     protected static ?string $model = Author::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-book-open';
+    protected static ?string $navigationIcon = 'heroicon-o-pencil-square';
 
-    protected static ?string $navigationLabel = 'Book authors';
+    protected static ?string $navigationLabel = 'Authors';
+
+    protected static ?string $navigationGroup = 'Catalogue';
+
+    protected static ?int $navigationSort = 2;
 
     public static function shouldRegisterNavigation(): bool
     {

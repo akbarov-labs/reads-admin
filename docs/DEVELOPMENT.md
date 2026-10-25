@@ -77,6 +77,24 @@ per-resource visibility rules make one panel behave like several:
   (`AuthorResource`, `TranslatorResource`, `TaqrizchiResource`,
   `InquiryResource`) is admin-only in the nav.
 
+### Navigation and the dashboard
+
+The admin's sidebar opens with Dashboard, Site stats and Inquiries, then three
+groups, in the order `AdminPanelProvider::navigationGroups()` gives them:
+
+- **Catalogue:** Books, Authors, Translators, Publishers.
+- **Reviews:** Taqrizlar, Reader reviews, Taqrizchilar.
+- **On the site:** Collections, Quotes, Announcements.
+
+A new resource names its group and place with `$navigationGroup` and
+`$navigationSort`; without them it lands at the top, above the groups. Lists
+with a moderation queue (Taqrizlar, Reader reviews, Announcements, Books)
+`use PendingNavigationBadge`, which shows an admin the count of pending rows.
+
+The admin's dashboard is `NeedsAttentionWidget` (each waiting count links to
+the list filtered to those rows) and `CatalogueOverviewWidget`. Both are
+admin-only; the other roles' dashboards keep their profile widgets.
+
 ## User roles
 
 `users.role` is a `UserRole` enum (`app/Enums/UserRole.php`) with four

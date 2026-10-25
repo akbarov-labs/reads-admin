@@ -22,9 +22,13 @@ class TranslatorResource extends Resource
 {
     protected static ?string $model = Translator::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-circle';
+    protected static ?string $navigationIcon = 'heroicon-o-language';
 
     protected static ?string $navigationLabel = 'Translators';
+
+    protected static ?string $navigationGroup = 'Catalogue';
+
+    protected static ?int $navigationSort = 3;
 
     /**
      * Only admins manage translators through the list/table — a translator

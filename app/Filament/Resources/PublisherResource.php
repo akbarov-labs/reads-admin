@@ -22,6 +22,10 @@ class PublisherResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
     protected static ?string $navigationLabel = 'Publishers';
 
+    protected static ?string $navigationGroup = 'Catalogue';
+
+    protected static ?int $navigationSort = 4;
+
     /**
      * Publishers now sign in to maintain their own entry and add the books
      * they publish, so unlike the other shared catalogue resources this is
