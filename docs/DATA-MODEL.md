@@ -172,14 +172,15 @@ finds or creates authors, publishers, translators and books through
 own, else the book's), `authors` (the book's, in order), `translators` (the
 edition's translator credits, in order), `publisher`, `language`, `year`,
 `pages`, `description`. Nothing else crosses: covers, galleries, taqrizlar,
-series and shelves stay here.
+series and shelves stay here. The one exception is the bot's `genre` on a
+push, below, which can put a book on its first shelf.
 
 ### Push: `PUT /api/sync/editions/{isbn}`
 
 ```json
 { "title": "…", "authors": ["…"], "translators": ["…"], "publisher": "…" ,
   "language": "uz", "year": 2019, "pages": 300, "description": "…",
-  "updatedAt": "2026-03-01T10:00:00Z" }
+  "genre": "Badiiy adabiyotlar", "updatedAt": "2026-03-01T10:00:00Z" }
 ```
 
 `title` and `updatedAt` are required; everything else may be null or empty.
@@ -203,6 +204,16 @@ The answer is `{"outcome", "bookId", "editionId", "updatedAt"}`, where
   was pending) that it could fill. Only empty columns are filled; titles
   never change.
 - `unchanged`: nothing to do.
+
+**genre** is never stored as text. When the book is on no shelf yet and the
+edition is not rejected, the shelf it names (`App\Support\BotGenres`: a
+shelf of that name, or one of its aliases) becomes the book's primary shelf.
+A book already on a shelf keeps exactly what it has, and an unknown genre
+does nothing. It is outside the projection, so it neither changes `outcome`
+nor the loop guard; the site is still pinged when a shelf was added. Books
+the bot sent before it sent genres were caught up once with
+`php artisan books:shelves-from-bot` (isbn<TAB>genre lines from the bot's
+database; dry run unless `--apply`).
 
 Other rules:
 
