@@ -107,6 +107,26 @@ class OutboundClickApiTest extends TestCase
         $this->assertSame(0, OutboundClick::count());
     }
 
+    public function test_the_site_logs_an_ask_ai_click_with_the_kind_of_page(): void
+    {
+        $this->click(['kind' => 'ask_ai', 'target' => 'book'])->assertNoContent();
+        // An author page has no book.
+        $this->click(['kind' => 'ask_ai', 'target' => 'author', 'book_id' => null, 'ip' => '198.51.100.7'])->assertNoContent();
+
+        $book = OutboundClick::where('target', 'book')->sole();
+        $this->assertSame(OutboundClickKind::AskAi, $book->kind);
+        $this->assertSame(Book::sole()->id, $book->book_id);
+        $this->assertNull(OutboundClick::where('target', 'author')->sole()->book_id);
+    }
+
+    public function test_an_ask_ai_click_must_name_a_page_that_has_the_button(): void
+    {
+        $this->click(['kind' => 'ask_ai', 'target' => 'asaxiy'])->assertUnprocessable();
+        $this->click(['kind' => 'ask_ai', 'target' => null])->assertUnprocessable();
+
+        $this->assertSame(0, OutboundClick::count());
+    }
+
     public function test_one_visitor_cannot_inflate_a_count(): void
     {
         for ($i = 0; $i < 40; $i++) {

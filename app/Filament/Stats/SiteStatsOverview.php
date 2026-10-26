@@ -49,7 +49,35 @@ class SiteStatsOverview extends StatsOverviewWidget
             Stat::make('Busiest store', $this->targets()[0] ?? '—'),
             Stat::make('Publisher orders', number_format($this->clicks(OutboundClickKind::PublisherOrder)->count()))
                 ->description('Order buttons pressed on announcements'),
+            $this->askAi($views),
         ];
+    }
+
+    /**
+     * Readers who asked an AI about a page's subject, by kind of page, and
+     * how that compares with book views: the one number that says whether
+     * the button earns its place near the top of the page.
+     */
+    private function askAi(int $views): Stat
+    {
+        $bySubject = $this->clicks(OutboundClickKind::AskAi)
+            ->toBase()
+            ->select('target')
+            ->selectRaw('count(*) as clicks')
+            ->groupBy('target')
+            ->orderByDesc('clicks')
+            ->orderBy('target')
+            ->pluck('clicks', 'target');
+
+        $total = (int) $bySubject->sum();
+        $parts = $bySubject->map(fn ($clicks, string $subject) => $subject.' '.number_format((int) $clicks))->values();
+
+        if ($views > 0) {
+            $parts->push($this->percent((int) ($bySubject['book'] ?? 0), $views).' of book views');
+        }
+
+        return Stat::make('Ask AI clicks', number_format($total))
+            ->description($total > 0 ? $parts->implode(', ') : 'Ask-AI buttons pressed on book, author and other pages');
     }
 
     private function percent(int $part, int $whole): string
