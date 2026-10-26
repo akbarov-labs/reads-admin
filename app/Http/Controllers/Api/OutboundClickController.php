@@ -13,8 +13,9 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 
 /**
- * The site's click log: a reader sent to a store's search, or to a
- * publisher's Telegram from an announcement's order button. The site's
+ * The site's click log: a reader sent to a store's search, to a
+ * publisher's Telegram from an announcement's order button, or to an AI
+ * from a page's ask-AI button. The site's
  * /go/... redirects post here after they have already sent the reader on,
  * so nothing a reader waits for depends on it.
  * The site has dropped bots by user agent before calling.
@@ -32,7 +33,14 @@ class OutboundClickController extends Controller
             // An order button's announcement. Its publisher is the target,
             // looked up here rather than taken from the request.
             'announcement_id' => ['required_if:kind,'.OutboundClickKind::PublisherOrder->value, 'nullable', 'integer', 'exists:announcements,id'],
-            'target' => ['required_if:kind,'.OutboundClickKind::Store->value, 'nullable', 'string', 'regex:/^[a-z0-9.-]{1,64}$/'],
+            'target' => [
+                'required_if:kind,'.OutboundClickKind::Store->value.','.OutboundClickKind::AskAi->value,
+                'nullable',
+                'string',
+                'regex:/^[a-z0-9.-]{1,64}$/',
+                // An ask-AI click names the kind of page it came from.
+                Rule::when($request->input('kind') === OutboundClickKind::AskAi->value, [Rule::in(OutboundClickKind::ASK_AI_SUBJECTS)]),
+            ],
             'locale' => ['nullable', Rule::in(['uz', 'ru', 'en'])],
             // The visitor's, as the site saw them. Hashed below, never stored.
             'ip' => ['nullable', 'ip'],

@@ -179,6 +179,35 @@ class SiteStatsPanelTest extends TestCase
             ]);
     }
 
+    public function test_ask_ai_clicks_are_counted_apart_from_store_clicks(): void
+    {
+        $this->admin();
+
+        $ask = fn (string $subject, ?Book $book, string $at = '2026-10-24 10:00:00') => OutboundClick::create([
+            'kind' => 'ask_ai', 'book_id' => $book?->id, 'target' => $subject,
+            'locale' => 'uz', 'visitor_hash' => 'x', 'created_at' => $at,
+        ]);
+
+        $ask('book', $this->tazarru);
+        $ask('book', $this->unclicked);
+        $ask('book', $this->unclicked);
+        $ask('author', null);
+        // Outside the default 30 days.
+        $ask('book', $this->kunlar, '2026-08-01 09:00:00');
+
+        Livewire::test(SiteStatsOverview::class, ['filters' => []])
+            ->assertSeeInOrder([
+                // Store figures are unchanged by them.
+                'Store clicks', '4', 'From 3 visitors',
+                'Busiest store', 'asaxiy',
+                // 3 of 75 book views.
+                'Ask AI clicks', '4', 'book 3, author 1, 4.0% of book views',
+            ]);
+
+        Livewire::test(TopBooksTable::class, ['filters' => []])
+            ->assertTableColumnStateSet('clicks', 0, $this->unclicked->getKey());
+    }
+
     public function test_searches_are_grouped_across_spellings(): void
     {
         $this->admin();
