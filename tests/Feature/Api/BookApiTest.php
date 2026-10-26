@@ -226,6 +226,29 @@ class BookApiTest extends TestCase
         $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.description', 'Kitobning oʻz tavsifi.');
     }
 
+    public function test_a_description_copied_from_asaxiy_credits_the_listing_it_came_from(): void
+    {
+        $about = str_repeat("Totalitar tuzumda yashayotgan Uinston Smitning taqdiri haqida roman. ", 2);
+        $book = $this->catalogueBook(edition: ['isbn' => '9789910679629', 'description' => $about, 'source_url' => 'https://asaxiy.uz/product/1984']);
+        // A shorter text elsewhere is not the one shown, so its source is not credited.
+        $this->edition($book, ['isbn' => '9789943231467', 'description' => str_repeat('Boshqa manbadan qisqaroq matn. ', 4), 'source_url' => 'https://example.uz/1984']);
+
+        $this->getJson("/api/books/{$book->id}")
+            ->assertJsonPath('data.description', trim($about))
+            ->assertJsonPath('data.descriptionSource', ['name' => 'Asaxiy', 'url' => 'https://asaxiy.uz/product/1984']);
+
+        // Its own description is the editors' words, and needs no credit.
+        $book->update(['description' => 'Kitobning oʻz tavsifi.']);
+        $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.descriptionSource', null);
+    }
+
+    public function test_a_description_from_anywhere_else_carries_no_credit(): void
+    {
+        $book = $this->catalogueBook(edition: ['isbn' => '9789910679629', 'description' => str_repeat('Botdan kelgan tavsif matni. ', 5), 'source_url' => null]);
+
+        $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.descriptionSource', null);
+    }
+
     public function test_a_book_whose_editions_only_carry_shop_text_or_notes_has_no_description(): void
     {
         $book = $this->catalogueBook(edition: ['isbn' => '9789943231962', 'description' => str_repeat('Kitob do‘konimizda. Buyurtma bering! ', 5)]);
