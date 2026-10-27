@@ -359,6 +359,22 @@ comes only from Softly.
 `supervisorctl` does not work in the container (no control socket). To see
 that the scheduler is up: `sudo docker top reads-admin-app | grep schedule`.
 
+Softly has no ISBNs, so titles are matched on title and author, and
+only an exact match is linked on its own. After each complete nightly
+run, a title with nothing like it in the catalogue becomes a book (its
+author found under any spelling, or made, and one edition with no ISBN);
+the same title in several libraries becomes one book. Titles with near
+matches wait under **Catalogue → Softly matches** for an admin to link,
+make a book, or skip. A book made by mistake (a magazine, a notebook) is
+removed from the same page, which also stops it being made again.
+`SOFTLY_CREATE_BOOKS=false` turns the nightly part off. To see what it
+would make, or to make the books now instead of at night:
+
+```bash
+sudo docker exec -u www-data reads-admin-app php artisan softly:add-books --dry-run
+sudo docker exec -u www-data reads-admin-app php artisan softly:add-books
+```
+
 Each nightly run logs `missed_by_quick`: copies that went out or came back
 without their book's `updatedAt` moving, which quick runs cannot see. If
 it is not 0 for a few days, set `SOFTLY_QUICK_MODE=full` and

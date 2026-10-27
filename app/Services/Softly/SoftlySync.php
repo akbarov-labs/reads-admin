@@ -26,6 +26,9 @@ use Illuminate\Support\Facades\Log;
  *    and only an exact match is taken (LibraryBookMatcher, rule 2): Softly
  *    has no ISBN, and a wrong "bor" is worse than none.
  *
+ *    After a full run, titles with nothing like them in the catalogue are
+ *    made books (SoftlyNewBooks); near matches wait for an admin.
+ *
  * 2. Work out each linked library's holdings from softly_books: copies at
  *    its location, and how many are not out. This is local and runs every
  *    time, so linking a library needs no request. A linked library's list
@@ -43,6 +46,7 @@ class SoftlySync
         private readonly SoftlyClient $client,
         private readonly LibraryBookMatcher $matcher,
         private readonly SiteRevalidator $revalidator,
+        private readonly SoftlyNewBooks $newBooks,
     ) {}
 
     /**
@@ -58,6 +62,14 @@ class SoftlySync
 
         try {
             $report = $this->read($full || config('services.softly.quick_mode') === 'full');
+
+            // Once a night, after every list was read to the end: titles the
+            // catalogue has nothing like become books, so this run's
+            // holdings already include them.
+            $report['created'] = $report['mode'] === 'full' && $report['complete'] && config('services.softly.create_books')
+                ? $this->newBooks->createWaiting()['created']
+                : 0;
+
             $report['holdings'] = $this->writeHoldings($report['complete']);
         } finally {
             $lock->release();
