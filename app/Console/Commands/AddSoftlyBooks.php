@@ -29,6 +29,14 @@ class AddSoftlyBooks extends Command
                 $this->line("  {$name}: {$books}");
             }
 
+            if ($preview['respelled'] !== []) {
+                $this->line(count($preview['respelled']).' name(s) taken as a typo of an author the catalogue has:');
+
+                foreach ($preview['respelled'] as $name => $author) {
+                    $this->line("  {$name} → {$author}");
+                }
+            }
+
             return self::SUCCESS;
         }
 
