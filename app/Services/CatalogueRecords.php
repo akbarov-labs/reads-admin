@@ -39,17 +39,23 @@ class CatalogueRecords
 
     public function author(string $name): Author
     {
-        $id = $this->idFor('authors', ['name', 'original_name'], $name, UzbekText::key(...))
-            ?? $this->mergedAuthorId($name);
-
-        if ($id !== null) {
-            return Author::findOrFail($id);
+        if ($author = $this->findAuthor($name)) {
+            return $author;
         }
 
         $author = Author::create(['name' => $name, 'slug' => Author::generateUniqueSlug($name)]);
         $this->index['authors'][UzbekText::key($name)] ??= $author->id;
 
         return $author;
+    }
+
+    /** The author with this name under any spelling, or null. Makes nothing. */
+    public function findAuthor(string $name): ?Author
+    {
+        $id = $this->idFor('authors', ['name', 'original_name'], $name, UzbekText::key(...))
+            ?? $this->mergedAuthorId($name);
+
+        return $id !== null ? Author::findOrFail($id) : null;
     }
 
     public function publisher(string $name): Publisher

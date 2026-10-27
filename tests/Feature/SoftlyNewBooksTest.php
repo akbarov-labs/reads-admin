@@ -11,6 +11,7 @@ use App\Models\LibraryImportRow;
 use App\Models\SoftlyBook;
 use App\Models\User;
 use App\Services\LibraryBookMatcher;
+use App\Services\Softly\SoftlyAuthorName;
 use App\Services\Softly\SoftlyNewBooks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -92,6 +93,47 @@ class SoftlyNewBooksTest extends TestCase
 
         $this->assertSame(['Abdulla Qodiriy'], Book::where('uzbek_title', "Bo'ronlar")->sole()->authors->pluck('name')->all());
         $this->assertSame(1, Author::count());
+    }
+
+    public function test_an_author_name_is_read_as_the_catalogue_should_credit_it(): void
+    {
+        $parse = fn (?string $raw) => SoftlyAuthorName::parse($raw);
+
+        $this->assertSame('Shayx Muhammad Sodiq Muhammad Yusuf', $parse('Shayx Muhammad Sodiq Muhammad Yusuf rohimahulloh')['name']);
+        $this->assertSame(['Shayx Muhammad Sodiq Muhammad Yusuf', 'Muhammad Sodiq Muhammad Yusuf'], $parse('Shayx Muhammad Sodiq Muhammad Yusuf rohimahulloh')['spellings']);
+        $this->assertSame('Abu Iso Muhammad at-Termiziy', $parse('Abu Iso Muhammad at-Termiziy rohmatullohi alayhi')['name']);
+        $this->assertSame(['Hofiz ibn Kasir', 'Ibn Kasir'], $parse('Hofiz ibn Kasir (Ibn Kasir)')['spellings']);
+        $this->assertSame('Abdulla Qodiriy', $parse('Tuzuvchi: Abdulla Qodiriy')['name']);
+
+        foreach (['mualliflar jamoasi', 'Usborne', "Noma'lum", 'Mhr: Abdumurod Tilavov', '', null] as $notAnAuthor) {
+            $this->assertNull($parse($notAnAuthor)['name'], (string) $notAnAuthor);
+        }
+
+        // Names that only look like they end in a word of respect stay whole.
+        $this->assertSame('Sun Ra', $parse('Sun Ra')['name']);
+        $this->assertSame('Sara', $parse('Sara')['name']);
+        // A title off a one-word name is not looked up alone.
+        $this->assertSame(['Hofiz Xorazmiy'], $parse('Hofiz Xorazmiy')['spellings']);
+    }
+
+    public function test_a_known_author_is_found_through_words_of_respect_titles_and_typos(): void
+    {
+        $this->row(1, 10, "Bo'ronlar", 'Abdulla Qodiriy rohimahulloh');
+        $this->row(1, 11, 'Kichik asarlar', 'Abdullah Qodiriy');
+        $this->row(1, 12, 'Maktublar', 'Domla Abdulla Qodiriy');
+        $this->row(1, 13, 'Ertaklar', 'mualliflar jamoasi');
+
+        $preview = $this->newBooks()->preview();
+        $this->assertSame([], $preview['new_authors']);
+        $this->assertSame(['Abdullah Qodiriy' => 'Abdulla Qodiriy'], $preview['respelled']);
+
+        $this->assertSame(4, $this->newBooks()->createWaiting()['created']);
+
+        $this->assertSame(1, Author::count());
+        foreach (["Bo'ronlar", 'Kichik asarlar', 'Maktublar'] as $title) {
+            $this->assertSame(['Abdulla Qodiriy'], Book::where('uzbek_title', $title)->sole()->authors->pluck('name')->all(), $title);
+        }
+        $this->assertCount(0, Book::where('uzbek_title', 'Ertaklar')->sole()->authors);
     }
 
     public function test_near_matches_and_skipped_titles_are_not_made_books(): void

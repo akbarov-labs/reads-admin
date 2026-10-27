@@ -3,6 +3,7 @@
 namespace App\Services\Softly;
 
 use App\Enums\ModerationStatus;
+use App\Models\Author;
 use App\Models\Book;
 use App\Models\LibraryImportRow;
 use App\Models\SoftlyBook;
@@ -34,6 +35,9 @@ use Illuminate\Support\Facades\DB;
  */
 class SoftlyNewBooks
 {
+    /** @var list<array{0: string, 1: int}>|null every author's name keys, for near spellings */
+    private ?array $authorKeys = null;
+
     public function __construct(
         private readonly CatalogueRecords $records,
         private readonly SiteRevalidator $revalidator,
@@ -70,7 +74,7 @@ class SoftlyNewBooks
         // One site refresh at the end rather than two per book.
         Model::withoutEvents(function () use (&$done) {
             foreach ($this->waiting() as $rows) {
-                [, $created] = $this->settle($rows, self::title($rows->first()), self::author($rows->first()));
+                [, $created] = $this->settle($rows, self::title($rows->first()), $rows->first()->author);
                 $done[$created ? 'created' : 'found']++;
             }
         });
@@ -147,32 +151,41 @@ class SoftlyNewBooks
 
     /**
      * What createWaiting() would do, for a look before it runs: how many
-     * books, and the author names no author in the catalogue has under any
-     * spelling, with how many books each would get.
+     * books; the author names the catalogue has under no spelling, with how
+     * many books each would get; and the names taken as a near spelling of
+     * an author it has.
      *
-     * @return array{books: int, rows: int, new_authors: array<string, int>, sample: list<string>}
+     * @return array{books: int, rows: int, new_authors: array<string, int>, respelled: array<string, string>, sample: list<string>}
      */
     public function preview(): array
     {
         $waiting = $this->waiting();
+        $newAuthors = [];
+        $respelled = [];
 
-        $known = DB::table('authors')->pluck('name')
-            ->concat(DB::table('authors')->whereNotNull('original_name')->pluck('original_name'))
-            ->concat(DB::table('author_aliases')->pluck('name'))
-            ->map(fn (string $name) => UzbekText::key($name))
-            ->flip();
+        foreach ($waiting as $rows) {
+            $name = SoftlyAuthorName::parse($rows->first()->author);
 
-        $newAuthors = $waiting
-            ->map(fn (Collection $rows) => self::author($rows->first()))
-            ->filter(fn (?string $author) => $author !== null && ! $known->has(UzbekText::key($author)))
-            ->countBy()
-            ->sortDesc()
-            ->all();
+            if ($name['name'] === null) {
+                continue;
+            }
+
+            [$author, $close] = $this->existingAuthor($name) ?? [null, false];
+
+            if ($author === null) {
+                $newAuthors[$name['name']] = ($newAuthors[$name['name']] ?? 0) + 1;
+            } elseif ($close) {
+                $respelled[$name['name']] = $author->name;
+            }
+        }
+
+        arsort($newAuthors);
 
         return [
             'books' => $waiting->count(),
             'rows' => $waiting->sum(fn (Collection $rows) => $rows->count()),
             'new_authors' => $newAuthors,
+            'respelled' => $respelled,
             'sample' => $waiting->take(10)
                 ->map(fn (Collection $rows) => collect([self::title($rows->first()), self::author($rows->first())])->filter()->implode(' — '))
                 ->values()
@@ -189,15 +202,19 @@ class SoftlyNewBooks
      */
     private function settle(Collection $rows, string $title, ?string $author): array
     {
-        return DB::transaction(function () use ($rows, $title, $author) {
-            $book = $this->records->findBook($author, $title);
+        $name = SoftlyAuthorName::parse($author);
+
+        return DB::transaction(function () use ($rows, $title, $name) {
+            $author = $name['name'] === null ? null
+                : ($this->existingAuthor($name)[0] ?? $this->records->author($name['name']));
+            $book = $this->records->findBook($author?->name, $title);
             $created = $book === null;
 
             if ($created) {
                 $book = Book::create(['uzbek_title' => $title, 'status' => ModerationStatus::Approved]);
 
                 if ($author !== null) {
-                    $book->authors()->attach($this->records->author($author)->id, ['position' => 0]);
+                    $book->authors()->attach($author->id, ['position' => 0]);
                 }
 
                 $book->editions()->create(['status' => ModerationStatus::Approved]);
@@ -211,6 +228,42 @@ class SoftlyNewBooks
 
             return [$book, $created];
         });
+    }
+
+    /**
+     * The catalogue's author for a name: under any of its spellings, or else
+     * one letter off a name of ten letters or more ("Abdullah Qodiriy" for
+     * Abdulla Qodiriy), which is a typo far more often than another person.
+     *
+     * @param  array{name: string, spellings: list<string>}  $name
+     * @return array{0: Author, 1: bool}|null the author, and whether found only by the near spelling
+     */
+    private function existingAuthor(array $name): ?array
+    {
+        foreach ($name['spellings'] as $spelling) {
+            if ($author = $this->records->findAuthor($spelling)) {
+                return [$author, false];
+            }
+        }
+
+        $wanted = UzbekText::key($name['name']);
+
+        if (strlen($wanted) < 10) {
+            return null;
+        }
+
+        $this->authorKeys ??= DB::table('authors')->orderBy('id')->get(['id', 'name', 'original_name'])
+            ->flatMap(fn (object $row) => collect([$row->name, $row->original_name])->filter()
+                ->map(fn (string $spelling) => [UzbekText::key($spelling), (int) $row->id]))
+            ->all();
+
+        foreach ($this->authorKeys as [$key, $id]) {
+            if (abs(strlen($key) - strlen($wanted)) <= 1 && levenshtein($key, $wanted) === 1) {
+                return [Author::findOrFail($id), true];
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -241,8 +294,9 @@ class SoftlyNewBooks
         return UzbekText::clean($row->name);
     }
 
+    /** The author to credit, without words of respect, brackets or a non-author (SoftlyAuthorName). */
     private static function author(SoftlyBook $row): ?string
     {
-        return UzbekText::clean($row->author);
+        return SoftlyAuthorName::parse($row->author)['name'];
     }
 }
