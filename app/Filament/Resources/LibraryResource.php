@@ -101,7 +101,7 @@ class LibraryResource extends Resource
                     ->integer()
                     ->minValue(1)
                     ->unique(ignoreRecord: true)
-                    ->helperText('For a library on kutubxonam.uz. Once set, its book list comes from Softly every half hour and replaces any list added by hand. The nightly sync log lists the ids.')
+                    ->helperText('For a library on kutubxonam.uz: Mehr 1, Kitobqand 16, Izlash 22, UzKutubxona.de 25, Idrok 26. Once set, its book list comes from Softly every half hour and replaces any list added by hand.')
                     ->visible($isAdmin),
             ])->columns(2),
 

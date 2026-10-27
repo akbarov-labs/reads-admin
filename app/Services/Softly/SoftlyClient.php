@@ -25,11 +25,13 @@ class SoftlyClient
     private ?float $lastRequestAt = null;
 
     /**
-     * One page of Softly's book list, newest change first.
+     * One page of a library's book list, newest change first. Softly picks
+     * the library from the `library` header and answers for Mehr (1)
+     * without it, as kutubxonam.uz does.
      *
      * @return array{items: list<array<string, mixed>>, total: int}
      */
-    public function books(int $page): array
+    public function books(int $library, int $page): array
     {
         $this->guard();
         $this->wait();
@@ -41,6 +43,7 @@ class SoftlyClient
         try {
             $response = Http::withUserAgent($this->config('user_agent'))
                 ->acceptJson()
+                ->withHeaders(['library' => (string) $library])
                 ->timeout(20)
                 ->get(rtrim($this->config('url'), '/').'/books', [
                     'page' => $page,

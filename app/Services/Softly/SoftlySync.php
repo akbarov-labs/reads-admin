@@ -9,6 +9,8 @@ use App\Models\SoftlyBook;
 use App\Services\LibraryBookMatcher;
 use App\Services\SiteRevalidator;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,9 +18,10 @@ use Illuminate\Support\Facades\Log;
 /**
  * Brings the libraries that run on Softly up to date, in two steps.
  *
- * 1. Read Softly's book list into softly_books. A quick run reads from the
- *    newest change back to the last one it saw, usually one page; a full
- *    run reads every page and takes away books Softly no longer lists. A
+ * 1. Read each library's book list into softly_books (Softly answers for
+ *    one library at a time). A quick run reads from the newest change back
+ *    to the last one it saw for that library, usually one page each; a
+ *    full run reads every page and takes away books Softly no longer lists. A
  *    new or renamed book is matched to the catalogue on title and author,
  *    and only an exact match is taken (LibraryBookMatcher, rule 2): Softly
  *    has no ISBN, and a wrong "bor" is worse than none.
@@ -68,13 +71,19 @@ class SoftlySync
     /** @return array<string, mixed> */
     private function read(bool $full): array
     {
-        $existing = SoftlyBook::all()->keyBy('softly_id');
-        // Nothing stored yet means there is nothing to stop at: read it all.
-        $cursor = $full ? null : $existing->max('softly_updated_at');
-        $full = $cursor === null;
+        $libraries = config('services.softly.libraries');
+        $existing = SoftlyBook::all()->groupBy('softly_library');
+
+        // Where each library's quick read stops: the newest change stored
+        // for it. A library with nothing stored yet is read in full.
+        $cursors = [];
+
+        foreach ($libraries as $library) {
+            $cursors[$library] = $full ? null : $existing->get($library)?->max('softly_updated_at');
+        }
 
         $report = [
-            'mode' => $full ? 'full' : 'changed',
+            'mode' => array_filter($cursors) === [] ? 'full' : 'changed',
             'requests' => 0,
             'added' => 0,
             'changed' => 0,
@@ -89,54 +98,27 @@ class SoftlySync
             'error' => null,
         ];
 
-        $seen = [];
-        $page = 1;
-
         try {
-            do {
-                $result = $this->client->books($page);
-                $report['requests']++;
-                $reachedCursor = false;
+            foreach ($libraries as $library) {
+                $seen = $this->readLibrary($library, $cursors[$library], $existing->get($library, collect())->keyBy('softly_id'), $report);
 
-                foreach ($result['items'] as $item) {
-                    if (! isset($item['id'], $item['name'])) {
-                        continue;
-                    }
-
-                    $updatedAt = isset($item['updatedAt']) ? CarbonImmutable::parse($item['updatedAt']) : null;
-
-                    // Second precision on both sides: the column drops the
-                    // milliseconds Softly sends.
-                    if ($cursor !== null && $updatedAt !== null && $updatedAt->startOfSecond()->lt($cursor)) {
-                        $reachedCursor = true;
-
-                        continue;
-                    }
-
-                    $seen[(int) $item['id']] = true;
-                    $this->store($item, $updatedAt, $existing->get((int) $item['id']), $full, $report);
+                // Only a full read that reached the end knows what is gone.
+                if ($cursors[$library] === null) {
+                    $report['removed'] += SoftlyBook::where('softly_library', $library)->whereNotIn('softly_id', $seen)->delete();
                 }
-
-                $lastPage = count($result['items']) < config('services.softly.page_size')
-                    || $page * config('services.softly.page_size') >= $result['total'];
-                $page++;
-
-                if ($page > (int) ceil($result['total'] / max(1, config('services.softly.page_size'))) + self::SPARE_PAGES) {
-                    throw new SoftlyUnavailable('More pages than the list has; stopping.');
-                }
-            } while (! $reachedCursor && ! $lastPage);
+            }
 
             $report['complete'] = true;
         } catch (SoftlyUnavailable $e) {
             $report['error'] = $e->getMessage();
         }
 
-        // Only a full run that reached the end knows what is gone.
-        if ($full && $report['complete']) {
-            $report['removed'] += SoftlyBook::whereNotIn('softly_id', array_keys($seen))->delete();
-        }
+        if ($report['mode'] === 'full') {
+            if ($report['complete']) {
+                // Libraries taken out of SOFTLY_LIBRARIES.
+                $report['removed'] += SoftlyBook::whereNotIn('softly_library', $libraries)->delete();
+            }
 
-        if ($full) {
             $report['locations'] = $this->locations();
         }
 
@@ -144,10 +126,61 @@ class SoftlySync
     }
 
     /**
+     * One library's list, from its newest change back to $cursor, or all of
+     * it when there is none. Throws SoftlyUnavailable and stops the run on
+     * any failure: the pause or the cap holds for every library.
+     *
+     * @param  Collection<int, SoftlyBook>  $existing  the library's stored books, by Softly id
+     * @param  array<string, mixed>  $report
+     * @return list<int> the Softly ids it read
+     */
+    private function readLibrary(int $library, ?CarbonInterface $cursor, Collection $existing, array &$report): array
+    {
+        $full = $cursor === null;
+        $seen = [];
+        $page = 1;
+
+        do {
+            $result = $this->client->books($library, $page);
+            $report['requests']++;
+            $reachedCursor = false;
+
+            foreach ($result['items'] as $item) {
+                if (! isset($item['id'], $item['name'])) {
+                    continue;
+                }
+
+                $updatedAt = isset($item['updatedAt']) ? CarbonImmutable::parse($item['updatedAt']) : null;
+
+                // Second precision on both sides: the column drops the
+                // milliseconds Softly sends.
+                if ($cursor !== null && $updatedAt !== null && $updatedAt->startOfSecond()->lt($cursor)) {
+                    $reachedCursor = true;
+
+                    continue;
+                }
+
+                $seen[(int) $item['id']] = true;
+                $this->store($library, $item, $updatedAt, $existing->get((int) $item['id']), $full, $report);
+            }
+
+            $lastPage = count($result['items']) < config('services.softly.page_size')
+                || $page * config('services.softly.page_size') >= $result['total'];
+            $page++;
+
+            if ($page > (int) ceil($result['total'] / max(1, config('services.softly.page_size'))) + self::SPARE_PAGES) {
+                throw new SoftlyUnavailable("Library {$library}: more pages than the list has; stopping.");
+            }
+        } while (! $reachedCursor && ! $lastPage);
+
+        return array_keys($seen);
+    }
+
+    /**
      * @param  array<string, mixed>  $item
      * @param  array<string, mixed>  $report
      */
-    private function store(array $item, ?CarbonImmutable $updatedAt, ?SoftlyBook $row, bool $full, array &$report): void
+    private function store(int $library, array $item, ?CarbonImmutable $updatedAt, ?SoftlyBook $row, bool $full, array &$report): void
     {
         if (! empty($item['deletedAt'])) {
             if ($row !== null) {
@@ -189,7 +222,7 @@ class SoftlySync
         }
 
         if ($row === null) {
-            SoftlyBook::create(['softly_id' => (int) $item['id'], ...$values]);
+            SoftlyBook::create(['softly_library' => $library, 'softly_id' => (int) $item['id'], ...$values]);
             $report['added']++;
 
             return;
