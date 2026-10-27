@@ -39,6 +39,7 @@ class SoftlySyncTest extends TestCase
         config([
             'services.softly.enabled' => true,
             'services.softly.libraries' => [1],
+            'services.softly.create_books' => false,
             'services.softly.page_size' => 2,
             'services.softly.delay_ms' => 0,
             'services.softly.daily_cap' => 100,
@@ -340,6 +341,24 @@ class SoftlySyncTest extends TestCase
         config(['services.softly.libraries' => [1]]);
         $this->assertSame(1, $this->sync(full: true)['removed']);
         $this->assertSame(0, SoftlyBook::where('softly_library', 16)->count());
+    }
+
+    public function test_a_full_run_makes_books_of_titles_with_nothing_like_them(): void
+    {
+        config(['services.softly.create_books' => true]);
+        $this->softly = [$this->item(3, "O'tkan kunlar", 'Abdulla Qodiriy', '2026-10-27T06:00:00.000Z', [[30, false, 1]])];
+        $this->sync();
+
+        // A quick run that adds a title leaves it for the night.
+        array_unshift($this->softly, $this->item(1, 'Harvard metodi', 'Kimdir', '2026-10-27T08:00:00.000Z', [[10, true, 1], [11, false, 1]]));
+        $this->assertSame(0, $this->sync()['created']);
+        $this->assertSame(0, Book::where('uzbek_title', 'Harvard metodi')->count());
+
+        $report = $this->sync(full: true);
+
+        $this->assertSame(1, $report['created']);
+        $harvard = Book::where('uzbek_title', 'Harvard metodi')->sole();
+        $this->assertSame([2, 1], $this->holding($harvard));
     }
 
     public function test_the_command_sends_nothing_while_the_sync_is_off(): void

@@ -35,6 +35,7 @@ class SyncSoftly extends Command
 
         if ($report['mode'] === 'full') {
             $this->line("Copies whose status changed without their book's updatedAt: {$report['missed_by_quick']}.");
+            $this->line("Books made from titles the catalogue lacked: {$report['created']}.");
 
             foreach ($report['locations'] as $location => $info) {
                 $this->line(sprintf('  location %d: %d copies, %s', $location, $info['copies'], $info['library'] ?? 'not linked to a library'));

@@ -52,6 +52,9 @@ return [
         // reads everything, for when a copy going out turns out not to
         // move its book's updatedAt (the nightly log counts those).
         'quick_mode' => env('SOFTLY_QUICK_MODE', 'changed'),
+        // Make a catalogue book, after each nightly run, of every title the
+        // libraries hold that the catalogue has nothing like. See SoftlyNewBooks.
+        'create_books' => (bool) env('SOFTLY_CREATE_BOOKS', true),
         // So Softly can see who is calling and how to reach us.
         'user_agent' => env('SOFTLY_USER_AGENT', 'KitoblarimReads/1.0 (+https://kitoblarim.uz)'),
     ],
