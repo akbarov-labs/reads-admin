@@ -236,11 +236,19 @@ Do not use `php artisan make:filament-user` here: it is not aware of the
 
 ## Changing `.env` on the server
 
-After editing `.env`, you must **recreate** the container, not restart it:
+After editing `.env`, you must **recreate** the container, not restart it,
+from the image it is already running:
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --force-recreate
+cd /opt/apps/reads-admin
+TAG=$(sudo docker inspect reads-admin-app --format '{{.Config.Image}}' | cut -d: -f2)
+sudo IMAGE_TAG=$TAG docker compose -f docker-compose.prod.yml up -d --force-recreate --pull never app
 ```
+
+Without `IMAGE_TAG`, compose asks GHCR for `:latest`, which deploys never
+use; with an expired login that fails with `unauthorized`, and leaves the
+old container running with the old `.env`. `--pull never` keeps it to the
+image already on the server.
 
 `docker compose restart` reuses the existing container, and a container's
 environment is captured once when it is *created*. Restarting re-runs
@@ -323,12 +331,28 @@ Softly let us use its API on the condition that we keep the load low, so:
 - Requests go one at a time, 2 s apart, at most 300 a day
   (`SOFTLY_DAILY_CAP`). A quick run is usually 1 request, a full run about
   26.
-- Any error stops every request for an hour. Logs say why:
-  `sudo docker compose -f docker-compose.prod.yml logs app | grep Softly`.
+- Any error stops every request for an hour.
+
+Each run, and why one stopped, is in Laravel's log file (not
+`docker logs`):
+
+```bash
+sudo docker exec reads-admin-app sh -c "grep -h 'Softly' storage/logs/laravel*.log | tail -5"
+```
+
+Run one by hand as `www-data`, so the log files stay writable by the app:
+
+```bash
+sudo docker exec -u www-data reads-admin-app php artisan softly:sync --full
+```
 
 To link a library, put its Softly location id in the library's admin form.
-The nightly run logs every location id with its copy count. The next run
-fills the list; a linked library's list comes only from Softly.
+`softly:sync --full` prints every location id with its copy count
+(location 1 is Mehr). The next run fills the list; a linked library's list
+comes only from Softly.
+
+`supervisorctl` does not work in the container (no control socket). To see
+that the scheduler is up: `sudo docker top reads-admin-app | grep schedule`.
 
 Each nightly run logs `missed_by_quick`: copies that went out or came back
 without their book's `updatedAt` moving, which quick runs cannot see. If
