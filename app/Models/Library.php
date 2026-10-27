@@ -37,6 +37,7 @@ use Spatie\Translatable\HasTranslations;
     'photo_path',
     'is_published',
     'holdings_updated_at',
+    'softly_location_id',
 ])]
 class Library extends Model
 {
@@ -59,6 +60,7 @@ class Library extends Model
             'holdings_updated_at' => 'datetime',
             'latitude' => 'float',
             'longitude' => 'float',
+            'softly_location_id' => 'integer',
         ];
     }
 

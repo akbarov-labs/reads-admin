@@ -96,6 +96,13 @@ class LibraryResource extends Resource
                     ->label('On the site')
                     ->helperText('Turn on once the library has its books in.')
                     ->visible($isAdmin),
+                Forms\Components\TextInput::make('softly_location_id')
+                    ->label('Softly location id')
+                    ->integer()
+                    ->minValue(1)
+                    ->unique(ignoreRecord: true)
+                    ->helperText('For a library on kutubxonam.uz. Once set, its book list comes from Softly every half hour and replaces any list added by hand. The nightly sync log lists the ids.')
+                    ->visible($isAdmin),
             ])->columns(2),
 
             Forms\Components\Section::make('Where')->schema([

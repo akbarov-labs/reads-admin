@@ -308,6 +308,33 @@ rotate it by changing both sides and recreating the container (see "Changing
 `editions` runs with the normal deploy. What the endpoints do is in
 `docs/DATA-MODEL.md`.
 
+## Softly library sync (kutubxonam.uz)
+
+Libraries on Softly (library.softly.uz, the system behind kutubxonam.uz)
+get their book lists from it: `softly:sync` reads what changed every half
+hour 08:00-21:00 Tashkent time, and `softly:sync --full` reads everything
+at 02:30. The scheduler runs inside the app container (`scheduler` in
+docker/prod/supervisord.conf).
+
+Softly let us use its API on the condition that we keep the load low, so:
+
+- It is off unless `SOFTLY_SYNC_ENABLED=true`. Set it in production only,
+  never on staging.
+- Requests go one at a time, 2 s apart, at most 300 a day
+  (`SOFTLY_DAILY_CAP`). A quick run is usually 1 request, a full run about
+  26.
+- Any error stops every request for an hour. Logs say why:
+  `sudo docker compose -f docker-compose.prod.yml logs app | grep Softly`.
+
+To link a library, put its Softly location id in the library's admin form.
+The nightly run logs every location id with its copy count. The next run
+fills the list; a linked library's list comes only from Softly.
+
+Each nightly run logs `missed_by_quick`: copies that went out or came back
+without their book's `updatedAt` moving, which quick runs cannot see. If
+it is not 0 for a few days, set `SOFTLY_QUICK_MODE=full` and
+`SOFTLY_DAILY_CAP=800`: every quick run then reads all ~26 pages.
+
 ## Rollback
 
 Every image is also tagged with its commit SHA (first 7 characters). The
