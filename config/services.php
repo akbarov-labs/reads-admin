@@ -40,9 +40,13 @@ return [
     'softly' => [
         'enabled' => (bool) env('SOFTLY_SYNC_ENABLED', false),
         'url' => env('SOFTLY_URL', 'https://library.softly.uz/api/app'),
+        // Softly library ids to read, as kutubxonam.uz lists them: Mehr 1,
+        // Kitobqand 16, Izlash 22, UzKutubxona.de 25, Idrok 26. A library's
+        // copies carry the same number as their location id.
+        'libraries' => array_values(array_filter(array_map('intval', explode(',', (string) env('SOFTLY_LIBRARIES', '1,16,22,25,26'))))),
         'page_size' => (int) env('SOFTLY_PAGE_SIZE', 100),
         'delay_ms' => (int) env('SOFTLY_DELAY_MS', 2000),
-        'daily_cap' => (int) env('SOFTLY_DAILY_CAP', 300),
+        'daily_cap' => (int) env('SOFTLY_DAILY_CAP', 400),
         'pause_minutes' => (int) env('SOFTLY_PAUSE_MINUTES', 60),
         // "changed" reads only what changed since the last sync; "full"
         // reads everything, for when a copy going out turns out not to

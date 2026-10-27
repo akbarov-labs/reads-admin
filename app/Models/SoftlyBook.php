@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * A book as Softly lists it, and the catalogue book it was matched to. The
+ * A book as one Softly library lists it, and the catalogue book it was matched to. The
  * copies (`stocks`) say which location holds each one and whether it is
  * out; SoftlySync turns them into library_holdings.
  */
 #[Fillable([
+    'softly_library',
     'softly_id',
     'name',
     'author',
@@ -27,6 +28,7 @@ class SoftlyBook extends Model
     protected function casts(): array
     {
         return [
+            'softly_library' => 'integer',
             'stocks' => 'array',
             'candidate_ids' => 'array',
             'softly_updated_at' => 'datetime',

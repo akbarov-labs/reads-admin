@@ -18,8 +18,11 @@ class SoftlySyncTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** What Softly answers, newest change first, as one list it pages through. */
+    /** What Softly answers for Mehr (library 1), newest change first, as one list it pages through. */
     private array $softly = [];
+
+    /** The same for other Softly libraries, by library id. */
+    private array $otherLibraries = [];
 
     private ?int $failWithStatus = null;
 
@@ -35,6 +38,7 @@ class SoftlySyncTest extends TestCase
 
         config([
             'services.softly.enabled' => true,
+            'services.softly.libraries' => [1],
             'services.softly.page_size' => 2,
             'services.softly.delay_ms' => 0,
             'services.softly.daily_cap' => 100,
@@ -62,11 +66,14 @@ class SoftlySyncTest extends TestCase
 
             parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
             $size = (int) $query['size'];
+            // Like Softly: no header means Mehr.
+            $library = (int) ($request->header('library')[0] ?? 1);
+            $list = $library === 1 ? $this->softly : ($this->otherLibraries[$library] ?? []);
 
             return Http::response([
                 'page' => (int) $query['page'],
-                'items' => array_slice($this->softly, ((int) $query['page'] - 1) * $size, $size),
-                'totalCount' => count($this->softly),
+                'items' => array_slice($list, ((int) $query['page'] - 1) * $size, $size),
+                'totalCount' => count($list),
             ]);
         });
     }
@@ -243,6 +250,96 @@ class SoftlySyncTest extends TestCase
 
         $this->assertSame(1, $report['missed_by_quick']);
         $this->assertSame([1, 0], $this->holding($this->kunlar));
+    }
+
+    public function test_each_library_is_read_with_its_own_header(): void
+    {
+        config(['services.softly.libraries' => [1, 16]]);
+        $kitobqand = Library::create(['slug' => 'kitobqand', 'name' => 'Kitobqand', 'region' => 'Toshkent shahri', 'softly_location_id' => 16]);
+
+        $this->softly = [$this->item(3, "O'tkan kunlar", 'Abdulla Qodiriy', '2026-10-27T06:00:00.000Z', [[30, false, 1]])];
+        // The same Softly id in another library is another book there.
+        $this->otherLibraries[16] = [
+            $this->item(3, 'Mehrobdan chayon', 'Abdulla Qodiriy', '2026-10-26T06:00:00.000Z', [[40, true, 16], [41, false, 16]]),
+        ];
+
+        $report = $this->sync();
+
+        $this->assertSame(2, $report['requests']);
+        $this->assertSame(2, $report['added']);
+        $this->assertSame(['1', '16'], Http::recorded(fn (Request $request) => str_contains($request->url(), 'softly'))
+            ->map(fn (array $pair) => $pair[0]->header('library')[0])->all());
+
+        $this->assertSame([1, 1], $this->holding($this->kunlar));
+        $this->assertNull($this->holding($this->chayon));
+        $this->assertSame([2, 1], [
+            $kitobqand->holdings()->where('book_id', $this->chayon->id)->value('copies_total'),
+            $kitobqand->holdings()->where('book_id', $this->chayon->id)->value('copies_available'),
+        ]);
+    }
+
+    public function test_a_quick_run_stops_at_each_library_s_own_last_change(): void
+    {
+        config(['services.softly.libraries' => [1, 16]]);
+        Library::create(['slug' => 'kitobqand', 'name' => 'Kitobqand', 'region' => 'Toshkent shahri', 'softly_location_id' => 16]);
+
+        $this->softly = [$this->item(3, "O'tkan kunlar", 'Abdulla Qodiriy', '2026-10-27T06:00:00.000Z', [[30, false, 1]])];
+        $this->otherLibraries[16] = [
+            $this->item(8, 'Mehrobdan chayon', 'Abdulla Qodiriy', '2026-10-20T06:00:00.000Z', [[40, false, 16]]),
+            $this->item(7, 'Harvard metodi', 'Kimdir', '2026-10-19T06:00:00.000Z', [[41, false, 16]]),
+        ];
+        $this->sync();
+
+        // Out at Kitobqand, on a day older than Mehr's newest change.
+        $this->otherLibraries[16][0] = $this->item(8, 'Mehrobdan chayon', 'Abdulla Qodiriy', '2026-10-21T06:00:00.000Z', [[40, true, 16]]);
+
+        $report = $this->sync();
+
+        $this->assertSame('changed', $report['mode']);
+        $this->assertSame(1, $report['changed']);
+        $this->assertSame(0, (int) Library::where('slug', 'kitobqand')->first()->holdings()->value('copies_available'));
+    }
+
+    public function test_a_new_library_is_read_in_full_on_a_quick_run(): void
+    {
+        $this->softly = [$this->item(3, "O'tkan kunlar", 'Abdulla Qodiriy', '2026-10-27T06:00:00.000Z', [[30, false, 1]])];
+        $this->sync();
+
+        config(['services.softly.libraries' => [1, 16]]);
+        $this->otherLibraries[16] = [
+            $this->item(8, 'Mehrobdan chayon', 'Abdulla Qodiriy', '2026-10-20T06:00:00.000Z', [[40, false, 16]]),
+            $this->item(7, 'Harvard metodi', 'Kimdir', '2026-10-19T06:00:00.000Z', [[41, false, 16]]),
+            $this->item(6, 'Kecha va kunduz', "Cho'lpon", '2026-10-18T06:00:00.000Z', [[42, false, 16]]),
+        ];
+
+        $report = $this->sync();
+
+        $this->assertSame('changed', $report['mode']);
+        $this->assertSame(3, $report['added']);
+        $this->assertSame(3, SoftlyBook::where('softly_library', 16)->count());
+    }
+
+    public function test_a_full_run_takes_away_only_what_that_library_no_longer_lists(): void
+    {
+        config(['services.softly.libraries' => [1, 16]]);
+        $this->softly = [$this->item(3, "O'tkan kunlar", 'Abdulla Qodiriy', '2026-10-27T06:00:00.000Z', [[30, false, 1]])];
+        $this->otherLibraries[16] = [
+            $this->item(8, 'Mehrobdan chayon', 'Abdulla Qodiriy', '2026-10-20T06:00:00.000Z', [[40, false, 16]]),
+            $this->item(3, 'Harvard metodi', 'Kimdir', '2026-10-19T06:00:00.000Z', [[41, false, 16]]),
+        ];
+        $this->sync();
+
+        array_pop($this->otherLibraries[16]);
+        $report = $this->sync(full: true);
+
+        $this->assertSame(1, $report['removed']);
+        $this->assertTrue(SoftlyBook::where('softly_library', 1)->where('softly_id', 3)->exists());
+        $this->assertFalse(SoftlyBook::where('softly_library', 16)->where('softly_id', 3)->exists());
+
+        // Taken out of SOFTLY_LIBRARIES: its books go on the next full run.
+        config(['services.softly.libraries' => [1]]);
+        $this->assertSame(1, $this->sync(full: true)['removed']);
+        $this->assertSame(0, SoftlyBook::where('softly_library', 16)->count());
     }
 
     public function test_the_command_sends_nothing_while_the_sync_is_off(): void

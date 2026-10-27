@@ -328,9 +328,13 @@ Softly let us use its API on the condition that we keep the load low, so:
 
 - It is off unless `SOFTLY_SYNC_ENABLED=true`. Set it in production only,
   never on staging.
-- Requests go one at a time, 2 s apart, at most 300 a day
-  (`SOFTLY_DAILY_CAP`). A quick run is usually 1 request, a full run about
-  26.
+- Softly answers for one library at a time (the `library` header). The
+  sync reads the five kutubxonam.uz libraries in `SOFTLY_LIBRARIES`
+  (default `1,16,22,25,26`), each with its own place to stop at.
+- Requests go one at a time, 2 s apart, at most 400 a day
+  (`SOFTLY_DAILY_CAP`). A quick run is usually 1 request per library (5),
+  a full run about 66. A library read for the first time is read in full,
+  even on a quick run (about 20 requests for Kitobqand).
 - Any error stops every request for an hour.
 
 Each run, and why one stopped, is in Laravel's log file (not
@@ -347,8 +351,9 @@ sudo docker exec -u www-data reads-admin-app php artisan softly:sync --full
 ```
 
 To link a library, put its Softly location id in the library's admin form.
-`softly:sync --full` prints every location id with its copy count
-(location 1 is Mehr). The next run fills the list; a linked library's list
+`softly:sync --full` prints every location id with its copy count. The
+ids are Mehr 1, Kitobqand 16, Izlash 22, UzKutubxona.de 25, Idrok 26 (each
+library's copies carry its library id). The next run fills the list; a linked library's list
 comes only from Softly.
 
 `supervisorctl` does not work in the container (no control socket). To see
@@ -357,7 +362,7 @@ that the scheduler is up: `sudo docker top reads-admin-app | grep schedule`.
 Each nightly run logs `missed_by_quick`: copies that went out or came back
 without their book's `updatedAt` moving, which quick runs cannot see. If
 it is not 0 for a few days, set `SOFTLY_QUICK_MODE=full` and
-`SOFTLY_DAILY_CAP=800`: every quick run then reads all ~26 pages.
+`SOFTLY_DAILY_CAP=2000`: every quick run then reads all ~66 pages.
 
 ## Rollback
 
