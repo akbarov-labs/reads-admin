@@ -179,11 +179,16 @@ answers with the kept author, whose current slug the site redirects to.
 
 The Kitoblarim Telegram bot keeps its own moderator-approved catalogue. Two
 endpoints keep it level with this one, both under `/api/sync`, both needing
-`Authorization: Bearer <token>`, where the token is `CATALOGUE_SYNC_TOKEN`
-(`config/catalogue.php`). With no token configured they answer
-`503 {"message":"Catalogue sync is not configured"}`; a missing or wrong
-token is `401`. They are throttled at 120 requests a minute and are not part
-of the public read API. The code is `App\Services\CatalogueSync`, which
+`Authorization: Bearer <token>`. Two bots may call them, each with its own
+token (`config/catalogue.php`): the Kitoblarim bot with
+`CATALOGUE_SYNC_TOKEN`, and the Kitob Marafoni bot (book marathons) with
+`CATALOGUE_MARATHON_TOKEN`, which also has an endpoint of its own for books
+without an ISBN (below). Either token lets a request in. With neither
+configured they answer `503 {"message":"Catalogue sync is not configured"}`;
+a missing or wrong token is `401`, and an unset token matches nothing. Each
+bot has its own bucket of 600 requests a minute; a caller without a right
+token gets 30 a minute per IP, so it cannot use up a bot's. They are not
+part of the public read API. The code is `App\Services\CatalogueSync`, which
 finds or creates authors, publishers, translators and books through
 `App\Services\CatalogueRecords`, the same keys the Asaxiy seeder uses.
 
@@ -250,6 +255,38 @@ Other rules:
   the bot). A **rejected** edition is left alone and answers `unchanged`.
 - The writes run without model events and the public site is pinged once,
   for the book, when something changed.
+
+### Books without an ISBN: `POST /api/sync/books`
+
+For the Kitob Marafoni bot, whose admins add books to a marathon that often
+have no ISBN, so `PUT /api/sync/editions/{isbn}` cannot take them. Books
+with an ISBN still go there (with this bot's token too).
+
+```json
+{ "title": "…", "authors": ["…"], "language": "uz", "description": "…" }
+```
+
+`title` is required; the rest may be null or left out. Text is cleaned and
+`language` mapped exactly as for a push. The answer is always `200`
+`{"outcome", "bookId", "status"}`:
+
+- `found`: a book with this *first author + title* (alphabet-insensitive,
+  `CatalogueRecords::findBook`, as a push uses) already exists, in any
+  status. Nothing is written: not its title, authors, description or
+  editions. `status` says whether the site shows it (`approved`) or not
+  (`pending`, `rejected`); a book an editor rejected is not made again.
+- `created`: none did. A book is created **pending** (`status: "pending"`),
+  with its authors found or created in order, and one **approved** edition
+  with no ISBN carrying `language` and `description`. The book's status
+  keeps it off the site until an editor approves it (*Books* in the panel,
+  where pending books are counted on the menu badge); since it already has
+  an approved edition, approving the book is all it takes to publish it.
+
+The same title and author sent again answers `found` with the same `bookId`,
+so the bot may retry freely. Two sends of one new book at once take turns
+behind a cache lock, so they cannot make two books. Nothing is pinged on the
+public site (a new book is pending, a found one untouched), and an edition
+with no ISBN never appears in the pull feed.
 
 ### Pull: `GET /api/sync/editions?since=&after=&limit=`
 

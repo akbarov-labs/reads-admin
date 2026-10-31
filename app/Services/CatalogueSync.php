@@ -14,6 +14,7 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -26,6 +27,9 @@ use Illuminate\Validation\ValidationException;
  * looked. Both talk about an edition through projection(), the handful of
  * fields the two sides share — it is what the feed serves and what the
  * loop-guard hash is taken over, so the two cannot drift apart.
+ *
+ * pushBook() is the Kitob Marafoni bot's way in for a book with no ISBN:
+ * it finds the book or starts one awaiting review, and syncs nothing back.
  */
 class CatalogueSync
 {
@@ -116,27 +120,8 @@ class CatalogueSync
         $language = $this->language($data['language'] ?? null);
         $uzbek = $language === self::UZBEK;
 
-        // A description keeps its paragraphs; everything else is one line.
-        $text = function (mixed $value, bool $paragraphs = false) use ($uzbek): ?string {
-            $value = ! is_string($value) ? null : ($paragraphs ? UzbekText::cleanParagraphs($value) : UzbekText::clean($value));
-
-            return $value !== null && $uzbek && UzbekText::hasCyrillic($value) ? UzbekText::toLatin($value) : $value;
-        };
-
-        $names = function (mixed $list) use ($text): array {
-            $names = [];
-
-            foreach (is_array($list) ? $list : [] as $name) {
-                $name = $text($name);
-
-                // Two spellings of one person in one credit line are one credit.
-                if ($name !== null && UzbekText::key($name) !== '') {
-                    $names[UzbekText::key($name)] ??= $name;
-                }
-            }
-
-            return array_values($names);
-        };
+        $text = fn (mixed $value, bool $paragraphs = false): ?string => $this->text($value, $uzbek, $paragraphs);
+        $names = fn (mixed $list): array => $this->names($list, $uzbek);
 
         $publisher = $text($data['publisher'] ?? null);
 
@@ -163,6 +148,32 @@ class CatalogueSync
             'updatedAt' => CarbonImmutable::parse($data['updatedAt'])->setMicrosecond(0),
             'fillOnly' => (bool) ($data['fillOnly'] ?? false),
         ];
+    }
+
+    /** Cleaned, and made Latin when the text is Uzbek; null when nothing is left. */
+    // A description keeps its paragraphs; everything else is one line.
+    private function text(mixed $value, bool $uzbek, bool $paragraphs = false): ?string
+    {
+        $value = ! is_string($value) ? null : ($paragraphs ? UzbekText::cleanParagraphs($value) : UzbekText::clean($value));
+
+        return $value !== null && $uzbek && UzbekText::hasCyrillic($value) ? UzbekText::toLatin($value) : $value;
+    }
+
+    /** @return list<string> */
+    private function names(mixed $list, bool $uzbek): array
+    {
+        $names = [];
+
+        foreach (is_array($list) ? $list : [] as $name) {
+            $name = $this->text($name, $uzbek);
+
+            // Two spellings of one person in one credit line are one credit.
+            if ($name !== null && UzbekText::key($name) !== '') {
+                $names[UzbekText::key($name)] ??= $name;
+            }
+        }
+
+        return array_values($names);
     }
 
     private function language(mixed $value): ?string
@@ -401,6 +412,66 @@ class CatalogueSync
         }
 
         return true;
+    }
+
+    // ------------------------------------------------------------------
+    // Push without an ISBN: the Kitob Marafoni bot → here
+    // ------------------------------------------------------------------
+
+    /**
+     * A book a marathon admin added that has no ISBN. Found by first author
+     * plus title, like create(); otherwise started **pending**, so an editor
+     * looks at it before the site shows it. The same book sent again finds
+     * the one made the first time, whatever its status now: a book an editor
+     * rejected is not made again.
+     *
+     * A new book gets one approved edition with no ISBN, carrying the
+     * language and description, so approving the book alone publishes it
+     * (the site lists books that have an approved edition). A book that was
+     * found is left exactly as it is.
+     *
+     * @param  array<string, mixed>  $data  the validated request body
+     * @return array{outcome: string, bookId: int, status: string}
+     */
+    public function pushBook(array $data): array
+    {
+        $language = $this->language($data['language'] ?? null);
+        $uzbek = $language === self::UZBEK;
+        $title = $this->text($data['title'] ?? null, $uzbek);
+        $authors = $this->names($data['authors'] ?? [], $uzbek);
+
+        if ($title === null || UzbekText::key($title) === '') {
+            throw ValidationException::withMessages(['title' => 'The title is required.']);
+        }
+
+        // Books have no unique key to lean on, so two sends of one new book
+        // at once take turns: the second then finds what the first made.
+        $lock = 'catalogue-sync-book:'.sha1(CatalogueRecords::bookKey($authors[0] ?? null, $title));
+
+        return Cache::lock($lock, 10)->block(10, fn () => Model::withoutEvents(fn () => DB::transaction(function () use ($title, $authors, $language, $uzbek, $data) {
+            $book = $this->records->findBook($authors[0] ?? null, $title);
+            $outcome = 'found';
+
+            if ($book === null) {
+                $book = Book::create(['uzbek_title' => $title, 'status' => ModerationStatus::Pending]);
+
+                foreach ($authors as $position => $name) {
+                    $book->authors()->syncWithoutDetaching([$this->records->author($name)->id => ['position' => $position]]);
+                }
+
+                $book->editions()->create([
+                    'language' => $language,
+                    'description' => $this->text($data['description'] ?? null, $uzbek, paragraphs: true),
+                    'status' => ModerationStatus::Approved,
+                ]);
+
+                $outcome = 'created';
+            }
+
+            // No ping for the public site: a new book is pending, and a
+            // found one was not touched.
+            return ['outcome' => $outcome, 'bookId' => $book->id, 'status' => $book->status->value];
+        })));
     }
 
     // ------------------------------------------------------------------

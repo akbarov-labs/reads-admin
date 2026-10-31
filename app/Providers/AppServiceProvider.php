@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsureCatalogueSyncToken;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -34,14 +35,12 @@ class AppServiceProvider extends ServiceProvider
         // (hundreds of pushes) could starve the pages. Token-guarded, so the
         // ceiling can be generous. The throttle runs before the token check,
         // so a caller without the right token gets a small bucket per IP
-        // instead: strangers must not be able to use up the bot's.
-        RateLimiter::for('catalogue-sync', function (Request $request) {
-            $token = (string) config('catalogue.sync_token');
-            $given = (string) $request->bearerToken();
-
-            return $token !== '' && $given !== '' && hash_equals($token, $given)
-                ? Limit::perMinute(600)->by('catalogue-sync')
-                : Limit::perMinute(30)->by('catalogue-sync-stranger:'.$request->ip());
+        // instead: strangers must not be able to use up the bot's. The Kitob
+        // Marafoni bot has its own token and so its own bucket.
+        RateLimiter::for('catalogue-sync', fn (Request $request) => match (EnsureCatalogueSyncToken::caller($request)) {
+            'kitoblarim' => Limit::perMinute(600)->by('catalogue-sync'),
+            'marathon' => Limit::perMinute(600)->by('catalogue-sync-marathon'),
+            default => Limit::perMinute(30)->by('catalogue-sync-stranger:'.$request->ip()),
         });
 
         // The public read API. Strangers get 120 a minute per IP, but the
