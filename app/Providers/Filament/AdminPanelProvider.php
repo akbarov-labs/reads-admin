@@ -2,10 +2,12 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Stats;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -43,9 +45,30 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            // Dashboard, Site stats and Inquiries sit above the groups. Then
+            // the catalogue itself, the reviews that need moderating, and
+            // what editors put on the site's pages. Each resource names its
+            // group and its place in it ($navigationGroup, $navigationSort).
+            ->navigationGroups([
+                NavigationGroup::make('Catalogue'),
+                NavigationGroup::make('Reviews'),
+                NavigationGroup::make('On the site'),
+            ])
+            // The Site stats page's widgets. Kept out of Filament/Widgets so
+            // the main dashboard does not show them, so registered by hand.
+            ->livewireComponents([
+                Stats\SiteStatsOverview::class,
+                Stats\ViewsAndSearchesChart::class,
+                Stats\ClicksPerDayChart::class,
+                Stats\TopBooksTable::class,
+                Stats\TopStoresTable::class,
+                Stats\TopAnnouncementsTable::class,
+                Stats\TopSearchesTable::class,
+                Stats\NoResultSearchesTable::class,
+            ])
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn () => (Auth::user()?->isTranslator() || Auth::user()?->isPublisher())
+                fn () => (Auth::user()?->isTranslator() || Auth::user()?->isPublisher() || Auth::user()?->isLibrary())
                     ? new HtmlString(<<<'HTML'
                         <style>
                             .fi-sidebar, .fi-topbar-open-sidebar-btn { display: none !important; }
@@ -53,7 +76,7 @@ class AdminPanelProvider extends PanelProvider
                         HTML)
                     : '',
             )
-            // The sidebar (hidden for translators and publishers, above)
+            // The sidebar (hidden for translators, publishers and libraries, above)
             // normally carries the only logo/home link back to the
             // dashboard — this keeps that path available in the topbar
             // regardless of role.

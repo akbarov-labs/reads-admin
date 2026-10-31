@@ -1,25 +1,32 @@
 <?php
 
+use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\AuthorController;
 use App\Http\Controllers\Api\BookController;
+use App\Http\Controllers\Api\BookViewController;
 use App\Http\Controllers\Api\CatalogueSyncController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\InquiryController;
+use App\Http\Controllers\Api\LibraryController;
+use App\Http\Controllers\Api\OutboundClickController;
 use App\Http\Controllers\Api\PublisherController;
 use App\Http\Controllers\Api\QuoteController;
+use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\SearchQueryController;
 use App\Http\Controllers\Api\SitemapController;
 use App\Http\Controllers\Api\TaqrizchiController;
 use App\Http\Controllers\Api\TaqrizController;
 use App\Http\Controllers\Api\TranslatorController;
 use App\Http\Middleware\EnsureCatalogueSyncToken;
+use App\Http\Middleware\EnsureSiteToken;
 use Illuminate\Support\Facades\Route;
 
-// Read endpoints are public, but not unlimited: in normal operation only the
-// Next.js site calls them, a handful of times per ISR window. A ceiling this
-// far above that costs legitimate traffic nothing while taking scraping and
-// cheap floods off the table.
-Route::middleware('throttle:120,1')->group(function () {
+// Read endpoints are public, but not unlimited: 120 a minute per IP takes
+// scraping and cheap floods off the table. The Next.js site, which sends
+// every visitor's and crawler's cache misses from one IP, has a bucket of its
+// own (`public-read` in AppServiceProvider).
+Route::middleware('throttle:public-read')->group(function () {
     Route::get('/translators', [TranslatorController::class, 'index']);
     Route::get('/translators/{translator}', [TranslatorController::class, 'show']);
     Route::get('/authors', [AuthorController::class, 'index']);
@@ -35,6 +42,16 @@ Route::middleware('throttle:120,1')->group(function () {
     Route::get('/collections', [CollectionController::class, 'index']);
     Route::get('/collections/{collection}', [CollectionController::class, 'show']);
     Route::get('/quotes/today', [QuoteController::class, 'today']);
+    Route::get('/libraries', [LibraryController::class, 'index']);
+    Route::get('/libraries/{library:slug}', [LibraryController::class, 'show']);
+    Route::get('/libraries/{library:slug}/books', [LibraryController::class, 'books']);
+    // Publishers' new books and pre-orders on the site today.
+    Route::get('/announcements', [AnnouncementController::class, 'index']);
+    Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show']);
+    // The search box's grouped suggestions. The site forwards each
+    // visitor's address and sends no token, so every visitor has a
+    // stranger's 120 a minute and nobody's typing eats the site's bucket.
+    Route::get('/search', SearchController::class);
     // Ids, slugs and dates for the site's sitemap, in one response.
     Route::get('/sitemap', [SitemapController::class, 'index']);
 });
@@ -43,6 +60,15 @@ Route::middleware('throttle:120,1')->group(function () {
 // honeypot check in StoreInquiryRequest/InquiryController.
 Route::post('/translators/{translator}/inquiries', [InquiryController::class, 'store'])
     ->middleware('throttle:5,1');
+
+// The site's own statistics: a reader it sent on to a store, a book page
+// opened, a search. Only the site writes here, with the secret it already
+// sends on its reads.
+Route::middleware(['throttle:site-writes', EnsureSiteToken::class])->group(function () {
+    Route::post('/clicks', [OutboundClickController::class, 'store']);
+    Route::post('/views', [BookViewController::class, 'store']);
+    Route::post('/searches', [SearchQueryController::class, 'store']);
+});
 
 // The bots' catalogue sync (the Kitoblarim bot's, and the Kitob Marafoni
 // bot's, each with its own token). Unlike everything above it writes, so

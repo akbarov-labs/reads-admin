@@ -236,11 +236,19 @@ Do not use `php artisan make:filament-user` here: it is not aware of the
 
 ## Changing `.env` on the server
 
-After editing `.env`, you must **recreate** the container, not restart it:
+After editing `.env`, you must **recreate** the container, not restart it,
+from the image it is already running:
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --force-recreate
+cd /opt/apps/reads-admin
+TAG=$(sudo docker inspect reads-admin-app --format '{{.Config.Image}}' | cut -d: -f2)
+sudo IMAGE_TAG=$TAG docker compose -f docker-compose.prod.yml up -d --force-recreate --pull never app
 ```
+
+Without `IMAGE_TAG`, compose asks GHCR for `:latest`, which deploys never
+use; with an expired login that fails with `unauthorized`, and leaves the
+old container running with the old `.env`. `--pull never` keeps it to the
+image already on the server.
 
 `docker compose restart` reuses the existing container, and a container's
 environment is captured once when it is *created*. Restarting re-runs
@@ -317,6 +325,70 @@ CATALOGUE_MARATHON_TOKEN=<openssl rand -hex 32, a different value>
 
 Blank shuts that bot out (401) without affecting the Kitoblarim bot; the
 endpoints only answer 503 when both tokens are blank.
+
+## Softly library sync (kutubxonam.uz)
+
+Libraries on Softly (library.softly.uz, the system behind kutubxonam.uz)
+get their book lists from it: `softly:sync` reads what changed every half
+hour 08:00-21:00 Tashkent time, and `softly:sync --full` reads everything
+at 02:30. The scheduler runs inside the app container (`scheduler` in
+docker/prod/supervisord.conf).
+
+Softly let us use its API on the condition that we keep the load low, so:
+
+- It is off unless `SOFTLY_SYNC_ENABLED=true`. Set it in production only,
+  never on staging.
+- Softly answers for one library at a time (the `library` header). The
+  sync reads the five kutubxonam.uz libraries in `SOFTLY_LIBRARIES`
+  (default `1,16,22,25,26`), each with its own place to stop at.
+- Requests go one at a time, 2 s apart, at most 400 a day
+  (`SOFTLY_DAILY_CAP`). A quick run is usually 1 request per library (5),
+  a full run about 66. A library read for the first time is read in full,
+  even on a quick run (about 20 requests for Kitobqand).
+- Any error stops every request for an hour.
+
+Each run, and why one stopped, is in Laravel's log file (not
+`docker logs`):
+
+```bash
+sudo docker exec reads-admin-app sh -c "grep -h 'Softly' storage/logs/laravel*.log | tail -5"
+```
+
+Run one by hand as `www-data`, so the log files stay writable by the app:
+
+```bash
+sudo docker exec -u www-data reads-admin-app php artisan softly:sync --full
+```
+
+To link a library, put its Softly location id in the library's admin form.
+`softly:sync --full` prints every location id with its copy count. The
+ids are Mehr 1, Kitobqand 16, Izlash 22, UzKutubxona.de 25, Idrok 26 (each
+library's copies carry its library id). The next run fills the list; a linked library's list
+comes only from Softly.
+
+`supervisorctl` does not work in the container (no control socket). To see
+that the scheduler is up: `sudo docker top reads-admin-app | grep schedule`.
+
+Softly has no ISBNs, so titles are matched on title and author, and
+only an exact match is linked on its own. After each complete nightly
+run, a title with nothing like it in the catalogue becomes a book (its
+author found under any spelling, or made, and one edition with no ISBN);
+the same title in several libraries becomes one book. Titles with near
+matches wait under **Catalogue → Softly matches** for an admin to link,
+make a book, or skip. A book made by mistake (a magazine, a notebook) is
+removed from the same page, which also stops it being made again.
+`SOFTLY_CREATE_BOOKS=false` turns the nightly part off. To see what it
+would make, or to make the books now instead of at night:
+
+```bash
+sudo docker exec -u www-data reads-admin-app php artisan softly:add-books --dry-run
+sudo docker exec -u www-data reads-admin-app php artisan softly:add-books
+```
+
+Each nightly run logs `missed_by_quick`: copies that went out or came back
+without their book's `updatedAt` moving, which quick runs cannot see. If
+it is not 0 for a few days, set `SOFTLY_QUICK_MODE=full` and
+`SOFTLY_DAILY_CAP=2000`: every quick run then reads all ~66 pages.
 
 ## Rollback
 

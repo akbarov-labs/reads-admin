@@ -25,6 +25,8 @@ class BookDetailResource extends BookResource
         return array_merge(parent::toArray($request), [
             // Its own, or the fullest an edition carries (Book::getAboutAttribute).
             'description' => $this->about,
+            // Credit for a description copied from a shop listing, or null.
+            'descriptionSource' => $this->about_source,
             'editions' => EditionResource::collection($this->approvedEditions),
 
             // Approved only — the controller constrains the eager load, so
@@ -47,7 +49,33 @@ class BookDetailResource extends BookResource
             'quotes' => QuoteResource::collection($this->whenLoaded('quotes')),
 
             'relatedBooks' => BookResource::collection(collect($this->related)),
+
+            // Published libraries that hold it: those with a copy on the
+            // shelf first, then the most recently confirmed lists.
+            'libraries' => $this->whenLoaded('libraryHoldings', fn () => $this->libraries()),
         ]);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function libraries(): array
+    {
+        return $this->libraryHoldings
+            ->sortBy([
+                fn ($a, $b) => ($b->copies_available > 0) <=> ($a->copies_available > 0),
+                fn ($a, $b) => $b->library->holdings_updated_at <=> $a->library->holdings_updated_at,
+            ])
+            ->map(fn ($holding) => [
+                'slug' => $holding->library->slug,
+                'name' => $holding->library->name,
+                'region' => $holding->library->region,
+                'district' => $holding->library->district,
+                'copiesTotal' => $holding->copies_total,
+                'copiesAvailable' => $holding->copies_available,
+                'updatedAt' => $holding->library->holdings_updated_at?->toIso8601String(),
+                'stale' => LibraryResource::isStale($holding->library),
+            ])
+            ->values()
+            ->all();
     }
 
     /** @return array{average: float, count: int, stars: list<int>|null}|null */

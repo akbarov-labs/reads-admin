@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\ModerationStatus;
 use App\Filament\Resources\ReaderReviewResource\Pages;
+use App\Filament\Support\PendingNavigationBadge;
 use App\Models\ReaderReview;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
@@ -19,11 +20,17 @@ use Illuminate\Database\Eloquent\Collection;
  */
 class ReaderReviewResource extends Resource
 {
+    use PendingNavigationBadge;
+
     protected static ?string $model = ReaderReview::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-ellipsis';
 
     protected static ?string $navigationLabel = 'Reader reviews';
+
+    protected static ?string $navigationGroup = 'Reviews';
+
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $modelLabel = 'reader review';
 

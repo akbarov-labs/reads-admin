@@ -14,6 +14,7 @@ use App\Services\CatalogueRecords;
 use App\Services\SiteRevalidator;
 use App\Support\Asaxiy\AsaxiyCatalog;
 use App\Support\Asaxiy\AsaxiyPage;
+use App\Support\SearchKeys;
 use App\Support\UzbekText;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Model;
@@ -118,6 +119,10 @@ class AsaxiyBooksSeeder extends Seeder
             $this->removeNotBooks();
         });
 
+        // Rows are saved with their keys, but an original name filled in
+        // by a bulk update further up is not.
+        SearchKeys::rebuild();
+
         app(SiteRevalidator::class)->everything();
 
         $c = $this->created;
@@ -140,6 +145,11 @@ class AsaxiyBooksSeeder extends Seeder
 
         foreach ($catalog->books() as $listing) {
             $listing += $this->pageDetails((string) $listing['source_article']);
+
+            // The page's description still has its paragraphs; the
+            // workbook's is one line with the structure guessed back.
+            $listing['description'] = AsaxiyCatalog::description($listing['page_description'], $listing['uzbek']) ?? $listing['description'];
+            unset($listing['page_description']);
 
             if (AsaxiyCatalog::isNotABook($listing)) {
                 $this->notBooks[] = (string) $listing['source_article'];
@@ -175,8 +185,8 @@ class AsaxiyBooksSeeder extends Seeder
 
     /**
      * What asaxiy:scrape saved about the listing that the workbook does not
-     * have: the genre crumb, the related books, and how many gallery photos
-     * there are.
+     * have: the genre crumb, the related books, how many gallery photos
+     * there are, and the description as the page laid it out.
      *
      * @return array<string, mixed>
      */
@@ -189,6 +199,7 @@ class AsaxiyBooksSeeder extends Seeder
             'breadcrumb' => $page['breadcrumb'] ?? null,
             'related' => $page['related'] ?? [],
             'gallery_count' => count($page['gallery'] ?? []),
+            'page_description' => $page['description'] ?? null,
         ];
     }
 
@@ -245,7 +256,12 @@ class AsaxiyBooksSeeder extends Seeder
             $this->publishers[UzbekText::publisherKey($publisher->name)] ??= $publisher->id;
         }
 
-        $taken = Publisher::pluck('slug')->flip()->all();
+        // A spelling merged into another publisher (PublisherMerger) stays merged.
+        foreach (DB::table('publisher_aliases')->select('publisher_id', 'name')->cursor() as $alias) {
+            $this->publishers[UzbekText::publisherKey($alias->name)] ??= $alias->publisher_id;
+        }
+
+        $taken = Publisher::pluck('slug')->flip()->all() + DB::table('publisher_aliases')->whereNotNull('slug')->pluck('slug')->flip()->all();
 
         foreach ($this->spellings(array_column($listings, 'publisher'), UzbekText::publisherKey(...)) as $key => $name) {
             if (isset($this->publishers[$key])) {

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\BookDetailResource;
 use App\Http\Resources\Api\BookResource;
 use App\Models\Book;
+use App\Support\SearchKeys;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -69,6 +70,7 @@ class BookController extends Controller
             // not the place to read them all.
             'readerReviews' => fn ($query) => $query->approved()->limit(20),
             'quotes' => fn ($query) => $query->approved()->with('edition.translators')->limit(10),
+            'libraryHoldings' => fn ($query) => $query->whereHas('library', fn ($library) => $library->published())->with('library'),
         ]);
 
         return new BookDetailResource($book, $this->relatedTo($book));
@@ -80,11 +82,21 @@ class BookController extends Controller
             $like = '%'.self::escapeLike($q).'%';
             $isbn = preg_replace('/[^0-9Xx]/', '', $q);
 
-            $query->where(function (Builder $match) use ($like, $isbn) {
+            $query->where(function (Builder $match) use ($q, $like, $isbn) {
                 $match->where('books.uzbek_title', 'like', $like)
                     ->orWhere('books.original_title', 'like', $like)
                     ->orWhereHas('authors', fn (Builder $a) => $a->where(fn (Builder $name) => $name->where('name', 'like', $like)->orWhere('original_name', 'like', $like)))
                     ->orWhereHas('editions', fn (Builder $e) => $e->approved()->where('title', 'like', $like));
+
+                // The search box finds by search_key; so must its "all
+                // results" page, or "otkan" and "толстой" would suggest
+                // books and authors it then cannot list.
+                if (($terms = SearchKeys::terms($q)) !== []) {
+                    $match->orWhere(fn (Builder $key) => SearchKeys::match($key, 'books.search_key', $terms))
+                        ->orWhereHas('authors', fn (Builder $a) => $a->where(fn (Builder $named) => $named
+                            ->where(fn (Builder $key) => SearchKeys::match($key, 'authors.search_key', $terms))
+                            ->orWhereHas('aliases', fn (Builder $alias) => SearchKeys::match($alias, 'author_aliases.search_key', $terms))));
+                }
 
                 if (strlen($isbn) >= 10) {
                     $match->orWhereHas('editions', fn (Builder $e) => $e->approved()->where('isbn', strtoupper($isbn)));

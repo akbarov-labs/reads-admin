@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\BookProblem;
 use App\Enums\ModerationStatus;
 use App\Filament\Resources\BookResource\Pages;
 use App\Filament\Resources\BookResource\RelationManagers\EditionsRelationManager;
+use App\Filament\Support\PendingNavigationBadge;
 use App\Models\Author;
 use App\Models\Book;
 use App\Models\Series;
@@ -24,11 +26,15 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class BookResource extends Resource
 {
+    use PendingNavigationBadge;
+
     protected static ?string $model = Book::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
 
     protected static ?string $navigationLabel = 'Books';
+
+    protected static ?string $navigationGroup = 'Catalogue';
 
     protected static ?int $navigationSort = 1;
 
@@ -159,6 +165,20 @@ class BookResource extends Resource
                 Tables\Filters\SelectFilter::make('status')->options(ModerationStatus::class),
                 Tables\Filters\SelectFilter::make('categories')->relationship('categories', 'name')->multiple()->preload(),
                 Tables\Filters\SelectFilter::make('authors')->relationship('authors', 'name')->searchable(),
+                // The same checks as `php artisan books:quality`.
+                Tables\Filters\SelectFilter::make('needs_attention')
+                    ->label('Needs attention')
+                    ->options(['any' => 'Any problem', ...collect(BookProblem::cases())
+                        ->mapWithKeys(fn (BookProblem $problem) => [$problem->value => $problem->getLabel()])->all()])
+                    ->query(function (Builder $query, array $data): void {
+                        if (blank($data['value'] ?? null)) {
+                            return;
+                        }
+
+                        $data['value'] === 'any'
+                            ? BookProblem::applyAny($query)
+                            : BookProblem::from($data['value'])->apply($query);
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

@@ -27,6 +27,10 @@ class CollectionResource extends Resource
 
     protected static ?string $navigationLabel = 'Collections';
 
+    protected static ?string $navigationGroup = 'On the site';
+
+    protected static ?int $navigationSort = 1;
+
     public static function shouldRegisterNavigation(): bool
     {
         return auth()->user()?->isAdmin() ?? false;

@@ -36,6 +36,13 @@ class UzbekText
         'ltd', 'inc', 'llc',
     ];
 
+    /**
+     * Publisher words written glued to the name ("Hilolnashr", "Factorbooks"),
+     * longest first. Not "uyi" or "ltd": too short to be told from the end of
+     * a real word.
+     */
+    private const PUBLISHER_SUFFIXES = ['nashriyoti', 'nashriyot', 'nashri', 'nashr', 'publishing', 'books', 'book'];
+
     /** Misspellings seen in the Asaxiy export that no general rule catches. */
     private const PUBLISHER_ALIASES = [
         'maatbachi' => 'matbaachi',
@@ -111,18 +118,63 @@ class UzbekText
         return $text === '' ? null : $text;
     }
 
+    /**
+     * clean() for running text — a description — where a line break is
+     * part of what was written: spaces collapse within each line, and
+     * paragraphs stay apart by at most one blank line.
+     */
+    public static function cleanParagraphs(?string $text): ?string
+    {
+        if ($text === null) {
+            return null;
+        }
+
+        $text = preg_replace('/[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{FEFF}]/u', '', $text);
+        $text = preg_replace('/\r\n?|[\x{2028}\x{2029}]/u', "\n", self::normalizeApostrophes($text));
+        $text = preg_replace(['/[^\S\n]+/u', '/ ?\n ?/', '/\n{3,}/'], [' ', "\n", "\n\n"], $text);
+        $text = trim($text);
+
+        return $text === '' ? null : $text;
+    }
+
     /** Same person or book regardless of alphabet, case, spacing or punctuation. */
     public static function key(string $text): string
     {
         return implode('', self::words($text));
     }
 
-    /** Same publisher regardless of alphabet, case, punctuation, or "nashr" / "Books" suffixes. */
+    /**
+     * What search compares, word by word: "Oʻtkan kunlar", "ЎТКАН КУНЛАР"
+     * and "otkan kunlar" all become "otkan kunlar". Stored per row in
+     * `search_key` (see SearchKeys) and applied to the query the same way,
+     * because SQLite's LIKE folds case for ASCII only and has no notion of
+     * the two alphabets. Null when nothing searchable is left.
+     */
+    public static function searchKey(?string ...$parts): ?string
+    {
+        $key = implode(' ', self::words(implode(' ', array_filter($parts))));
+
+        return $key === '' ? null : $key;
+    }
+
+    /**
+     * Same publisher regardless of alphabet, case, punctuation, or "nashr" /
+     * "Books" suffixes, written apart or glued on: "Hilol-nashr",
+     * "Hilolnashr" and "Hilol nashriyoti" are all "hilol".
+     */
     public static function publisherKey(string $text): string
     {
         $words = self::words($text);
         $significant = array_values(array_diff($words, self::PUBLISHER_NOISE));
         $key = implode('', $significant ?: $words);
+
+        foreach (self::PUBLISHER_SUFFIXES as $suffix) {
+            // At least three letters of name left: "Nashr" alone stays a name.
+            if (str_ends_with($key, $suffix) && strlen($key) - strlen($suffix) >= 3) {
+                $key = substr($key, 0, -strlen($suffix));
+                break;
+            }
+        }
 
         return self::PUBLISHER_ALIASES[$key] ?? $key;
     }

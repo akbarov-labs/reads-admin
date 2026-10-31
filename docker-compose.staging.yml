@@ -18,11 +18,18 @@
 #
 # add-app replaces STAGING_AUTH_HASH with the real password hash.
 
+# Docker keeps container logs forever unless told otherwise; cap every
+# service at 3 files of 10 MB. Applies to containers created after this lands.
+x-logging: &default-logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
 services:
   app:
     image: ${IMAGE:-ghcr.io/akbarov-labs/reads-admin}:${IMAGE_TAG:-latest}
     container_name: reads-admin-staging-app
     restart: unless-stopped
+    logging: *default-logging
     env_file: .env
     volumes:
       - app_storage:/var/www/html/storage

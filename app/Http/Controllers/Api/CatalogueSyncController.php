@@ -46,6 +46,9 @@ class CatalogueSyncController extends Controller
             // The columns are unsigned smallints.
             'pages' => ['nullable', 'integer', 'between:1,65535'],
             'description' => ['nullable', 'string', 'max:65000'],
+            // Free text in the bot; a book with no shelf here goes on the
+            // shelf it names, if any (App\Support\BotGenres).
+            'genre' => ['nullable', 'string', 'max:1000'],
             'updatedAt' => ['required', 'date'],
             // The bot has never synced this book: only fill our blanks.
             'fillOnly' => ['sometimes', 'boolean'],

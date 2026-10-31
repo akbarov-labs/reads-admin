@@ -27,6 +27,10 @@ class QuoteResource extends Resource
 
     protected static ?string $navigationLabel = 'Quotes';
 
+    protected static ?string $navigationGroup = 'On the site';
+
+    protected static ?int $navigationSort = 2;
+
     public static function shouldRegisterNavigation(): bool
     {
         return auth()->user()?->isAdmin() ?? false;
