@@ -385,6 +385,17 @@ sudo docker exec -u www-data reads-admin-app php artisan softly:add-books --dry-
 sudo docker exec -u www-data reads-admin-app php artisan softly:add-books
 ```
 
+When the "To check" list runs to hundreds, settle it from a spreadsheet:
+export the list, fill in an `action` per title (`link` with a `book_id`,
+`new`, or `skip`; anything else is left for the page), copy the file in,
+and apply it:
+
+```bash
+sudo docker cp softly-decisions.csv reads-admin-app:/tmp/softly-decisions.csv
+sudo docker exec -u www-data reads-admin-app php artisan softly:apply-decisions /tmp/softly-decisions.csv --dry-run
+sudo docker exec -u www-data reads-admin-app php artisan softly:apply-decisions /tmp/softly-decisions.csv
+```
+
 Each nightly run logs `missed_by_quick`: copies that went out or came back
 without their book's `updatedAt` moving, which quick runs cannot see. If
 it is not 0 for a few days, set `SOFTLY_QUICK_MODE=full` and
