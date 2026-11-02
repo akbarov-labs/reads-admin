@@ -84,7 +84,8 @@ class PublisherResource extends Resource
                 Forms\Components\TextInput::make('telegram_channel')
                     ->label('Telegram channel')
                     ->prefix('@')
-                    ->helperText('The public channel where new books and pre-orders are announced. Its post links can be pasted into Announcements.')
+                    ->helperText(fn (?Publisher $record) => 'The public channel where new books and pre-orders are announced. It is read every hour, and posts that look like announcements wait in Announcements for review. '
+                        .($record?->telegram_scanned_at ? 'Last read '.$record->telegram_scanned_at->timezone('Asia/Tashkent')->format('j M, H:i').'.' : 'Not read yet.'))
                     ->rule('regex:'.TelegramChannel::USERNAME)
                     ->dehydrateStateUsing(fn (?string $state) => TelegramChannel::username($state))
                     // Which posts count as this publisher's: an admin's call.

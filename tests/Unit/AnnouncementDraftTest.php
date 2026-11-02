@@ -136,4 +136,26 @@ class AnnouncementDraftTest extends TestCase
         $this->assertSame('Sotuvda!', $second->text);
         $this->assertSame('https://cdn4.telesco.pe/file/thumb42.jpg', $second->photoUrl);
     }
+
+    /** @return array<string, array{0: string, 1: bool}> */
+    public static function channelPosts(): array
+    {
+        return [
+            'a price' => ["✨ Ota-onaga yaxshilik qilishning fazilati\n👉 Narxi: 84 000 so'm\nSotib olish uchun: @hilol_reception", true],
+            'a price in Cyrillic' => ["«Тафсири Ҳилол» тўпламини сотиб олинг\n👉 Нархи: 798 000 сўм", true],
+            'a pre-order without a price' => ['«Hayola» kitobiga oldindan buyurtma ochildi!', true],
+            'a new book by its title' => ["#тез_кунда\n🎉 Янгилик\nАбдулкарим Ҳасаннинг янги «Хаёла» китоби нашрдан чиқяпти.", true],
+            'new-book words without a title' => ['Sotuvda!', false],
+            'an event' => ["«15 йил маърифат таратиб» тадбиридан видеолавҳа\n🌐 Тадбирни томоша қилинг", false],
+            'opening hours' => ["#маълумот\nБугун қуйидаги дўконларимиз ишлайди:\n– Бош дўкон;\n– Хадра;", false],
+            'a phone number is not a price' => ['Savollar uchun: +998712175999', false],
+            'no text' => ['', false],
+        ];
+    }
+
+    #[DataProvider('channelPosts')]
+    public function test_which_channel_posts_look_like_announcements(string $text, bool $expected): void
+    {
+        $this->assertSame($expected, AnnouncementDraft::looksLikeAnnouncement($text));
+    }
 }

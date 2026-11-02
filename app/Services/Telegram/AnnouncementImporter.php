@@ -7,9 +7,10 @@ use App\Models\Announcement;
 use App\Models\Publisher;
 
 /**
- * Turns a pasted post link into a pending announcement: reads the post,
- * saves its cover, and fills what it can from the text. The admin checks the
- * rest before approving.
+ * Turns a post into a pending announcement: saves its cover and fills what
+ * it can from the text. The admin checks the rest before approving. Posts
+ * come from a pasted link (import) or from the hourly scan of publishers'
+ * channels (ChannelScanner, through fromPost).
  */
 class AnnouncementImporter
 {
@@ -42,19 +43,33 @@ class AnnouncementImporter
             return [$existing, false];
         }
 
-        $post = $this->telegram->post($channel, $id);
-        $draft = AnnouncementDraft::fromText($post->text, $post->postedAt);
+        return [$this->create($this->telegram->post($channel, $id), $publisher, foundByScan: false), true];
+    }
 
-        $announcement = Announcement::create([
-            ...$draft,
+    /**
+     * A draft from a post already read, unless that post has one (pasted,
+     * scanned, or rejected before: a rejected post stays rejected).
+     */
+    public function fromPost(TelegramPost $post, Publisher $publisher): ?Announcement
+    {
+        if (Announcement::query()->whereRaw('lower(source_url) = ?', [strtolower($post->url())])->exists()) {
+            return null;
+        }
+
+        return $this->create($post, $publisher, foundByScan: true);
+    }
+
+    private function create(TelegramPost $post, Publisher $publisher, bool $foundByScan): Announcement
+    {
+        return Announcement::create([
+            ...AnnouncementDraft::fromText($post->text, $post->postedAt),
             'publisher_id' => $publisher->id,
             'source_url' => $post->url(),
             'posted_at' => $post->postedAt,
             'post_text' => $post->text,
             'cover_path' => $this->telegram->saveCover($post),
             'status' => ModerationStatus::Pending,
+            'found_by_scan' => $foundByScan,
         ]);
-
-        return [$announcement, true];
     }
 }

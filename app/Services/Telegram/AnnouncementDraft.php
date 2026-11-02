@@ -29,6 +29,27 @@ final class AnnouncementDraft
         'июл' => 7, 'август' => 8, 'сентябр' => 9, 'октябр' => 10, 'ноябр' => 11, 'декабр' => 12,
     ];
 
+    // "New book", "out now", "coming soon" in Latin and Cyrillic Uzbek and in
+    // Russian. Such a post counts only when it also names a «book».
+    private const NEW_BOOK_WORDS = '/yangi\s+kitob|yangi\s+nashr|yangilik|nashrdan\s+chiq|sotuvda|sotuvga\s+chiq|tez\s+kunda|янги\s+китоб|янги\s+нашр|янгилик|нашрдан\s+чиқ|сотувда|сотувга\s+чиқ|тез\s+кунда|новинка|в\s+продаже/iu';
+
+    /**
+     * Whether a channel post is worth a draft: it gives a price in so'm,
+     * takes pre-orders, or announces a new book by its «title». Channels
+     * also post events, videos, opening hours and quotes; those are left
+     * alone, and an admin can still paste a link the scan passed over.
+     */
+    public static function looksLikeAnnouncement(?string $text): bool
+    {
+        $text = (string) $text;
+
+        if (self::amounts($text) !== [] || preg_match(self::PREORDER_WORDS, $text)) {
+            return true;
+        }
+
+        return preg_match(self::NEW_BOOK_WORDS, $text) && preg_match('/«[^»]{2,200}»/u', $text);
+    }
+
     /**
      * @return array{title: string, author_name: ?string, translator_name: ?string, price: ?int, preorder_price: ?int, preorder_deadline: ?string}
      */

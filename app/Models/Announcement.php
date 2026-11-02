@@ -15,9 +15,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A publisher's new book or discounted pre-order, made from a post on its
- * public Telegram channel (see the create_announcements_table migration and
- * App\Services\TelegramChannel). Pending until an admin has checked the
- * fields against the post.
+ * public Telegram channel, pasted by an admin or found by the hourly scan
+ * (see the create_announcements_table migration and App\Services\Telegram).
+ * Pending until an admin has checked the fields against the post.
  */
 #[ObservedBy(AnnouncementObserver::class)]
 #[Fillable([
@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'preorder_deadline',
     'cover_path',
     'status',
+    'found_by_scan',
 ])]
 class Announcement extends Model
 {
@@ -52,6 +53,7 @@ class Announcement extends Model
     {
         return [
             'status' => ModerationStatus::class,
+            'found_by_scan' => 'boolean',
             'posted_at' => 'datetime',
             'preorder_deadline' => 'date',
             'price' => 'integer',
