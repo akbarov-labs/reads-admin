@@ -16,9 +16,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 /**
  * The review queue for publishers' new books and pre-orders. A draft comes
- * from a pasted Telegram post link (Pages\ListAnnouncements), with what
- * could be read from the post filled in; an admin checks it against the
- * post and publishes it. Pre-orders leave the site after their deadline,
+ * from the hourly scan of publishers' Telegram channels (announcements:scan)
+ * or a pasted post link (Pages\ListAnnouncements), with what could be read
+ * from the post filled in; an admin checks it against the post and
+ * publishes it. Pre-orders leave the site after their deadline,
  * new books after Announcement::NEW_FOR_DAYS.
  */
 class AnnouncementResource extends Resource
@@ -144,7 +145,8 @@ class AnnouncementResource extends Resource
                     ->label('Price')
                     ->state(fn (Announcement $record) => collect([$record->preorder_price, $record->price])->filter()->map(fn (int $sum) => number_format($sum, 0, '.', ' '))->implode(' / ') ?: null)
                     ->placeholder('—'),
-                Tables\Columns\TextColumn::make('status')->badge(),
+                Tables\Columns\TextColumn::make('status')->badge()
+                    ->description(fn (Announcement $record) => $record->found_by_scan ? 'Found by scan' : 'Pasted'),
                 Tables\Columns\TextColumn::make('clicks_count')->label('Orders')->counts('clicks')->sortable(),
                 Tables\Columns\TextColumn::make('posted_at')->label('Posted')->date('j M Y')->sortable(),
             ])

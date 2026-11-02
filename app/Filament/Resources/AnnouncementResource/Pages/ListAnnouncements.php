@@ -6,6 +6,7 @@ use App\Enums\ModerationStatus;
 use App\Filament\Resources\AnnouncementResource;
 use App\Models\Publisher;
 use App\Services\Telegram\AnnouncementImporter;
+use App\Services\Telegram\ChannelScanner;
 use App\Services\Telegram\TelegramChannelException;
 use Filament\Actions;
 use Filament\Forms;
@@ -21,6 +22,30 @@ class ListAnnouncements extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('scan')
+                ->label('Scan channels now')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->requiresConfirmation()
+                ->modalHeading('Scan publishers\' channels')
+                ->modalDescription('Every publisher\'s Telegram channel is read every hour for posts that look like a new book or a pre-order. This reads them now; it may take a little while.')
+                ->modalSubmitActionLabel('Scan')
+                ->action(function (ChannelScanner $scanner) {
+                    $report = $scanner->scanAll();
+
+                    $notification = Notification::make()
+                        ->title(match ($report['drafts']) {
+                            0 => 'No new announcements',
+                            1 => '1 new draft to review',
+                            default => "{$report['drafts']} new drafts to review",
+                        })
+                        ->body(collect([
+                            "{$report['channels']} channel(s) read, {$report['posts']} new post(s).",
+                            ...collect($report['errors'])->map(fn (string $error, string $channel) => "@{$channel}: {$error}"),
+                        ])->implode("\n"));
+
+                    ($report['errors'] === [] ? $notification->success() : $notification->warning())->send();
+                }),
             Actions\Action::make('paste')
                 ->label('Paste post link')
                 ->icon('heroicon-o-link')

@@ -22,6 +22,18 @@ class PublisherObserver
 
     public function saving(Publisher $publisher): void
     {
+        $this->keepAdminOnlyFields($publisher);
+
+        // Another channel's post ids mean nothing here: the scan of a new
+        // channel starts afresh (App\Services\Telegram\ChannelScanner).
+        if ($publisher->isDirty('telegram_channel')) {
+            $publisher->telegram_seen_post_id = null;
+            $publisher->telegram_scanned_at = null;
+        }
+    }
+
+    private function keepAdminOnlyFields(Publisher $publisher): void
+    {
         $user = Auth::user();
 
         // No authenticated user means a seeder, a console command or a test.

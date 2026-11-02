@@ -23,3 +23,12 @@ Schedule::command('softly:sync --full')
     ->dailyAt('02:30')
     ->timezone('Asia/Tashkent')
     ->withoutOverlapping();
+
+// Publishers' Telegram channels: new posts that look like a new book or a
+// pre-order become drafts in Announcements, for an admin to publish. Hourly
+// while publishers post; the night's posts are picked up in the morning.
+Schedule::command('announcements:scan')
+    ->hourly()
+    ->between('8:00', '23:00')
+    ->timezone('Asia/Tashkent')
+    ->withoutOverlapping();

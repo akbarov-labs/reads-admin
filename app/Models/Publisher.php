@@ -40,7 +40,11 @@ class Publisher extends Model
 
     protected function casts(): array
     {
-        return ['established_year' => 'integer'];
+        return [
+            'established_year' => 'integer',
+            'telegram_seen_post_id' => 'integer',
+            'telegram_scanned_at' => 'datetime',
+        ];
     }
 
 
