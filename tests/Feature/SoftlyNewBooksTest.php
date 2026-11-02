@@ -200,6 +200,48 @@ class SoftlyNewBooksTest extends TestCase
         $this->assertNotNull($row->fresh()->book_id);
     }
 
+    public function test_a_spreadsheet_of_decisions_settles_many_titles_at_once(): void
+    {
+        $mehr = $this->row(1, 10, 'Mehrobdan', 'Abdulla Qodiriy');
+        $izlash = $this->row(22, 30, 'Mehrobdan', 'Abdulla Qodiriy');
+        $roman = $this->row(1, 11, 'Mehrobdan chayon', 'Hamid Olimjon');
+        $daftar = $this->row(1, 12, 'Daftar 48 varaq', null);
+        $unsure = $this->row(1, 13, 'Mehrobdan chayon (roman)', 'Boshqa');
+
+        $file = tempnam(sys_get_temp_dir(), 'decisions');
+        $csv = fopen($file, 'w');
+        // As the export and a spreadsheet app write it: BOM, extra columns.
+        fwrite($csv, "\u{FEFF}");
+        fputcsv($csv, ['action', 'book_id', 'softly_title', 'softly_author', 'why']);
+        fputcsv($csv, ['link', $this->chayon->id, 'Mehrobdan', 'Abdulla Qodiriy', 'subtitle']);
+        fputcsv($csv, ['new', '', 'Mehrobdan chayon', 'Hamid Olimjon', 'different author']);
+        fputcsv($csv, ['skip', '', 'Daftar 48 varaq', '', 'not a book']);
+        fputcsv($csv, ['check', '', 'Mehrobdan chayon (roman)', 'Boshqa', 'unsure']);
+        fputcsv($csv, ['link', '999999', 'Mehrobdan chayon (roman)', 'Boshqa', 'typo in the id']);
+        fclose($csv);
+
+        $this->artisan('softly:apply-decisions', ['file' => $file, '--dry-run' => true])
+            ->expectsOutputToContain('Would be: 1 linked, 1 made new books, 1 skipped. 1 left')
+            ->assertSuccessful();
+        $this->assertNull($mehr->fresh()->book_id);
+
+        $this->artisan('softly:apply-decisions', ['file' => $file])
+            ->expectsOutputToContain('Done: 1 linked, 1 made new books, 1 skipped.')
+            ->expectsOutputToContain('no book 999999')
+            ->assertSuccessful();
+
+        $this->assertSame($this->chayon->id, $mehr->fresh()->book_id);
+        $this->assertSame($this->chayon->id, $izlash->fresh()->book_id);
+        $this->assertSame(['Hamid Olimjon'], $roman->fresh()->book->authors->pluck('name')->all());
+        $this->assertTrue($daftar->fresh()->skipped);
+        $this->assertNull($unsure->fresh()->book_id);
+
+        // Run again: everything it settled stays settled.
+        $this->artisan('softly:apply-decisions', ['file' => $file])
+            ->expectsOutputToContain('Done: 0 linked, 0 made new books, 1 skipped')
+            ->assertSuccessful();
+    }
+
     public function test_the_review_page_settles_a_title_for_admins_only(): void
     {
         $near = $this->row(1, 10, 'Mehrobdan', 'Abdulla Qodiriy');
@@ -219,6 +261,11 @@ class SoftlyNewBooksTest extends TestCase
             ->assertHasNoTableActionErrors();
 
         $this->assertSame(0, SoftlyBook::whereNull('book_id')->count());
+
+        $guess = $this->row(1, 14, 'Mehrobdan', 'Abdulla Qodiriy rohimahulloh');
+        Livewire::test(ListSoftlyBooks::class)->callTableBulkAction('linkGuess', [$guess]);
+        $this->assertSame($this->chayon->id, $guess->fresh()->book_id);
+
         $made = Book::where('uzbek_title', 'Mehrobdan chayon')->whereKeyNot($this->chayon->id)->sole();
         $this->assertSame(['Hamid Olimjon'], $made->authors->pluck('name')->all());
 

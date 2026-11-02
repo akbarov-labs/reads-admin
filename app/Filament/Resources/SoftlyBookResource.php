@@ -178,6 +178,18 @@ class SoftlyBookResource extends Resource
                     }),
             ])
             ->bulkActions([
+                Tables\Actions\BulkAction::make('linkGuess')
+                    ->label('Link to best guess')
+                    ->icon('heroicon-m-link')
+                    ->requiresConfirmation()
+                    ->modalDescription('Each selected title is linked to the book shown under "Book on kitoblarim.uz".')
+                    ->deselectRecordsAfterCompletion()
+                    ->action(function (Collection $rows, SoftlyNewBooks $newBooks) {
+                        $rows->whereNull('book_id')
+                            ->filter(fn (SoftlyBook $row) => filled($row->candidate_ids))
+                            ->each(fn (SoftlyBook $row) => $newBooks->link($row, (int) $row->candidate_ids[0]));
+                        self::done('Linked');
+                    }),
                 Tables\Actions\BulkAction::make('createAll')
                     ->label('Make new books')
                     ->icon('heroicon-m-plus')
