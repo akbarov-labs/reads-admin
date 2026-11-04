@@ -3,7 +3,9 @@
 namespace App\Filament\Stats;
 
 use App\Enums\OutboundClickKind;
+use App\Models\ReaderReview;
 use App\Models\SearchQuery;
+use App\Support\SiteStats;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -50,6 +52,7 @@ class SiteStatsOverview extends StatsOverviewWidget
             Stat::make('Publisher orders', number_format($this->clicks(OutboundClickKind::PublisherOrder)->count()))
                 ->description('Order buttons pressed on announcements'),
             $this->askAi($views),
+            $this->reviewClicks($views),
         ];
     }
 
@@ -78,6 +81,34 @@ class SiteStatsOverview extends StatsOverviewWidget
 
         return Stat::make('Ask AI clicks', number_format($total))
             ->description($total > 0 ? $parts->implode(', ') : 'Ask-AI buttons pressed on book, author and other pages');
+    }
+
+    /**
+     * Readers sent to the bot to write a review, set against the reviews bot
+     * readers actually wrote for the site in the same days: whether readers
+     * want to review from the site, before anyone builds a sign-in for it.
+     * Reviews have no site language, so the language filter leaves them be.
+     */
+    private function reviewClicks(int $views): Stat
+    {
+        $clicks = $this->clicks(OutboundClickKind::BotReview)
+            ->toBase()
+            ->selectRaw('count(*) as clicks, count(distinct book_id) as books')
+            ->first();
+
+        $written = SiteStats::betweenDays(ReaderReview::query(), $this->from(), $this->until(), 'written_at')->count();
+
+        $parts = collect([
+            number_format((int) $clicks->books).' books',
+            number_format($written).' reader reviews written for the site',
+        ]);
+
+        if ($views > 0) {
+            $parts->prepend($this->percent((int) $clicks->clicks, $views).' of book views');
+        }
+
+        return Stat::make('Write-a-review clicks', number_format((int) $clicks->clicks))
+            ->description($parts->implode(', '));
     }
 
     private function percent(int $part, int $whole): string

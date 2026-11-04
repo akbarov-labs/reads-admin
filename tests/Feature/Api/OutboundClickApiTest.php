@@ -127,6 +127,23 @@ class OutboundClickApiTest extends TestCase
         $this->assertSame(0, OutboundClick::count());
     }
 
+    public function test_the_site_logs_a_write_a_review_click_on_a_book(): void
+    {
+        $this->click(['kind' => 'bot_review', 'target' => null])->assertNoContent();
+
+        $click = OutboundClick::sole();
+        $this->assertSame(OutboundClickKind::BotReview, $click->kind);
+        $this->assertSame(Book::sole()->id, $click->book_id);
+        $this->assertSame('bot', $click->target);
+    }
+
+    public function test_a_write_a_review_click_must_name_its_book(): void
+    {
+        $this->click(['kind' => 'bot_review', 'target' => null, 'book_id' => null])->assertUnprocessable();
+
+        $this->assertSame(0, OutboundClick::count());
+    }
+
     public function test_one_visitor_cannot_inflate_a_count(): void
     {
         for ($i = 0; $i < 40; $i++) {

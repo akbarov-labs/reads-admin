@@ -14,6 +14,7 @@ use App\Models\Book;
 use App\Models\BookView;
 use App\Models\OutboundClick;
 use App\Models\Publisher;
+use App\Models\ReaderReview;
 use App\Models\SearchQuery;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -206,6 +207,38 @@ class SiteStatsPanelTest extends TestCase
 
         Livewire::test(TopBooksTable::class, ['filters' => []])
             ->assertTableColumnStateSet('clicks', 0, $this->unclicked->getKey());
+    }
+
+    public function test_write_a_review_clicks_are_set_against_the_reviews_written(): void
+    {
+        $this->admin();
+
+        $review = fn (Book $book, string $at = '2026-10-24 10:00:00') => OutboundClick::create([
+            'kind' => 'bot_review', 'book_id' => $book->id, 'target' => 'bot',
+            'locale' => 'uz', 'visitor_hash' => 'x', 'created_at' => $at,
+        ]);
+
+        $review($this->tazarru);
+        $review($this->tazarru);
+        $review($this->kunlar);
+        // Outside the default 30 days.
+        $review($this->kunlar, '2026-08-01 09:00:00');
+
+        $written = fn (string $id, string $at) => ReaderReview::create([
+            'external_id' => $id, 'book_id' => $this->tazarru->id, 'author_name' => 'Aziza',
+            'body' => 'Yaxshi kitob', 'written_at' => $at,
+        ]);
+
+        $written('r1', '2026-10-20 18:00:00');
+        $written('r2', '2026-08-01 18:00:00');
+
+        Livewire::test(SiteStatsOverview::class, ['filters' => []])
+            ->assertSeeInOrder([
+                // Store figures are unchanged by them.
+                'Store clicks', '4', 'From 3 visitors',
+                // 3 of 75 book views.
+                'Write-a-review clicks', '3', '4.0% of book views, 2 books, 1 reader reviews written for the site',
+            ]);
     }
 
     public function test_searches_are_grouped_across_spellings(): void
