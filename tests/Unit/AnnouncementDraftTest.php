@@ -141,14 +141,25 @@ class AnnouncementDraftTest extends TestCase
     public static function channelPosts(): array
     {
         return [
-            'a price' => ["✨ Ota-onaga yaxshilik qilishning fazilati\n👉 Narxi: 84 000 so'm\nSotib olish uchun: @hilol_reception", true],
-            'a price in Cyrillic' => ["«Тафсири Ҳилол» тўпламини сотиб олинг\n👉 Нархи: 798 000 сўм", true],
-            'a pre-order without a price' => ['«Hayola» kitobiga oldindan buyurtma ochildi!', true],
+            // From real channels (Hilol-nashr, Akademnashr, Zabarjad Media, Asaxiy Books), November 2026.
             'a new book by its title' => ["#тез_кунда\n🎉 Янгилик\nАбдулкарим Ҳасаннинг янги «Хаёла» китоби нашрдан чиқяпти.", true],
-            'new-book words without a title' => ['Sotuvda!', false],
+            'a reprint' => ["🎉 «Тайсирус сарф» китоби нашр қилинди\n✨ Араб тили қоидаларини тушунишда қийналяпсизми?\n👉 Нархи: 21 500 сўм", true],
+            'a reprint in Russian' => ['🎉 Книга «Счастливая семья» переиздана в 5-й раз и снова поступила в продажу.', true],
+            'hashtags without quotes' => ["#yangi_nashr\n#sotuvda\n\n📘 Chili loyihasi\n\n📖 Fragment va mundarija\n\n“Chikago yigitlari” va neoliberalizm tanazzuli hikoyasi", true],
+            'a pre-order hashtag' => ["#oldindan_buyurtma\n\n📘 Istisno\n\nMehrNozning she’riy toʻplami uchun buyurtma berish boshlandi.", true],
+            'a pre-order without a price' => ['«Hayola» kitobiga oldindan buyurtma ochildi!', true],
+            'a pre-order discount' => ["«Hayola» kitobiga oldindan buyurtmada 20% chegirma: 79 000 so'm", true],
+            'a book already in print, with a price' => ["✨ Ota-onaga yaxshilik qilishning fazilati\n👉 Narxi: 84 000 so'm\nSotib olish uchun: @hilol_reception", false],
+            'a store promotion' => ["💡 Erkinlik va iqtisodiyot o‘rtasida qanday bog‘liqlik bor?\n📚 Milton Fridman — \"Kapitalizm va erkinlik\"\nNarxi: 99 000 soʻm", false],
+            'the week\'s top five' => ["⭐️ O‘tgan haftaning TOP-5 kitobi bilan tanishamiz!\n1️⃣ Molxona - 30 000 so‘m\n2️⃣ Kichkina shahzoda - 41 700 so'm\nSotuvda!", false],
+            'bestsellers' => ["📚 Октябрь ойида энг кўп сотилган китоблар билан танишинг\n1. «Бахтиёр оила» – 78 000 сўм\nСотувда", false],
+            'a priced list' => ["#sotuvda\n1. O‘zbekiston tavalludi — 150 000 so‘m\n2. Shayboniylar davrining mashhur olimlari — 120 000 so‘m\n3. Vatan tarixi — 210 000 so‘m", false],
+            'a contest prize' => ["Random g‘olibi Gulsevar\nKarta raqamingizni yozib qoldiring! 50.000 so‘mdan pul mukofoti. Yangi kitob sizni kutmoqda", false],
+            'a magazine issue' => ['#тез_кунда 🎉 Янгилик. «Ҳилол» журналининг 83-сони тез кунда барча дўконларимизда сотувга чиқади.', false],
+            'a sale on what is in stock' => ["Diqqat: bayramona chegirma 🏷️\nUshbu kun munosabati bilan sotuvda mavjud barcha tarjima adabiyotlarimiz uchun 10% chegirma e’lon qilamiz.", false],
+            'a one-word reply' => ['Sotuvda!', false],
             'an event' => ["«15 йил маърифат таратиб» тадбиридан видеолавҳа\n🌐 Тадбирни томоша қилинг", false],
             'opening hours' => ["#маълумот\nБугун қуйидаги дўконларимиз ишлайди:\n– Бош дўкон;\n– Хадра;", false],
-            'a phone number is not a price' => ['Savollar uchun: +998712175999', false],
             'no text' => ['', false],
         ];
     }
