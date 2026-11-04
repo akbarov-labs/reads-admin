@@ -19,6 +19,16 @@ enum OutboundClickKind: string implements HasLabel
      */
     case AskAi = 'ask_ai';
 
+    /**
+     * The Kitoblarim bot, opened at a book's review from the "Taqriz
+     * yozish" button on its page. Always has a book; its target is
+     * always BOT_TARGET.
+     */
+    case BotReview = 'bot_review';
+
+    /** The one place a review button leads. */
+    public const BOT_TARGET = 'bot';
+
     /** The pages that carry an ask-AI button. */
     public const ASK_AI_SUBJECTS = ['book', 'author', 'translator', 'publisher'];
 
@@ -28,6 +38,7 @@ enum OutboundClickKind: string implements HasLabel
             self::Store => 'Store',
             self::PublisherOrder => 'Publisher order',
             self::AskAi => 'Ask AI',
+            self::BotReview => 'Write a review',
         };
     }
 }
