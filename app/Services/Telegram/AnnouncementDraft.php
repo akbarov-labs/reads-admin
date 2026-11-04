@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
  */
 final class AnnouncementDraft
 {
-    private const PREORDER_WORDS = '/oldindan\s+buyurtma|old\.?\s*buyurtma|predzakaz|предзаказ|предварительн\w*\s+заказ|pre-?order/iu';
+    private const PREORDER_WORDS = '/oldindan[\s_]+buyurtma|old\.?\s*buyurtma|predzakaz|предзаказ|предварительн\w*\s+заказ|pre-?order/iu';
 
     // Latin month names take Uzbek suffixes (oktabrgacha, 25-oktabrda);
     // Cyrillic ones Russian case endings (октября, марта). Nothing else may
@@ -29,25 +29,49 @@ final class AnnouncementDraft
         'июл' => 7, 'август' => 8, 'сентябр' => 9, 'октябр' => 10, 'ноябр' => 11, 'декабр' => 12,
     ];
 
-    // "New book", "out now", "coming soon" in Latin and Cyrillic Uzbek and in
-    // Russian. Such a post counts only when it also names a «book».
-    private const NEW_BOOK_WORDS = '/yangi\s+kitob|yangi\s+nashr|yangilik|nashrdan\s+chiq|sotuvda|sotuvga\s+chiq|tez\s+kunda|янги\s+китоб|янги\s+нашр|янгилик|нашрдан\s+чиқ|сотувда|сотувга\s+чиқ|тез\s+кунда|новинка|в\s+продаже/iu';
+    // A publisher saying a book is new, out, back from the printer or coming
+    // soon, in Latin and Cyrillic Uzbek and in Russian, hashtags included
+    // (#yangi_nashr, #sotuvda, #тез_кунда). A price alone is not news:
+    // stores advertise books long in print every day.
+    private const NEWS_WORDS = '/yangi[\s_]+(?:kitob|nashr)|yangilik|nashrdan\s+chiq|nashr\s+(?:qilindi|etildi)|chop\s+etildi|sotuvda|sotuvga\s+chiq|tez[\s_]+kunda|premyera|янги[\s_]+(?:китоб|нашр)|янгилик|нашрдан\s+чиқ|нашр\s+(?:қилинди|этилди)|чоп\s+этилди|сотувда|сотувга\s+чиқ|тез[\s_]+кунда|новинк|в\s+продаж|поступил\w*\s+в\s+продажу|переиздан|премьер/iu';
+
+    // Posts that use those words without announcing one book: the week's
+    // top five, bestsellers, contests and their prize money, a magazine's
+    // issue. (Not "mukofot" alone: a book's blurb names its author's prizes.)
+    private const NOT_ONE_BOOK = '/\btop[\s-]?\d|топ[\s-]?\d|bestseller|бестселлер|eng\s+ko[\'ʻ‘’`]?p\s+(?:sotilgan|tanlagan|xarid|o[\'ʻ‘’`]?qilgan)|энг\s+кўп\s+(?:сотилган|ўқилган)|самы\w+\s+продаваем|konkurs|конкурс|розыгрыш|random|pul\s+mukofot|пул\s+мукофот|g[\'ʻ‘’`]?olib\w*\s+aniqlan|ғолиб\w*\s+аниқлан|jurnal\w*\s+\d+|журнал\w*\s+\d+/iu';
 
     /**
-     * Whether a channel post is worth a draft: it gives a price in so'm,
-     * takes pre-orders, or announces a new book by its «title». Channels
-     * also post events, videos, opening hours and quotes; those are left
-     * alone, and an admin can still paste a link the scan passed over.
+     * Whether a channel post is worth a draft: it says a book is new, out or
+     * coming, or takes pre-orders, about one book (a list of three or more
+     * priced books is a roundup), with more to it than a one-word reply.
+     * Channels also post promotions, events, videos, opening hours and
+     * quotes; those are left alone, and an admin can still paste a link the
+     * scan passed over.
      */
     public static function looksLikeAnnouncement(?string $text): bool
     {
         $text = (string) $text;
 
-        if (self::amounts($text) !== [] || preg_match(self::PREORDER_WORDS, $text)) {
-            return true;
+        if (! preg_match(self::NEWS_WORDS, $text) && ! preg_match(self::PREORDER_WORDS, $text)) {
+            return false;
         }
 
-        return preg_match(self::NEW_BOOK_WORDS, $text) && preg_match('/«[^»]{2,200}»/u', $text);
+        if (preg_match(self::NOT_ONE_BOOK, $text)) {
+            return false;
+        }
+
+        // A sale on what is in stock, unless it is a pre-order's discount.
+        if (preg_match('/chegirma|чегирма|скидк|aksiya|акция/iu', $text) && ! preg_match(self::PREORDER_WORDS, $text)) {
+            return false;
+        }
+
+        $pricedLines = array_filter(preg_split('/\R/u', $text), fn (string $line) => self::amounts($line) !== []);
+
+        if (count($pricedLines) >= 3) {
+            return false;
+        }
+
+        return mb_strlen(trim($text)) >= 60 || preg_match('/[«“"][^»”"]{2,200}[»”"]/u', $text);
     }
 
     /**

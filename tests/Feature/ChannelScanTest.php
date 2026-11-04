@@ -105,13 +105,15 @@ class ChannelScanTest extends TestCase
 
     public function test_posts_that_look_like_announcements_become_pending_drafts(): void
     {
-        $this->channelPost(100, "«Jinoyat va jazo»\nMuallif: Fyodor Dostoyevskiy\nNarxi: 120 000 so'm");
+        $this->channelPost(100, "#yangi_nashr\n«Jinoyat va jazo»\nMuallif: Fyodor Dostoyevskiy\nNarxi: 120 000 so'm");
         $this->channelPost(101, "Bugun do'konlarimiz 10:00 dan ishlaydi");
+        // A book long in print, advertised with its price: not news.
+        $this->channelPost(104, "«Kapitalizm va erkinlik» — erkin bozor haqida o‘ylang. Narxi: 99 000 so'm");
         $this->channelPost(102, "«Hayola» kitobiga oldindan buyurtma: 79 000 so'm, 30-oktabrgacha");
 
         $report = $this->scan();
 
-        $this->assertSame(['channels' => 1, 'posts' => 3, 'drafts' => 2, 'errors' => []], $report);
+        $this->assertSame(['channels' => 1, 'posts' => 4, 'drafts' => 2, 'errors' => []], $report);
 
         $first = Announcement::query()->where('source_url', 'https://t.me/HilolNashr/100')->sole();
         $this->assertSame(ModerationStatus::Pending, $first->status);
@@ -129,13 +131,13 @@ class ChannelScanTest extends TestCase
         $this->assertSame(0, Announcement::query()->live()->count());
 
         $this->hilol->refresh();
-        $this->assertSame(102, $this->hilol->telegram_seen_post_id);
+        $this->assertSame(104, $this->hilol->telegram_seen_post_id);
         $this->assertNotNull($this->hilol->telegram_scanned_at);
     }
 
     public function test_each_post_is_read_once_and_rejected_posts_stay_rejected(): void
     {
-        $this->channelPost(100, "«Jinoyat va jazo» — 120 000 so'm");
+        $this->channelPost(100, "#sotuvda «Jinoyat va jazo» — 120 000 so'm");
         $this->scan();
 
         Announcement::query()->update(['status' => ModerationStatus::Rejected]);
@@ -143,7 +145,7 @@ class ChannelScanTest extends TestCase
         $this->hilol->forceFill(['telegram_seen_post_id' => null])->saveQuietly();
         $this->assertSame(0, $this->scan()['drafts']);
 
-        $this->channelPost(103, "«Hayola» — 79 000 so'm");
+        $this->channelPost(103, "#sotuvda «Hayola» — 79 000 so'm");
         $report = $this->scan();
 
         $this->assertSame(1, $report['posts']);
@@ -158,7 +160,7 @@ class ChannelScanTest extends TestCase
             'publisher_id' => $this->hilol->id, 'source_url' => 'https://t.me/hilolnashr/100',
             'title' => 'Pasted before', 'status' => ModerationStatus::Approved,
         ]);
-        $this->channelPost(100, "«Jinoyat va jazo» — 120 000 so'm");
+        $this->channelPost(100, "#sotuvda «Jinoyat va jazo» — 120 000 so'm");
 
         $this->assertSame(0, $this->scan()['drafts']);
         $this->assertSame(1, Announcement::query()->count());
@@ -166,8 +168,8 @@ class ChannelScanTest extends TestCase
 
     public function test_old_posts_are_not_news(): void
     {
-        $this->channelPost(90, "«Eski kitob» — 50 000 so'm", '2026-10-01 09:00');
-        $this->channelPost(100, "«Jinoyat va jazo» — 120 000 so'm");
+        $this->channelPost(90, "#sotuvda «Eski kitob» — 50 000 so'm", '2026-10-01 09:00');
+        $this->channelPost(100, "#sotuvda «Jinoyat va jazo» — 120 000 so'm");
 
         $report = $this->scan();
 
@@ -180,7 +182,7 @@ class ChannelScanTest extends TestCase
         $this->hilol->forceFill(['telegram_seen_post_id' => 200])->saveQuietly();
 
         foreach (range(190, 245) as $id) {
-            $this->channelPost($id, "«Kitob {$id}» — 50 000 so'm");
+            $this->channelPost($id, "#yangi_nashr «Kitob {$id}» — 50 000 so'm");
         }
 
         $report = $this->scan();
@@ -196,7 +198,7 @@ class ChannelScanTest extends TestCase
     public function test_the_first_scan_of_a_channel_reads_one_page(): void
     {
         foreach (range(1, 30) as $id) {
-            $this->channelPost($id, "«Kitob {$id}» — 50 000 so'm");
+            $this->channelPost($id, "#yangi_nashr «Kitob {$id}» — 50 000 so'm");
         }
 
         $this->assertSame(20, $this->scan()['drafts']);
@@ -206,7 +208,7 @@ class ChannelScanTest extends TestCase
     public function test_one_unreadable_channel_does_not_stop_the_others(): void
     {
         Publisher::create(['slug' => 'yopiq', 'name' => 'Yopiq', 'telegram_channel' => 'yopiqkanal']);
-        $this->channelPost(100, "«Jinoyat va jazo» — 120 000 so'm");
+        $this->channelPost(100, "#sotuvda «Jinoyat va jazo» — 120 000 so'm");
 
         $report = $this->scan();
 
@@ -221,7 +223,7 @@ class ChannelScanTest extends TestCase
 
     public function test_the_command_reports_what_it_found(): void
     {
-        $this->channelPost(100, "«Jinoyat va jazo» — 120 000 so'm");
+        $this->channelPost(100, "#sotuvda «Jinoyat va jazo» — 120 000 so'm");
 
         $this->artisan('announcements:scan', ['--publisher' => 'hilol-nashr'])
             ->expectsOutput('1 channel(s) read: 1 new post(s), 1 draft(s) waiting for review.')
@@ -246,12 +248,37 @@ class ChannelScanTest extends TestCase
             'name' => 'Admin', 'email' => 'a@example.test',
             'password' => 'password', 'role' => UserRole::Admin,
         ]));
-        $this->channelPost(100, "«Jinoyat va jazo» — 120 000 so'm");
+        $this->channelPost(100, "#sotuvda «Jinoyat va jazo» — 120 000 so'm");
 
         Livewire::test(ListAnnouncements::class)
             ->callAction('scan')
             ->assertNotified('1 new draft to review');
 
         $this->assertSame(1, Announcement::query()->where('found_by_scan', true)->count());
+    }
+
+    public function test_recheck_rejects_the_scans_drafts_that_are_not_news(): void
+    {
+        $make = fn (string $url, string $text, bool $scanned, ModerationStatus $status = ModerationStatus::Pending) => Announcement::create([
+            'publisher_id' => $this->hilol->id, 'source_url' => $url, 'title' => $url,
+            'post_text' => $text, 'found_by_scan' => $scanned, 'status' => $status,
+        ]);
+
+        $make('https://t.me/hilolnashr/1', '⭐️ TOP-5 kitob: Molxona - 30 000 so‘m', scanned: true);
+        $make('https://t.me/hilolnashr/2', "#yangi_nashr «Jinoyat va jazo» — 120 000 so'm", scanned: true);
+        // Pasted by an admin, or already published: theirs to keep.
+        $make('https://t.me/hilolnashr/3', "«Kapitalizm va erkinlik» Narxi: 99 000 so'm", scanned: false);
+        $make('https://t.me/hilolnashr/4', "«Kapitalizm va erkinlik» Narxi: 99 000 so'm", scanned: true, status: ModerationStatus::Approved);
+
+        $this->artisan('announcements:scan', ['--recheck' => true])
+            ->expectsOutput('  rejected: https://t.me/hilolnashr/1')
+            ->expectsOutput('1 pending draft(s) rejected.')
+            ->assertSuccessful();
+
+        $this->assertSame(
+            ['https://t.me/hilolnashr/1'],
+            Announcement::query()->where('status', ModerationStatus::Rejected)->pluck('source_url')->all(),
+        );
+        Http::assertNothingSent();
     }
 }

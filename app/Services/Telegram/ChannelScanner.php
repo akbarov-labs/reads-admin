@@ -2,6 +2,8 @@
 
 namespace App\Services\Telegram;
 
+use App\Enums\ModerationStatus;
+use App\Models\Announcement;
 use App\Models\Publisher;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Sleep;
@@ -30,6 +32,30 @@ class ChannelScanner
         private readonly TelegramChannel $telegram,
         private readonly AnnouncementImporter $importer,
     ) {}
+
+    /**
+     * Rejects the scan's drafts still waiting for review whose post no
+     * longer passes looksLikeAnnouncement, after the check has been made
+     * stricter. Pasted drafts are an admin's own choice and are left alone.
+     *
+     * @return list<string> The titles rejected.
+     */
+    public function rejectStaleDrafts(): array
+    {
+        $rejected = [];
+
+        Announcement::query()
+            ->where('status', ModerationStatus::Pending)
+            ->where('found_by_scan', true)
+            ->each(function (Announcement $announcement) use (&$rejected) {
+                if (! AnnouncementDraft::looksLikeAnnouncement($announcement->post_text)) {
+                    $announcement->update(['status' => ModerationStatus::Rejected]);
+                    $rejected[] = $announcement->title;
+                }
+            });
+
+        return $rejected;
+    }
 
     /**
      * @return array{channels: int, posts: int, drafts: int, errors: array<string, string>}
