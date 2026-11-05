@@ -12,7 +12,9 @@ use App\Filament\Stats\SiteStatsOverview;
 use App\Filament\Stats\TopAnnouncementsTable;
 use App\Filament\Stats\TopStoresTable;
 use App\Models\Announcement;
+use App\Models\Author;
 use App\Models\Book;
+use App\Models\Edition;
 use App\Models\OutboundClick;
 use App\Models\Publisher;
 use App\Models\User;
@@ -171,6 +173,88 @@ class AnnouncementTest extends TestCase
         $this->assertSame(ModerationStatus::Approved, $draft->status);
         $this->assertSame('Jinoyat va jazo', $draft->title);
         $this->assertTrue($draft->isPreorder());
+    }
+
+    public function test_publishing_makes_the_book_and_its_edition_from_the_details_typed_in_review(): void
+    {
+        $this->admin();
+        Storage::disk('public')->put('announcements/cover.jpg', 'jpeg-bytes');
+        $draft = $this->announcement([
+            'status' => ModerationStatus::Pending,
+            'title' => 'Jinoyat va jazo',
+            'author_name' => 'Fyodor Dostoyevskiy',
+            'translator_name' => 'Ozod Sharafiddinov',
+            'cover_path' => 'announcements/cover.jpg',
+        ]);
+
+        Livewire::test(EditAnnouncement::class, ['record' => $draft->getRouteKey()])
+            ->fillForm(['isbn' => '978-9943-12345-6', 'pages' => 512, 'year' => 2026, 'order_contact' => '@kitob_buyurtma'])
+            ->callAction('publish')
+            ->assertHasNoFormErrors();
+
+        $draft->refresh();
+        $book = Book::findOrFail($draft->book_id);
+        $edition = $book->editions()->sole();
+
+        $this->assertSame('Jinoyat va jazo', $book->uzbek_title);
+        $this->assertSame(['Fyodor Dostoyevskiy'], $book->authors->pluck('name')->all());
+        $this->assertSame($this->hilol->id, $edition->publisher_id);
+        $this->assertSame('9789943123456', $edition->isbn);
+        $this->assertSame(512, $edition->pages);
+        $this->assertSame(2026, $edition->year);
+        $this->assertSame('announcements/cover.jpg', $edition->cover_path);
+        $this->assertSame(['Ozod Sharafiddinov'], $edition->translators->pluck('name')->all());
+        $this->assertSame('kitob_buyurtma', $draft->order_contact);
+
+        $this->getJson("/api/announcements/{$draft->id}")
+            ->assertOk()
+            ->assertJsonPath('data.bookId', (string) $book->id)
+            ->assertJsonPath('data.orderContact', 'kitob_buyurtma');
+    }
+
+    public function test_publishing_links_a_book_the_catalogue_already_has_instead_of_making_it_twice(): void
+    {
+        $this->admin();
+        $book = Book::create(['uzbek_title' => 'Jinoyat va jazo']);
+        $book->authors()->attach(Author::create(['name' => 'Fyodor Dostoyevskiy', 'slug' => 'fyodor-dostoyevskiy'])->id, ['position' => 0]);
+        $draft = $this->announcement(['status' => ModerationStatus::Pending, 'title' => 'Jinoyat va jazo', 'author_name' => 'Fyodor Dostoyevskiy']);
+
+        Livewire::test(ListAnnouncements::class)->callTableAction('approve', $draft, data: ['isbn' => '9789943123456']);
+
+        $this->assertSame($book->id, $draft->refresh()->book_id);
+        $this->assertSame(1, Book::count());
+        $this->assertSame('9789943123456', $book->editions()->sole()->isbn);
+    }
+
+    public function test_the_same_isbn_is_never_made_twice(): void
+    {
+        $this->admin();
+        $book = Book::create(['uzbek_title' => 'Eski nom']);
+        $book->editions()->create(['isbn' => '9789943123456']);
+        $draft = $this->announcement(['status' => ModerationStatus::Pending, 'title' => 'Yangi nom', 'isbn' => '978-9943-12345-6']);
+
+        $draft->update(['status' => ModerationStatus::Approved]);
+
+        $this->assertSame($book->id, $draft->refresh()->book_id);
+        $this->assertSame(1, Edition::count());
+    }
+
+    public function test_a_book_an_admin_linked_is_left_alone_and_a_bad_isbn_is_refused(): void
+    {
+        $this->admin();
+        $book = Book::create(['uzbek_title' => 'Tanlangan']);
+        $draft = $this->announcement(['status' => ModerationStatus::Pending, 'book_id' => $book->id]);
+
+        $draft->update(['status' => ModerationStatus::Approved]);
+        $this->assertSame(1, Book::count());
+        $this->assertSame(0, Edition::count());
+
+        $other = $this->announcement(['status' => ModerationStatus::Pending]);
+        Livewire::test(EditAnnouncement::class, ['record' => $other->getRouteKey()])
+            ->fillForm(['isbn' => '12345'])
+            ->callAction('publish')
+            ->assertHasFormErrors(['isbn']);
+        $this->assertSame(ModerationStatus::Pending, $other->refresh()->status);
     }
 
     public function test_publishers_do_not_reach_the_queue(): void
