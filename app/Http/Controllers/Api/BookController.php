@@ -29,6 +29,7 @@ class BookController extends Controller
      * one the site routes on:
      *
      *   ?q=        title, original title, author name, or an exact ISBN
+     *   ?isbn=     only the book with an approved edition of this ISBN
      *   ?author=   ?publisher=   ?translator=   ?category=   ?series=
      *   ?sort=     year (newest edition first, the default) | title | recent;
      *              a search with no sort of its own puts the closest title first
@@ -102,6 +103,10 @@ class BookController extends Controller
                     $match->orWhereHas('editions', fn (Builder $e) => $e->approved()->where('isbn', strtoupper($isbn)));
                 }
             });
+        }
+
+        if (filled($isbn = $request->query('isbn'))) {
+            $query->whereHas('editions', fn (Builder $e) => $e->approved()->where('isbn', strtoupper(preg_replace('/[^0-9Xx]/', '', (string) $isbn))));
         }
 
         if (filled($slug = $request->query('author'))) {

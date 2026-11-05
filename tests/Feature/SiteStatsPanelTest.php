@@ -241,6 +241,32 @@ class SiteStatsPanelTest extends TestCase
             ]);
     }
 
+    public function test_clicks_from_shared_lists_have_a_stat_of_their_own(): void
+    {
+        $this->admin();
+
+        $click = fn (Book $book, string $at = '2026-10-24 10:00:00') => OutboundClick::create([
+            'kind' => 'shared_list', 'book_id' => $book->id, 'target' => 'list',
+            'locale' => 'uz', 'visitor_hash' => 'x', 'created_at' => $at,
+        ]);
+
+        Livewire::test(SiteStatsOverview::class, ['filters' => []])
+            ->assertSeeInOrder(['Shared list clicks', '0', 'Books opened from readers\' lists in Telegram']);
+
+        $click($this->tazarru);
+        $click($this->tazarru);
+        $click($this->kunlar);
+        // Outside the default 30 days.
+        $click($this->kunlar, '2026-08-01 09:00:00');
+
+        Livewire::test(SiteStatsOverview::class, ['filters' => []])
+            ->assertSeeInOrder([
+                // Store figures are unchanged by them.
+                'Store clicks', '4', 'From 3 visitors',
+                'Shared list clicks', '3', '2 books opened from readers\' lists in Telegram',
+            ]);
+    }
+
     public function test_searches_are_grouped_across_spellings(): void
     {
         $this->admin();

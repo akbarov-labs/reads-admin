@@ -53,6 +53,7 @@ class SiteStatsOverview extends StatsOverviewWidget
                 ->description('Order buttons pressed on announcements'),
             $this->askAi($views),
             $this->reviewClicks($views),
+            $this->sharedListClicks(),
         ];
     }
 
@@ -109,6 +110,21 @@ class SiteStatsOverview extends StatsOverviewWidget
 
         return Stat::make('Write-a-review clicks', number_format((int) $clicks->clicks))
             ->description($parts->implode(', '));
+    }
+
+    /**
+     * Books opened from the monthly lists readers share in Telegram: whether
+     * those lists bring anyone to the site. Who shared them is not known.
+     */
+    private function sharedListClicks(): Stat
+    {
+        $clicks = $this->clicks(OutboundClickKind::SharedList)
+            ->toBase()
+            ->selectRaw('count(*) as clicks, count(distinct book_id) as books')
+            ->first();
+
+        return Stat::make('Shared list clicks', number_format((int) $clicks->clicks))
+            ->description((int) $clicks->clicks > 0 ? number_format((int) $clicks->books).' books opened from readers\' lists in Telegram' : 'Books opened from readers\' lists in Telegram');
     }
 
     private function percent(int $part, int $whole): string

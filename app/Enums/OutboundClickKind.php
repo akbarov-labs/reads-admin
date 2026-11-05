@@ -26,8 +26,18 @@ enum OutboundClickKind: string implements HasLabel
      */
     case BotReview = 'bot_review';
 
+    /**
+     * A book's page on the site, opened from the monthly list of books a
+     * Kitoblarim reader shares in Telegram. Always has a book; its target
+     * is always LIST_TARGET.
+     */
+    case SharedList = 'shared_list';
+
     /** The one place a review button leads. */
     public const BOT_TARGET = 'bot';
+
+    /** What a shared list's click records as its target: it leaves for no other site. */
+    public const LIST_TARGET = 'list';
 
     /** The pages that carry an ask-AI button. */
     public const ASK_AI_SUBJECTS = ['book', 'author', 'translator', 'publisher'];
@@ -39,6 +49,7 @@ enum OutboundClickKind: string implements HasLabel
             self::PublisherOrder => 'Publisher order',
             self::AskAi => 'Ask AI',
             self::BotReview => 'Write a review',
+            self::SharedList => 'Shared reading list',
         };
     }
 }
