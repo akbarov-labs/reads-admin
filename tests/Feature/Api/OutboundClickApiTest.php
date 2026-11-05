@@ -144,6 +144,23 @@ class OutboundClickApiTest extends TestCase
         $this->assertSame(0, OutboundClick::count());
     }
 
+    public function test_the_site_logs_a_click_from_a_shared_list_on_a_book(): void
+    {
+        $this->click(['kind' => 'shared_list', 'target' => null])->assertNoContent();
+
+        $click = OutboundClick::sole();
+        $this->assertSame(OutboundClickKind::SharedList, $click->kind);
+        $this->assertSame(Book::sole()->id, $click->book_id);
+        $this->assertSame('list', $click->target);
+    }
+
+    public function test_a_click_from_a_shared_list_must_name_its_book(): void
+    {
+        $this->click(['kind' => 'shared_list', 'target' => null, 'book_id' => null])->assertUnprocessable();
+
+        $this->assertSame(0, OutboundClick::count());
+    }
+
     public function test_one_visitor_cannot_inflate_a_count(): void
     {
         for ($i = 0; $i < 40; $i++) {

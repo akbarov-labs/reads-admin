@@ -192,6 +192,26 @@ class BookApiTest extends TestCase
         $this->getJson('/api/books?q=978-9943-23-198-6')->assertJsonCount(1, 'data');
     }
 
+    public function test_the_isbn_filter_finds_only_the_book_with_that_edition(): void
+    {
+        $this->catalogueBook(['uzbek_title' => 'Kokoro'], ['isbn' => '9789943231986']);
+        // Its title has the digits in it, which ?q= would find too.
+        $this->catalogueBook(['uzbek_title' => 'Kitob 9789943231986'], ['isbn' => '9789943231962']);
+
+        $this->getJson('/api/books?isbn=978-9943-23-198-6')
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.uzbekTitle', 'Kokoro');
+
+        $this->getJson('/api/books?isbn=9789943000000')->assertJsonCount(0, 'data');
+    }
+
+    public function test_the_isbn_filter_ignores_an_edition_awaiting_moderation(): void
+    {
+        $this->catalogueBook(edition: ['isbn' => '9789943231986', 'status' => ModerationStatus::Pending]);
+
+        $this->getJson('/api/books?isbn=9789943231986')->assertJsonCount(0, 'data');
+    }
+
     public function test_a_search_finds_o_apostrophe_however_the_apostrophe_is_typed(): void
     {
         $this->catalogueBook(['uzbek_title' => "O'tkan kunlar"]);

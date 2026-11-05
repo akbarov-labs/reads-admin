@@ -15,8 +15,8 @@ use Illuminate\Validation\Rule;
 /**
  * The site's click log: a reader sent to a store's search, to a
  * publisher's Telegram from an announcement's order button, to an AI
- * from a page's ask-AI button, or to the bot from a book's "write a
- * review" button. The site's
+ * from a page's ask-AI button, to the bot from a book's "write a review"
+ * button, or to a book's page from a reader's shared list. The site's
  * /go/... redirects post here after they have already sent the reader on,
  * so nothing a reader waits for depends on it.
  * The site has dropped bots by user agent before calling.
@@ -30,8 +30,9 @@ class OutboundClickController extends Controller
     {
         $data = $request->validate([
             'kind' => ['required', Rule::enum(OutboundClickKind::class)],
-            // A review button is on a book page, so it always has one.
-            'book_id' => ['required_if:kind,'.OutboundClickKind::BotReview->value, 'nullable', 'integer', 'exists:books,id'],
+            // A review button is on a book page and a shared list's link
+            // opens one, so these always have one.
+            'book_id' => ['required_if:kind,'.OutboundClickKind::BotReview->value.','.OutboundClickKind::SharedList->value, 'nullable', 'integer', 'exists:books,id'],
             // An order button's announcement. Its publisher is the target,
             // looked up here rather than taken from the request.
             'announcement_id' => ['required_if:kind,'.OutboundClickKind::PublisherOrder->value, 'nullable', 'integer', 'exists:announcements,id'],
@@ -72,6 +73,7 @@ class OutboundClickController extends Controller
             'target' => match (true) {
                 $announcement !== null => $announcement->publisher->slug,
                 $data['kind'] === OutboundClickKind::BotReview->value => OutboundClickKind::BOT_TARGET,
+                $data['kind'] === OutboundClickKind::SharedList->value => OutboundClickKind::LIST_TARGET,
                 default => $data['target'],
             },
             'locale' => $data['locale'] ?? null,
