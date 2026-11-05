@@ -7,12 +7,16 @@ use App\Filament\Resources\AnnouncementResource\Pages;
 use App\Filament\Support\PendingNavigationBadge;
 use App\Models\Announcement;
 use App\Models\Book;
+use App\Models\Edition;
+use App\Services\CatalogueSync;
+use App\Services\Telegram\TelegramChannel;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 /**
  * The review queue for publishers' new books and pre-orders. A draft comes
@@ -104,7 +108,7 @@ class AnnouncementResource extends Resource
                     ->helperText('Leave empty for a book already in print. A pre-order leaves the site the day after this.'),
                 Forms\Components\Select::make('book_id')
                     ->label('Book in the catalogue')
-                    ->helperText('Optional: links the announcement to the book\'s page.')
+                    ->helperText('Leave empty and publishing makes the book from this announcement (or links the one already there with the same ISBN, or title and author).')
                     ->searchable()
                     ->getSearchResultsUsing(fn (string $search): array => Book::query()
                         ->where('uzbek_title', 'like', "%{$search}%")
@@ -122,8 +126,62 @@ class AnnouncementResource extends Resource
                     ->disk('public')
                     ->directory('announcements')
                     ->columnSpanFull(),
+                self::orderContactField(),
             ])->columns(2),
+            Forms\Components\Section::make('Book details')
+                ->description('Saved to the catalogue edition when the announcement is published.')
+                ->schema([
+                    ...self::bookFields(),
+                    Forms\Components\Placeholder::make('book_link')
+                        ->label('Book')
+                        ->content(fn (?Announcement $record) => $record?->book ? new HtmlString('<a class="underline" href="'.e(BookResource::getUrl('edit', ['record' => $record->book])).'">'.e($record->book->uzbek_title).' — edit the book</a>') : '—')
+                        ->visible(fn (?Announcement $record) => $record?->book_id !== null)
+                        ->columnSpanFull(),
+                ])->columns(2),
         ]);
+    }
+
+    /** A username, "@name" or t.me link, kept as the bare username. */
+    public static function orderContactField(): Forms\Components\TextInput
+    {
+        return Forms\Components\TextInput::make('order_contact')
+            ->label('Telegram for orders')
+            ->prefix('@')
+            ->helperText('Only for this book. Empty: the publisher\'s order account.')
+            ->rule(fn () => function (string $attribute, mixed $value, \Closure $fail) {
+                if (filled($value) && TelegramChannel::username((string) $value) === null) {
+                    $fail('That is not a Telegram username.');
+                }
+            })
+            ->dehydrateStateUsing(fn (?string $state) => TelegramChannel::username($state));
+    }
+
+    /**
+     * What a post rarely says and the catalogue wants. Shown only while the
+     * announcement has no book: after that, the book's own page is where
+     * its edition is edited.
+     *
+     * @return list<Forms\Components\Component>
+     */
+    public static function bookFields(): array
+    {
+        $unlinked = fn (?Announcement $record) => $record?->book_id === null;
+
+        return [
+            Forms\Components\TextInput::make('isbn')
+                ->label('ISBN')
+                ->maxLength(32)
+                ->helperText('13 digits, hyphens allowed. A book with this ISBN in the catalogue is linked instead of made again.')
+                ->rule(fn () => function (string $attribute, mixed $value, \Closure $fail) {
+                    if (filled($value) && CatalogueSync::normalizeIsbn((string) $value) === null) {
+                        $fail('An ISBN has 13 digits.');
+                    }
+                })
+                ->visible($unlinked),
+            Forms\Components\TextInput::make('pages')->numeric()->minValue(1)->maxValue(10000)->visible($unlinked),
+            Forms\Components\TextInput::make('year')->numeric()->minValue(Edition::FIRST_YEAR)->maxValue(Edition::lastYear())->visible($unlinked),
+            Forms\Components\Textarea::make('description')->rows(4)->columnSpanFull()->visible($unlinked),
+        ];
     }
 
     public static function table(Table $table): Table
@@ -157,7 +215,15 @@ class AnnouncementResource extends Resource
                     ->icon('heroicon-o-check')
                     ->color('success')
                     ->visible(fn (Announcement $record) => $record->status !== ModerationStatus::Approved)
-                    ->action(fn (Announcement $record) => $record->update(['status' => ModerationStatus::Approved])),
+                    // Asks for the details the catalogue needs, so a row can be
+                    // published without opening it.
+                    ->fillForm(fn (Announcement $record) => $record->only(['order_contact', 'isbn', 'pages', 'year', 'description']))
+                    ->form(fn (Announcement $record) => [
+                        self::orderContactField(),
+                        ...($record->book_id === null ? self::bookFields() : []),
+                    ])
+                    ->modalHeading('Publish and add to the catalogue')
+                    ->action(fn (Announcement $record, array $data) => $record->update([...$data, 'status' => ModerationStatus::Approved])),
                 Tables\Actions\Action::make('reject')
                     ->label('Reject')
                     ->icon('heroicon-o-x-mark')

@@ -33,6 +33,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'preorder_price',
     'preorder_deadline',
     'cover_path',
+    'order_contact',
+    'isbn',
+    'pages',
+    'year',
+    'description',
     'status',
     'found_by_scan',
 ])]
@@ -58,6 +63,8 @@ class Announcement extends Model
             'preorder_deadline' => 'date',
             'price' => 'integer',
             'preorder_price' => 'integer',
+            'pages' => 'integer',
+            'year' => 'integer',
         ];
     }
 

@@ -9,7 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * One announcement as the site shows it: the book, its prices, the
  * publisher, and where the order button leads (`orderContact`, a Telegram
- * username; null sends the reader to the post itself).
+ * username, the announcement's own or else the publisher's; null sends the reader to the post itself).
  *
  * @mixin Announcement
  */
@@ -30,7 +30,7 @@ class AnnouncementResource extends JsonResource
             'coverUrl' => $this->coverUrl(),
             'postedAt' => $this->posted_at?->toIso8601String(),
             'sourceUrl' => $this->source_url,
-            'orderContact' => $this->publisher->order_contact,
+            'orderContact' => $this->order_contact ?? $this->publisher->order_contact,
             'publisher' => [
                 'slug' => $this->publisher->slug,
                 'name' => $this->publisher->name,
