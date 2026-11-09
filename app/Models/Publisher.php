@@ -28,6 +28,9 @@ use Spatie\Translatable\HasTranslations;
     'website_url',
     'telegram_channel',
     'order_contact',
+    'phone',
+    'instagram',
+    'address',
 ])]
 class Publisher extends Model
 {

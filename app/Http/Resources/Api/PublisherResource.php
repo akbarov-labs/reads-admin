@@ -19,6 +19,10 @@ class PublisherResource extends JsonResource
             'establishedYear' => $this->established_year,
             'logoUrl' => $this->logo_url,
             'websiteUrl' => $this->website_url,
+            'telegramChannel' => $this->telegram_channel,
+            'phone' => $this->phone,
+            'instagram' => $this->instagram,
+            'address' => $this->address,
             'bookCount' => $this->when($this->books_count !== null, fn () => (int) $this->books_count),
             // A few covers for the card; see CatalogueCovers.
             'coverUrls' => $this->when($this->cover_urls !== null, fn () => $this->cover_urls),

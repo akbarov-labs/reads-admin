@@ -156,14 +156,48 @@ class TelegramChannel
      */
     public function saveCover(TelegramPost $post): ?string
     {
-        $host = strtolower((string) parse_url((string) $post->photoUrl, PHP_URL_HOST));
+        return $this->saveImage((string) $post->photoUrl, 'announcements');
+    }
+
+    /**
+     * Saves a channel's profile photo (a publisher's logo) in the given
+     * folder of the public disk. Read from the channel's plain t.me page,
+     * which shows the photo even when the channel has no web preview. Null
+     * when the channel has no photo or Telegram did not answer.
+     */
+    public function saveChannelPhoto(string $channel, string $directory): ?string
+    {
+        if (! preg_match(self::USERNAME, $channel)) {
+            return null;
+        }
+
+        try {
+            $response = Http::withHeaders(['User-Agent' => self::USER_AGENT])
+                ->withOptions(['allow_redirects' => false])
+                ->timeout(15)
+                ->get("https://t.me/{$channel}");
+        } catch (ConnectionException) {
+            return null;
+        }
+
+        if (! $response->successful() || ! preg_match('/<img class="tgme_page_photo_image"[^>]*\ssrc="([^"]+)"/', $response->body(), $m)) {
+            return null;
+        }
+
+        return $this->saveImage(html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5), $directory);
+    }
+
+    /** An image from Telegram's CDN, saved under a random name; null for anything else. */
+    private function saveImage(string $url, string $directory): ?string
+    {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
 
         if ($host === '' || ! (str_ends_with($host, '.telesco.pe') || $host === 'telegram.org' || str_ends_with($host, '.telegram.org'))) {
             return null;
         }
 
         try {
-            $response = Http::withHeaders(['User-Agent' => self::USER_AGENT])->timeout(20)->get($post->photoUrl);
+            $response = Http::withHeaders(['User-Agent' => self::USER_AGENT])->timeout(20)->get($url);
         } catch (ConnectionException) {
             return null;
         }
@@ -174,7 +208,7 @@ class TelegramChannel
             return null;
         }
 
-        $path = 'announcements/'.Str::random(32).'.'.self::COVER_TYPES[$type];
+        $path = $directory.'/'.Str::random(32).'.'.self::COVER_TYPES[$type];
         Storage::disk('public')->put($path, $response->body());
 
         return $path;
