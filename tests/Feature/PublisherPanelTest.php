@@ -169,6 +169,32 @@ class PublisherPanelTest extends TestCase
         $this->assertSame(1996, $publisher->established_year);
     }
 
+    public function test_an_admin_can_add_contacts_and_an_instagram_link_is_kept_as_a_username(): void
+    {
+        $publisher = $this->publisher();
+
+        $this->actingAs($this->admin());
+
+        Livewire::test(EditPublisher::class, ['record' => $publisher->getRouteKey()])
+            ->fillForm([
+                'phone' => '+998 71 217 59 99',
+                'instagram' => 'https://www.instagram.com/yangiasravlodi/?igsh=x',
+                'address' => 'Toshkent, Navoiy koʻchasi 30',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $publisher->refresh();
+        $this->assertSame('+998 71 217 59 99', $publisher->phone);
+        $this->assertSame('yangiasravlodi', $publisher->instagram);
+        $this->assertSame('Toshkent, Navoiy koʻchasi 30', $publisher->address);
+
+        Livewire::test(EditPublisher::class, ['record' => $publisher->getRouteKey()])
+            ->fillForm(['instagram' => 'not a username'])
+            ->call('save')
+            ->assertHasFormErrors(['instagram']);
+    }
+
     public function test_an_admin_can_delete_a_publisher_without_taking_its_books(): void
     {
         $publisher = $this->publisher();

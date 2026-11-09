@@ -96,6 +96,18 @@ class PublisherResource extends Resource
                     ->helperText('The account readers write to when they press "Order" on an announcement. The message is pre-filled and names kitoblarim.uz.')
                     ->rule('regex:'.TelegramChannel::USERNAME)
                     ->dehydrateStateUsing(fn (?string $state) => TelegramChannel::username($state)),
+                Forms\Components\TextInput::make('phone')->tel()->maxLength(32)
+                    ->helperText('Shown on the publisher\'s page, e.g. +998 71 217 59 99.'),
+                Forms\Components\TextInput::make('instagram')->label('Instagram')->prefix('@')->maxLength(255)
+                    ->helperText('The username, or a link to the profile.')
+                    ->rules([fn () => function (string $attribute, mixed $value, \Closure $fail) {
+                        if (filled($value) && self::instagramUsername($value) === null) {
+                            $fail('This is not an Instagram username.');
+                        }
+                    }])
+                    ->dehydrateStateUsing(fn (?string $state) => self::instagramUsername($state)),
+                Forms\Components\TextInput::make('address')->maxLength(255)->columnSpanFull()
+                    ->helperText('Where readers can come in, e.g. Toshkent, Muqimiy koʻchasi 178.'),
                 Forms\Components\FileUpload::make('logo_path')->label('Logo')->image()->acceptedFileTypes(TranslatorResource::SAFE_IMAGE_TYPES)->maxSize(4096)->disk('public')->directory('publishers'),
             ])->columns(2),
             Forms\Components\Section::make('Localized information')->schema([
@@ -107,6 +119,16 @@ class PublisherResource extends Resource
             ]),
             Forms\Components\TextInput::make('established_year')->numeric()->minValue(1)->maxValue(9999),
         ]);
+    }
+
+    /** "@name", "instagram.com/name/" or "name" as a bare username, or null. */
+    public static function instagramUsername(?string $value): ?string
+    {
+        $value = trim((string) $value);
+        $value = preg_replace('#^(?:https?://)?(?:www\.)?instagram\.com/#i', '', $value);
+        $value = ltrim(rtrim(explode('?', $value)[0], '/'), '@');
+
+        return preg_match('/^[A-Za-z0-9._]{1,30}$/', $value) ? $value : null;
     }
 
     /** @return array<int, Forms\Components\Component> */

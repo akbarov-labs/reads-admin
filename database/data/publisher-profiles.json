@@ -1,0 +1,534 @@
+{
+  "hilol-nashr": {
+    "telegram_channel": "hilolnashr",
+    "order_contact": "hilol_reception",
+    "website_url": "https://hilol.uz",
+    "phone": "+998 71 217 59 99",
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Hilol-nashr» — Toshkentdagi nashriyot-matbaa uyi. U islomiy-maʼrifiy kitoblar, jumladan Shayx Muhammad Sodiq Muhammad Yusufning asarlarini, Abdulla Qodiriyning «Oʻtkan kunlar» kabi badiiy asarlarni hamda «Hilol» jurnalini chiqaradi. Kitoblari oʻz doʻkonlarida va «Hilol eBook» ilovasida ham taqdim etiladi.",
+      "ru": "«Hilol-nashr» — издательско-полиграфический дом из Ташкента. Выпускает исламскую просветительскую литературу, в том числе труды шейха Мухаммада Содика Мухаммада Юсуфа, художественные книги, такие как «Минувшие дни» Абдуллы Кадыри, и журнал «Hilol». Книги продаются в собственных магазинах и в приложении «Hilol eBook».",
+      "en": "Hilol-nashr is a Tashkent publishing and printing house. It publishes Islamic educational books, including works by Sheikh Muhammad Sodiq Muhammad Yusuf, fiction such as Abdulla Qodiriy's \"Oʻtkan kunlar\", and the Hilol magazine. Its books are sold in its own shops and through the Hilol eBook app."
+    }
+  },
+  "akademnashr": {
+    "telegram_channel": "akademnashr",
+    "order_contact": "akademsavdo",
+    "website_url": null,
+    "phone": "+998 99 433 16 77",
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Akademnashr» nashriyoti tarjima ilmiy-ommabop va ijtimoiy-siyosiy kitoblarni (masalan, Adrian Vuldrijning «Isteʼdod aristokratiyasi» va «Chili loyihasi»), badiiy adabiyotni hamda maktab oʻquvchilari uchun «Qoʻshimcha dars» turkumini chiqaradi. Nashriyot shiori — «Mutolaa qiling!».",
+      "ru": "Издательство «Akademnashr» выпускает переводную научно-популярную и общественно-политическую литературу (например, «Аристократию таланта» Адриана Вулдриджа и «Проект Чили»), художественную литературу и серию «Qoʻshimcha dars» для школьников. Девиз издательства — «Mutolaa qiling!» («Читайте!»).",
+      "en": "Akademnashr publishes translated popular-science and current-affairs books (such as Adrian Wooldridge's \"The Aristocracy of Talent\" and \"Chili loyihasi\"), fiction, and the \"Qoʻshimcha dars\" (Extra Lesson) series for schoolchildren. Its motto is \"Mutolaa qiling!\" (\"Read!\")."
+    }
+  },
+  "zabarjad-media": {
+    "telegram_channel": "zabarjadmedia",
+    "order_contact": "sotuv_zabarjad",
+    "website_url": null,
+    "phone": "+998 90 440 05 60",
+    "instagram": "zabarjadmed",
+    "address": "Toshkent, Muqimiy koʻchasi 178",
+    "established_year": null,
+    "bio": {
+      "uz": "«Zabarjad Media» nashriyoti jadid adabiyotiga alohida eʼtibor beradi: «Jadid adabiyoti namoyandalari» (14 kitob) va «Jadid kulliyoti» (8 kitob) turkumlari shular jumlasidan. Shuningdek, xalq ogʻzaki ijodi, oʻzbek adabiyoti, «Muz va olov qoʻshigʻi» kabi tarjima asarlar hamda «Quyoshim» va «Yosh kitobxon kutubxonasi» singari bolalar turkumlarini chiqaradi.",
+      "ru": "Издательство «Zabarjad Media» уделяет особое внимание литературе джадидов: среди его серий — «Jadid adabiyoti namoyandalari» (14 книг) и «Jadid kulliyoti» (8 книг). Также выпускает фольклор, узбекскую литературу, переводы, в том числе «Песнь льда и огня», и детские серии «Quyoshim» и «Yosh kitobxon kutubxonasi».",
+      "en": "Zabarjad Media focuses on Jadid literature, with series such as \"Jadid adabiyoti namoyandalari\" (14 books) and \"Jadid kulliyoti\" (8 books). It also publishes folklore, Uzbek literature, translations such as \"A Song of Ice and Fire\", and children's series including \"Quyoshim\" and \"Yosh kitobxon kutubxonasi\"."
+    }
+  },
+  "kitobdornashr": {
+    "telegram_channel": "kitobdornashr",
+    "order_contact": "kitobdor01",
+    "website_url": null,
+    "phone": "+998 95 747 06 06",
+    "instagram": "kitobdor",
+    "address": "Toshkent, Xadra maydoni, Toshkent kitob markazi, 1-doʻkon",
+    "established_year": null,
+    "bio": {
+      "uz": "«Kitobdornashr» oʻzbek nasrini, jumladan Erkin Malik, Odil Yoqubov va Shoniyoz Meliboyev kitoblarini chiqaradi va sotadi. Doʻkoni Toshkent kitob markazida joylashgan; Oʻzbekiston boʻylab yetkazib berish va ulgurji savdo mavjud.",
+      "ru": "«Kitobdornashr» издаёт и продаёт узбекскую прозу, в том числе книги Эркина Малика, Одила Якубова и Шониёза Мелибоева. Магазин находится в Ташкентском книжном центре; есть доставка по Узбекистану и оптовые продажи.",
+      "en": "Kitobdornashr publishes and sells Uzbek prose, including books by Erkin Malik, Odil Yoqubov and Shoniyoz Meliboyev. Its shop is in the Tashkent Book Centre, with delivery across Uzbekistan and wholesale orders."
+    }
+  },
+  "sharq": {
+    "telegram_channel": "sharq_nmak",
+    "order_contact": null,
+    "website_url": "https://www.sharq.uz",
+    "phone": "+998 71 233 04 04",
+    "instagram": null,
+    "address": "Toshkent, Buyuk Turon koʻchasi 41",
+    "established_year": null,
+    "bio": {
+      "uz": "«Sharq» — Toshkentdagi nashriyot-matbaa aksiyadorlik kompaniyasi. U oʻzbek adiblarining kitoblarini, jumladan tanlangan asarlar toʻplamlarini nashr etadi.",
+      "ru": "«Sharq» — издательско-полиграфическая акционерная компания в Ташкенте. Выпускает книги узбекских писателей, в том числе сборники избранных произведений.",
+      "en": "Sharq is a publishing and printing joint-stock company in Tashkent. It publishes books by Uzbek writers, including collections of selected works."
+    }
+  },
+  "asaxiy": {
+    "telegram_channel": "asaxiybooks",
+    "order_contact": null,
+    "website_url": "https://asaxiy.uz",
+    "phone": "+998 71 200 01 05",
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Asaxiy Books» oʻzbek, rus va ingliz tillaridagi kitoblarni taqdim etadi, 12 ta filialga ega va Oʻzbekiston boʻylab yetkazib beradi. Kanalda har oy kitobxonlar bilan onlayn kitob muhokamalari oʻtkaziladi.",
+      "ru": "«Asaxiy Books» предлагает книги на узбекском, русском и английском языках, имеет 12 филиалов и доставляет по всему Узбекистану. На канале ежемесячно проходят онлайн-обсуждения книг с читателями.",
+      "en": "Asaxiy Books offers books in Uzbek, Russian and English, has 12 branches and delivers across Uzbekistan. Its channel hosts a monthly online book discussion with readers."
+    }
+  },
+  "pir-nashriyoti": {
+    "telegram_channel": "pirnashr",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 77 500 44 66",
+    "instagram": "pirnashr",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Pir nashriyoti» kanalida nashriyot kitoblari hamda tarix, adabiyot va mutolaa haqidagi qisqa maqolalar eʼlon qilinadi.",
+      "ru": "На канале «Pir nashriyoti» публикуются книги издательства и короткие заметки об истории, литературе и чтении.",
+      "en": "Pir nashriyoti shares its books along with short pieces on history, literature and reading."
+    }
+  },
+  "nasim-kutub": {
+    "telegram_channel": "nasimkutub",
+    "order_contact": "nasimcall",
+    "website_url": null,
+    "phone": null,
+    "instagram": "nasimkutub",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Nasim Kutub» asosan tarixiy kitoblar chiqaradi: Ahmad Shimshirgilning «Amir Temur», Yavuz Bahodiroʻgʻlining «Alvido, Buxoro», «Yonayotgan Buxoro» va «Salohiddin Ayyubiy», Abdulqodir Majidning «Shayboniylar davlati» hamda Grigoriy Petrovning «Oq nilufarlar oʻlkasi» shular jumlasidan. Kitoblari Uzum Market orqali sotiladi.",
+      "ru": "«Nasim Kutub» выпускает в основном историческую литературу: «Амир Темур» Ахмеда Шимширгиля, «Прощай, Бухара», «Горящая Бухара» и «Салахуддин Айюби» Явуза Бахадыроглу, «Государство Шейбанидов» Абдулкадира Маджида, а также «Страну белых лилий» Григория Петрова. Книги продаются через Uzum Market.",
+      "en": "Nasim Kutub publishes mainly history books, among them Ahmet Şimşirgil's \"Amir Temur\", Yavuz Bahadıroğlu's \"Alvido, Buxoro\", \"Yonayotgan Buxoro\" and \"Salohiddin Ayyubiy\", Abdulqodir Majid's \"Shayboniylar davlati\", and Grigory Petrov's \"The Land of White Lilies\". Its books are sold on Uzum Market."
+    }
+  },
+  "factor-books": {
+    "telegram_channel": "factor_books",
+    "order_contact": "factorbooks_info",
+    "website_url": "https://www.factorbooks.uz",
+    "phone": "+998 95 035 95 11",
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Factor Books» badiiy adabiyot, asosan oʻzbek mualliflarining romanlari va tarjima asarlarni taklif etadi; buyurtmalar Telegram orqali qabul qilinadi.",
+      "ru": "«Factor Books» предлагает художественную литературу — в основном романы узбекских авторов и переводные произведения; заказы принимаются через Telegram.",
+      "en": "Factor Books offers fiction, mainly novels by Uzbek authors and works in translation, with orders taken via Telegram."
+    }
+  },
+  "falaq-nashr": {
+    "telegram_channel": "falaqnashr",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 93 194 91 31",
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Falaq nashr» diniy-maʼrifiy kitoblar, xususan ayollar va qizlar uchun «Yosh qizga nasihat» kabi qoʻllanmalar hamda «Binafsha shuʼlasi» va ilmiy-fantastik «1500 yillik mahbuslar» singari badiiy asarlarni chiqaradi. «Binafsha shuʼlasi» rus tilida ham nashr etilgan.",
+      "ru": "«Falaq nashr» выпускает религиозно-просветительскую литературу, в том числе книги для женщин и девушек, например «Yosh qizga nasihat», а также художественные произведения — «Binafsha shuʼlasi» и научно-фантастический роман «1500 yillik mahbuslar». «Binafsha shuʼlasi» вышла и на русском языке.",
+      "en": "Falaq nashr publishes Islamic educational books, including guides for women and girls such as \"Yosh qizga nasihat\", and fiction such as \"Binafsha shuʼlasi\" and the science-fiction novel \"1500 yillik mahbuslar\". \"Binafsha shuʼlasi\" has also been published in Russian."
+    }
+  },
+  "pingvin-books": {
+    "telegram_channel": "pingvinbooks",
+    "order_contact": null,
+    "website_url": null,
+    "phone": null,
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Pingvin books» — bolalar kitoblari nashriyoti. U ota-onalar farzandlari bilan birga oʻqishi uchun ertaklar va hikoyalar, jumladan «Meva hidli bolakay» kitobini chiqaradi.",
+      "ru": "«Pingvin books» — издательство детских книг. Выпускает сказки и рассказы для совместного чтения родителей с детьми, в том числе книгу «Meva hidli bolakay».",
+      "en": "Pingvin books is a children's book publisher. It publishes fairy tales and stories for parents to read with their children, including \"Meva hidli bolakay\"."
+    }
+  },
+  "info-capital-books": {
+    "telegram_channel": "infokapitalbooks",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 88 890 89 11",
+    "instagram": "infocapitalbooks",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Info Capital Books» jahon bestsellerlarining oʻzbekcha tarjimalarini chiqaradi: Jorj Oruell asarlari, Uilki Kollinzning «Oq libosli ayol» romani, Jon Maksvellning «Liderlikning 21 muqarrar qonuni» kabi biznes va shaxsiy rivojlanish kitoblari shular jumlasidan. Nashriyot xizmatlarini ham koʻrsatadi.",
+      "ru": "«Info Capital Books» выпускает узбекские переводы мировых бестселлеров: книги Джорджа Оруэлла, «Женщину в белом» Уилки Коллинза, литературу о бизнесе и саморазвитии, например «21 непреложный закон лидерства» Джона Максвелла. Также оказывает издательские услуги.",
+      "en": "Info Capital Books publishes Uzbek translations of international bestsellers, including George Orwell's books, Wilkie Collins's \"The Woman in White\", and business and self-development titles such as John Maxwell's \"The 21 Irrefutable Laws of Leadership\". It also offers publishing services."
+    }
+  },
+  "huzur": {
+    "telegram_channel": "huzurkitoblari",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 70 049 05 05",
+    "instagram": null,
+    "address": "Toshkent, Toshkent kitob markazi",
+    "established_year": null,
+    "bio": {
+      "uz": "«Huzur» nashriyoti diniy-maʼnaviy kitoblar va tarjima asarlarni chiqaradi, jumladan «Ishqning mehrobi Yusuf» va «Alloh bor – muammo yoʻq» kitoblarini. Doʻkoni Toshkent kitob markazida joylashgan; nashriyot shiori — «Huzur sari».",
+      "ru": "Издательство «Huzur» выпускает религиозно-духовную и переводную литературу, в том числе книги «Ishqning mehrobi Yusuf» и «Alloh bor – muammo yoʻq». Магазин находится в Ташкентском книжном центре; девиз издательства — «Huzur sari».",
+      "en": "Huzur publishes spiritual and religious books and translations, including \"Ishqning mehrobi Yusuf\" and \"Alloh bor – muammo yoʻq\". Its shop is in the Tashkent Book Centre, and its motto is \"Huzur sari\" (\"Towards serenity\")."
+    }
+  },
+  "ijod-nashr": {
+    "telegram_channel": "ijodnashr",
+    "order_contact": "Ahmad_Ergashev",
+    "website_url": null,
+    "phone": "+998 97 765 56 86",
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Ijod nashr» yosh ijodkorlarning sheʼriy va adabiy toʻplamlarini, jumladan «GulDU mushoirasi», «Sirdaryo yoshlari» va Yorqinjon Hayitboyevning «444 toʻrtlik» kitobini, shuningdek iqtisodiy tafakkurga oid tarjima asarlarni nashr etadi.",
+      "ru": "«Ijod nashr» выпускает поэтические и литературные сборники молодых авторов, в том числе «GulDU mushoirasi», «Sirdaryo yoshlari» и «444 toʻrtlik» Ёркинжона Хайитбоева, а также переводные книги по экономической мысли.",
+      "en": "Ijod nashr publishes poetry and literary collections by young authors, including \"GulDU mushoirasi\", \"Sirdaryo yoshlari\" and Yorqinjon Hayitboyev's \"444 toʻrtlik\", as well as translated works on economic thought."
+    }
+  },
+  "tirilish": {
+    "telegram_channel": "tirilishuz",
+    "order_contact": null,
+    "website_url": null,
+    "phone": null,
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Tirilish» nashriyoti islomiy tafakkur va jahon klassikasiga oid kitoblarni chiqaradi: «Muqaddima», «Falastin», «Alloh biz bilan birga», «Islom psixologiyasi» va Fyodor Dostoyevskiyning «Oʻsmir» romani shular jumlasidan. Nashriyot shiori — «Bizning kitoblar fikrlashingizni oʻzgartiradi».",
+      "ru": "Издательство «Tirilish» выпускает книги по исламской мысли и мировую классику, среди них «Мукаддима», «Палестина», «Аллах с нами», «Исламская психология» и роман Фёдора Достоевского «Подросток». Девиз издательства — «Наши книги меняют ваше мышление».",
+      "en": "Tirilish publishes books on Islamic thought and world classics, among them \"Muqaddima\", \"Falastin\", \"Alloh biz bilan birga\", \"Islom psixologiyasi\" and Fyodor Dostoevsky's \"The Adolescent\". Its motto is \"Our books change the way you think\"."
+    }
+  },
+  "mitti-olam": {
+    "telegram_channel": "mittiolamnashriyoti",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 71 230 00 50",
+    "instagram": "mitti_olam_nashriyoti",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Mitti olam» — bolalar kitoblari nashriyoti. U ertaklar, yoʻl harakati qoidalariga oid «Qizil chiroqda toʻxta», Kressida Kovellning «Ajdar oʻrgatuvchilar» asari va mantiqiy oʻyinlar kitoblarini chiqaradi. Nashriyot shiori — «Mitti olam bilan katta kelajak sari!».",
+      "ru": "«Mitti olam» — издательство детских книг. Выпускает сказки, книгу о правилах дорожного движения «Qizil chiroqda toʻxta», «Как приручить дракона» Крессиды Коуэлл и сборники логических игр. Девиз издательства — «Mitti olam bilan katta kelajak sari!» («С маленьким миром — к большому будущему!»).",
+      "en": "Mitti olam is a children's book publisher. It publishes fairy tales, the road-safety book \"Qizil chiroqda toʻxta\", Cressida Cowell's \"How to Train Your Dragon\" and books of logic games. Its motto is \"Mitti olam bilan katta kelajak sari!\" (\"With a little world towards a big future!\")."
+    }
+  },
+  "sahifa": {
+    "telegram_channel": "sahifanashr",
+    "order_contact": null,
+    "website_url": "https://sahifanashr.uz",
+    "phone": null,
+    "instagram": "sahifanashr",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Sahifa nashr» diniy-maʼnaviy va shaxsiy rivojlanishga oid kitoblarni chiqaradi, jumladan «Hayot chizigʻi» va «Eng buyuk Oshno». Nashriyot shiori — «Yangi sahifa oching».",
+      "ru": "«Sahifa nashr» выпускает духовно-религиозную литературу и книги о саморазвитии, в том числе «Hayot chizigʻi» и «Eng buyuk Oshno». Девиз издательства — «Yangi sahifa oching» («Откройте новую страницу»).",
+      "en": "Sahifa nashr publishes spiritual, religious and self-development books, including \"Hayot chizigʻi\" and \"Eng buyuk Oshno\". Its motto is \"Yangi sahifa oching\" (\"Open a new page\")."
+    }
+  },
+  "yuridik-adabiyotlar-publish": {
+    "telegram_channel": "yuridikadabiyotlar",
+    "order_contact": "yuridikadabiyotlar_admin",
+    "website_url": null,
+    "phone": "+998 99 554 70 70",
+    "instagram": "yuridik_adabiyotlar",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Yuridik adabiyotlar publish» huquqiy adabiyotga ixtisoslashgan: u oliy yuridik taʼlim uchun darsliklar hamda Oʻzbekiston Respublikasi kodekslarining soʻnggi oʻzgartishlar kiritilgan nashrlarini oʻzbek va rus tillarida chiqaradi. Nashriyot universitetlarda yuridik adabiyotlar yarmarkalarini ham oʻtkazadi.",
+      "ru": "«Yuridik adabiyotlar publish» специализируется на юридической литературе: выпускает учебники для высшего юридического образования и издания кодексов Республики Узбекистан с последними изменениями на узбекском и русском языках. Издательство также проводит ярмарки юридической литературы в университетах.",
+      "en": "Yuridik adabiyotlar publish specialises in legal literature: it publishes law-school textbooks and up-to-date editions of the codes of the Republic of Uzbekistan in Uzbek and Russian. It also holds legal book fairs at universities."
+    }
+  },
+  "tarbiyachi": {
+    "telegram_channel": "tarbiyachi_nashr",
+    "order_contact": "Tarbiyachinashr",
+    "website_url": null,
+    "phone": "+998 99 299 67 62",
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Tarbiyachi» nashriyoti bolalar va oʻsmirlar uchun tarbiyaviy va sarguzasht kitoblar chiqaradi, jumladan Abiljon Abdurahmonovning «Yulduzlar kezuvchi» fantastik asarini.",
+      "ru": "Издательство «Tarbiyachi» выпускает воспитательные и приключенческие книги для детей и подростков, в том числе фантастическую повесть Абилжона Абдурахмонова «Yulduzlar kezuvchi».",
+      "en": "Tarbiyachi publishes educational and adventure books for children and teenagers, including Abiljon Abdurahmonov's science-fiction story \"Yulduzlar kezuvchi\"."
+    }
+  },
+  "tasnim": {
+    "telegram_channel": "tasnimbooks",
+    "order_contact": "Tasnimadmin",
+    "website_url": null,
+    "phone": "+998 93 113 27 17",
+    "instagram": "tasnimbooks",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Tasnim» nashriyoti tarjima romanlar hamda oila va iymon mavzusidagi kitoblarni chiqaradi: Ahmad Gunbay Yildizning «Gunohning rangi», «Nikoh ostonasida» va Charli Makkizining «Bolakay, Koʻrsichqon, Tulki va Tulpor» kitobi shular jumlasidan.",
+      "ru": "Издательство «Tasnim» выпускает переводные романы и книги о семье и вере, среди них «Gunohning rangi» Ахмета Гюнбая Йылдыза, «Nikoh ostonasida» и «Мальчик, Крот, Лис и Конь» Чарли Макеси.",
+      "en": "Tasnim publishes translated novels and books on family and faith, among them Ahmet Günbay Yıldız's \"Gunohning rangi\", \"Nikoh ostonasida\" and Charlie Mackesy's \"The Boy, the Mole, the Fox and the Horse\"."
+    }
+  },
+  "nido": {
+    "telegram_channel": "nidonashr",
+    "order_contact": null,
+    "website_url": null,
+    "phone": null,
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Nido nashr» diniy-maʼrifiy kitoblar, xususan ayollar va oila mavzusidagi asarlarni chiqaradi; Shayx Abdulqodir Jiyloniyning «Oʻzingni oʻngla» va Sardor domla Odilovning «10 daqiqalik amallar» kitoblari shular jumlasidan.",
+      "ru": "«Nido nashr» выпускает религиозно-просветительскую литературу, в том числе книги для женщин и о семье; среди них «Oʻzingni oʻngla» шейха Абдулкадира Гиляни и «10 daqiqalik amallar» Сардора домлы Одилова.",
+      "en": "Nido nashr publishes Islamic educational books, with a focus on women and family; titles include Sheikh Abdulqadir Gilani's \"Oʻzingni oʻngla\" and Sardor domla Odilov's \"10 daqiqalik amallar\"."
+    }
+  },
+  "tavfiqnashr": {
+    "telegram_channel": "tavfiqnashr",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 97 521 67 00",
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Tavfiqnashr» mumtoz islomiy va adabiy merosni nashr etadi: Hakim Termiziyning «Haqlar kitobi», Alisher Navoiyning «Hayrat ul-abror» dostoni, «Ibodati islomiyya», «Risolayi margʻuba» va «Aruz va mumtoz poetika» shular jumlasidan. Nashriyot shiori — «Oʻqiladigan kitoblar bulogʻi».",
+      "ru": "«Tavfiqnashr» издаёт классическое исламское и литературное наследие: «Книгу прав» Хакима Термизи, поэму Алишера Навои «Хайрат ул-аброр», «Ibodati islomiyya», «Risolayi margʻuba» и «Aruz va mumtoz poetika». Девиз издательства — «Oʻqiladigan kitoblar bulogʻi» («Родник книг, которые читают»).",
+      "en": "Tavfiqnashr publishes classical Islamic and literary heritage, including Hakim Tirmidhi's \"Book of Rights\" (\"Haqlar kitobi\"), Alisher Navoi's poem \"Hayrat ul-abror\", \"Ibodati islomiyya\", \"Risolayi margʻuba\" and \"Aruz va mumtoz poetika\". Its motto is \"Oʻqiladigan kitoblar bulogʻi\" (\"A spring of books worth reading\")."
+    }
+  },
+  "chinor": {
+    "telegram_channel": "chinor_nashriyoti",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 50 444 88 44",
+    "instagram": null,
+    "address": "Toshkent, Alisher Navoiy koʻchasi 40 (Toshkent kitob markazi)",
+    "established_year": null,
+    "bio": {
+      "uz": "«Chinor» (Chinar Education Publishing) — bolalar kitoblari nashriyoti. U bolalarning aqliy va mantiqiy rivojlanishi uchun qoʻllanmalar, Prezident maktablari va ixtisoslashtirilgan maktablarga tayyorlov kitoblari hamda uch tilli «Boʻyaymiz va oʻrganamiz» kitobini chiqaradi. Nashriyot shiori — «Asosida mehr bor».",
+      "ru": "«Chinor» (Chinar Education Publishing) — издательство детских книг. Выпускает пособия для умственного и логического развития детей, книги для подготовки в Президентские и специализированные школы, а также трёхъязычную книгу-раскраску «Boʻyaymiz va oʻrganamiz». Девиз издательства — «Asosida mehr bor» («В основе — любовь»).",
+      "en": "Chinor (Chinar Education Publishing) is a children's book publisher. It publishes activity books for children's cognitive and logical development, preparation books for Presidential and specialised schools, and the trilingual colouring book \"Boʻyaymiz va oʻrganamiz\". Its motto is \"Asosida mehr bor\" (\"Built on care\")."
+    }
+  },
+  "sakura-books": {
+    "telegram_channel": "sakurabooksuz",
+    "order_contact": null,
+    "website_url": null,
+    "phone": null,
+    "instagram": "sakurabooks.uz",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Sakura Books» bolalarni rivojlantiruvchi kitoblar chiqaradi, jumladan Kumon metodikasi asosidagi «Oson chiziqlar», «Qirqish» va «Raqamlar 1–30» kitoblarini.",
+      "ru": "«Sakura Books» выпускает развивающие книги для детей, в том числе пособия по методике Kumon: «Oson chiziqlar», «Qirqish» и «Raqamlar 1–30».",
+      "en": "Sakura Books publishes developmental books for children, including Kumon-method workbooks such as \"Oson chiziqlar\" (Easy Lines), \"Qirqish\" (Cutting) and \"Raqamlar 1–30\" (Numbers 1–30)."
+    }
+  },
+  "anorbooks": {
+    "telegram_channel": "anorbooks_nashr",
+    "order_contact": null,
+    "website_url": "https://taplink.cc/anorbooks",
+    "phone": null,
+    "instagram": "anorbooks_nashriyoti",
+    "address": "Toshkent, Shayxontohur tumani, Qiziltut koʻchasi 7",
+    "established_year": null,
+    "bio": {
+      "uz": "«Anorbooks» nashriyoti badiiy va maʼnaviy mavzudagi kitoblarni chiqaradi, jumladan «Shams ila Mavlono» va Iskandar Palaning «Ishq otashi» romanini. Kanalda adabiyot va tarix haqidagi maqolalar ham eʼlon qilinadi.",
+      "ru": "Издательство «Anorbooks» выпускает художественную и духовную литературу, в том числе «Shams ila Mavlono» и роман Искандера Палы «Ishq otashi». На канале также публикуются материалы о литературе и истории.",
+      "en": "Anorbooks publishes fiction and spiritual literature, including \"Shams ila Mavlono\" and Iskender Pala's novel \"Ishq otashi\". Its channel also shares articles on literature and history."
+    }
+  },
+  "sahhof": {
+    "telegram_channel": "sahhof_nashriyoti",
+    "order_contact": null,
+    "website_url": null,
+    "phone": null,
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Sahhof» nashriyoti zamonaviy oʻzbek adabiyoti va tarjima asarlarni chiqaradi, jumladan Husniddin Sharipovning «Tanlangan asarlar»i, Shahriyor Shavkatning «Hirotga, bobomning huzuriga» kitobi va Erve Bellekning «Yo sariyogʻ, yo mullajiring» romani tarjimasi. Kitoblari Asaxiy va Book.uz doʻkonlarida ham sotiladi.",
+      "ru": "Издательство «Sahhof» выпускает современную узбекскую литературу и переводы, в том числе «Избранное» Хусниддина Шарипова, книгу Шахриёра Шавката «Hirotga, bobomning huzuriga» и перевод романа Эрве Беллека «Yo sariyogʻ, yo mullajiring». Книги также продаются в магазинах Asaxiy и Book.uz.",
+      "en": "Sahhof publishes contemporary Uzbek literature and translations, including Husniddin Sharipov's selected works, Shahriyor Shavkat's \"Hirotga, bobomning huzuriga\" and an Uzbek translation of a novel by Hervé Bellec. Its books are also sold at Asaxiy and Book.uz."
+    }
+  },
+  "turon-iqbol": {
+    "telegram_channel": "turoniqbol_nashriyoti",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 77 412 00 30",
+    "instagram": "turoniqbol_nashriyoti",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Turon-Iqbol» nashriyoti taʼlimga oid kitoblar chiqaradi: tarix, huquqshunoslik va kimyo fanlaridan test toʻplamlari, Milliy sertifikat imtihoniga tayyorlov qoʻllanmalari, boshlangʻich sinflar uchun matematika toʻplamlari va koreyscha-oʻzbekcha lugʻat.",
+      "ru": "Издательство «Turon-Iqbol» выпускает учебную литературу: сборники тестов по истории, правоведению и химии, пособия для подготовки к экзамену на Национальный сертификат, сборники задач по математике для начальных классов и корейско-узбекский словарь.",
+      "en": "Turon-Iqbol publishes educational books: test collections in history, law and chemistry, preparation guides for the National Certificate exam, maths workbooks for primary grades, and a Korean–Uzbek dictionary."
+    }
+  },
+  "bayoz": {
+    "telegram_channel": "bayoznashriyoti",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 97 722 77 88",
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Bayoz» nashriyoti oʻqituvchilar va maktablar uchun oʻquv qoʻllanmalari, metodik adabiyotlar va plakatlar chiqaradi.",
+      "ru": "Издательство «Bayoz» выпускает учебные пособия, методическую литературу и плакаты для учителей и школ.",
+      "en": "Bayoz publishes study guides, teaching-methods literature and posters for teachers and schools."
+    }
+  },
+  "intellekt-books": {
+    "telegram_channel": "intellekt_books",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 90 016 03 06",
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Intellekt Books» tarjima romanlar, jumladan psixologik trillerlar, hamda shaxsiy rivojlanishga oid kitoblarni chiqaradi; «Opa-singil Bannerlar» romani shular jumlasidan.",
+      "ru": "«Intellekt Books» выпускает переводные романы, в том числе психологические триллеры, а также книги о саморазвитии; среди них роман «Opa-singil Bannerlar».",
+      "en": "Intellekt Books publishes translated novels, including psychological thrillers, as well as self-development books; titles include the novel \"Opa-singil Bannerlar\"."
+    }
+  },
+  "tahlil": {
+    "telegram_channel": "tahlilnashriyoti",
+    "order_contact": "tahlil_admin",
+    "website_url": null,
+    "phone": null,
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Tahlil» nashriyoti ilmiy-ommabop va publitsistik kitoblar chiqaradi, jumladan Edvin Abbotning «Yassiyurt», «Psixologik urush», «Sotilayotgan kasalliklar» va «Oʻlimdan keyingi hayot». Nashriyot shiori — «Tafakkurni boyituvchi kitoblar».",
+      "ru": "Издательство «Tahlil» выпускает научно-популярные и публицистические книги, в том числе «Флатландию» Эдвина Эбботта, «Psixologik urush», «Sotilayotgan kasalliklar» и «Oʻlimdan keyingi hayot». Девиз издательства — «Tafakkurni boyituvchi kitoblar» («Книги, обогащающие мышление»).",
+      "en": "Tahlil publishes popular-science and non-fiction books, including Edwin Abbott's \"Flatland\" (\"Yassiyurt\"), \"Psixologik urush\", \"Sotilayotgan kasalliklar\" and \"Oʻlimdan keyingi hayot\". Its motto is \"Tafakkurni boyituvchi kitoblar\" (\"Books that enrich thinking\")."
+    }
+  },
+  "qaldirgoch": {
+    "telegram_channel": "qaldirgoch_nashr",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 98 302 19 58",
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Qaldirgʻoch» nashriyoti (MChJ) oʻz kitoblarini Telegram kanali orqali taqdim etadi; Toshkent boʻylab yetkazib berish mavjud.",
+      "ru": "Издательство «Qaldirgʻoch» (ООО) представляет свои книги через Telegram-канал; есть доставка по Ташкенту.",
+      "en": "Qaldirgʻoch (LLC) presents its books through its Telegram channel and delivers within Tashkent."
+    }
+  },
+  "turon-nashr": {
+    "telegram_channel": "turon_nashr",
+    "order_contact": null,
+    "website_url": null,
+    "phone": "+998 91 529 77 67",
+    "instagram": null,
+    "address": "Samarqand, Xoja Ahrori Valiy koʻchasi 37",
+    "established_year": null,
+    "bio": {
+      "uz": "«Turon nashr» nashriyoti Turon fanlar akademiyasining Samarqand filiali qoshida tashkil etilgan. Kanalda oʻzbek adabiyoti va adiblari haqidagi materiallar eʼlon qilinadi.",
+      "ru": "Издательство «Turon nashr» создано при Самаркандском филиале Академии наук «Турон». На канале публикуются материалы об узбекской литературе и писателях.",
+      "en": "Turon nashr was set up under the Samarkand branch of the Turon Academy of Sciences. Its channel shares material on Uzbek literature and writers."
+    }
+  },
+  "farengeyt-press": {
+    "telegram_channel": "farengeyt_press",
+    "order_contact": null,
+    "website_url": null,
+    "phone": null,
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Farengeyt Press» — ilmiy-ommabop va maʼrifiy adabiyotlarni nashrga tayyorlaydigan ijtimoiy-tadbirkorlik loyihasi. Uning «Asl intellekt» turkumida tanqidiy fikrlashga oid kitoblar, jumladan Sergey Povarninning «Kitobni qanday oʻqish kerak» asari chiqqan; nashriyot «Behalovat avlod» kitobini ham chop etgan.",
+      "ru": "«Farengeyt Press» — социально-предпринимательский проект, готовящий к изданию научно-популярную и просветительскую литературу. В его серии «Asl intellekt» выходят книги о критическом мышлении, в том числе «Как читать книги» Сергея Поварнина; издательство также выпустило книгу «Behalovat avlod».",
+      "en": "Farengeyt Press is a social-enterprise project that prepares popular-science and educational books for publication. Its \"Asl intellekt\" series covers critical thinking and includes Sergey Povarnin's \"How to Read Books\"; it has also published \"Behalovat avlod\"."
+    }
+  },
+  "yogdu": {
+    "telegram_channel": "yogdu_nashriyoti",
+    "order_contact": null,
+    "website_url": null,
+    "phone": null,
+    "instagram": "yogdu.nashriyoti",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Yogʻdu» nashriyoti tarjima badiiy adabiyot chiqaradi; kanalda Margaret Atvudning «Oqsoch hikoyasi» romani Kanada adabiyotidan oʻzbek tiliga oʻgirilgan ilk asar sifatida taqdim etilgan. Nashriyot shiori — «Koʻzlarimiz, kitoblarimiz va qalbimiz yogʻdu taratsin!».",
+      "ru": "Издательство «Yogʻdu» выпускает переводную художественную литературу; на канале роман Маргарет Этвуд «Рассказ служанки» представлен как первое произведение канадской литературы, переведённое на узбекский язык. Девиз издательства — «Koʻzlarimiz, kitoblarimiz va qalbimiz yogʻdu taratsin!» («Пусть наши глаза, книги и сердца излучают свет!»).",
+      "en": "Yogʻdu publishes translated fiction; its channel presents Margaret Atwood's \"The Handmaid's Tale\" as the first work of Canadian literature translated into Uzbek. Its motto is \"Koʻzlarimiz, kitoblarimiz va qalbimiz yogʻdu taratsin!\" (\"May our eyes, our books and our hearts shine\")."
+    }
+  },
+  "innovatsiya-nashriyoti": {
+    "telegram_channel": "innovatsiya_nashr",
+    "order_contact": null,
+    "website_url": "https://www.indep.uz",
+    "phone": "+998 99 920 90 35",
+    "instagram": "innovatsiyanashriyoti",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Innovatsiya nashriyoti» (Innovatsion rivojlanish nashriyot-matbaa uyi) oliy taʼlim uchun darsliklar, oʻquv qoʻllanmalar va ilmiy monografiyalar chiqaradi: iqtisodiyot, buxgalteriya hisobi, falsafa, pedagogika va ingliz tili boʻyicha.",
+      "ru": "«Innovatsiya nashriyoti» (издательско-полиграфический дом «Innovatsion rivojlanish») выпускает учебники, учебные пособия и научные монографии для высшей школы — по экономике, бухгалтерскому учёту, философии, педагогике и английскому языку.",
+      "en": "Innovatsiya nashriyoti (the Innovatsion rivojlanish publishing and printing house) publishes university textbooks, study guides and academic monographs in economics, accounting, philosophy, pedagogy and English."
+    }
+  },
+  "sabo-nashr": {
+    "telegram_channel": "sabo_nashr",
+    "order_contact": null,
+    "website_url": null,
+    "phone": null,
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Sabo-Nashr» diniy-maʼnaviy va shaxsiy rivojlanishga oid kitoblar chiqaradi, jumladan Xolid Munifning «Qaddingni koʻtar» va «Bu mening Rabbim» kitoblarini. Kitoblari Oʻzbekiston boʻylab kitob doʻkonlarida sotiladi.",
+      "ru": "«Sabo-Nashr» выпускает духовно-религиозную литературу и книги о саморазвитии, в том числе «Qaddingni koʻtar» Халида Мунифа и «Bu mening Rabbim». Книги продаются в книжных магазинах по всему Узбекистану.",
+      "en": "Sabo-Nashr publishes spiritual, religious and self-development books, including Khalid Munif's \"Qaddingni koʻtar\" and \"Bu mening Rabbim\". Its books are sold in bookshops across Uzbekistan."
+    }
+  },
+  "xgroup-books": {
+    "telegram_channel": "xgroupbooks",
+    "order_contact": null,
+    "website_url": null,
+    "phone": null,
+    "instagram": "xgroupbooks",
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Xgroup books» — nashriyot va kitob doʻkoni. U badiiy va ilmiy-ommabop kitoblar, jumladan Feya Moranning «Sen bir olam, men oʻzga olam», Jeyn Ostinning «Sevgi va sadoqat» va Jorj Oruellning «1984» romanlarini taklif etadi.",
+      "ru": "«Xgroup books» — издательство и книжный магазин. Предлагает художественную и научно-популярную литературу, в том числе «Sen bir olam, men oʻzga olam» Фейи Моран, «Доводы рассудка» Джейн Остин и «1984» Джорджа Оруэлла.",
+      "en": "Xgroup books is a publisher and bookshop offering fiction and popular non-fiction, including Feya Moran's \"Sen bir olam, men oʻzga olam\", Jane Austen's \"Persuasion\" (\"Sevgi va sadoqat\") and George Orwell's \"1984\"."
+    }
+  },
+  "ziyo-nur-publisher": {
+    "telegram_channel": "ziyonurpublisher",
+    "order_contact": null,
+    "website_url": null,
+    "phone": null,
+    "instagram": null,
+    "address": null,
+    "established_year": null,
+    "bio": {
+      "uz": "«Ziyo Nur» nashriyoti diniy-maʼrifiy kitoblar chiqaradi: «Chahor kitob», «Masjid odoblari», «Ibodati islomiya» hamda Shayx Doʻstmuhammad Tursun Hanafiy Naqshbandiy hayoti haqidagi kitob shular jumlasidan.",
+      "ru": "Издательство «Ziyo Nur» выпускает религиозно-просветительскую литературу: «Chahor kitob», «Masjid odoblari», «Ibodati islomiya» и книгу о жизни шейха Дустмухаммада Турсуна Ханафи Накшбанди.",
+      "en": "Ziyo Nur publishes Islamic educational books, including \"Chahor kitob\", \"Masjid odoblari\", \"Ibodati islomiya\" and a book on the life of Sheikh Doʻstmuhammad Tursun Hanafiy Naqshbandiy."
+    }
+  }
+}
