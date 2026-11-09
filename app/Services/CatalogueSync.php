@@ -209,7 +209,7 @@ class CatalogueSync
                 $outcome = $this->merge($edition, $incoming);
             }
 
-            $edition->load(['book.authors', 'publisher', 'translators']);
+            $edition->load(['book.authors', 'book.categories', 'publisher', 'translators']);
 
             // Rejected here: nothing was written, and the feed never serves
             // it, so there is nothing to guard.
@@ -246,9 +246,10 @@ class CatalogueSync
 
     /**
      * Puts a book Reads has on no shelf yet on the shelf of the bot's genre,
-     * as its primary one. A book already on a shelf keeps exactly what it
-     * has: shelves are curated here. The genre is not part of the
-     * projection, so this leaves the loop guard alone.
+     * as its genre. A book already on a shelf keeps exactly what it has:
+     * shelves are curated here. The genre is part of the projection, so a
+     * bot genre spelt otherwise than the shelf ("Badiiy adabiyotlar") leaves
+     * the loop guard unset and the feed hands the shelf's name back.
      */
     private function shelve(Book $book, ?string $genre): bool
     {
@@ -258,9 +259,7 @@ class CatalogueSync
             return false;
         }
 
-        $book->categories()->attach($shelf->id, ['is_primary' => true]);
-
-        return true;
+        return $book->setGenre($shelf);
     }
 
     /**
@@ -519,11 +518,8 @@ class CatalogueSync
                 continue;
             }
 
-            $primary = $edition->book->categories->first(fn ($category) => (bool) $category->pivot->is_primary);
-
             $items[] = [
                 ...$projection,
-                'genre' => $primary?->name,
                 'coverUrl' => $edition->cover_url !== null ? rtrim((string) config('app.url'), '/').$edition->cover_url : null,
                 'updatedAt' => self::iso($edition->updated_at),
             ];
@@ -547,7 +543,7 @@ class CatalogueSync
      * The fields both sides keep about an edition, as stored here. The
      * edition must have book.authors, publisher and translators loaded.
      *
-     * @return array{isbn: ?string, title: ?string, authors: list<string>, translators: list<string>, publisher: ?string, language: ?string, year: ?int, pages: ?int, description: ?string}
+     * @return array{isbn: ?string, title: ?string, authors: list<string>, translators: list<string>, publisher: ?string, language: ?string, year: ?int, pages: ?int, description: ?string, genre: ?string}
      */
     public function projection(Edition $edition): array
     {
@@ -565,6 +561,7 @@ class CatalogueSync
             'year' => $edition->year,
             'pages' => $edition->pages,
             'description' => $edition->description,
+            'genre' => $edition->book->genre()?->name,
         ]);
     }
 
@@ -579,7 +576,7 @@ class CatalogueSync
      * edition always hashes the same whichever side's data it came from.
      *
      * @param  array<string, mixed>  $fields
-     * @return array{isbn: ?string, title: ?string, authors: list<string>, translators: list<string>, publisher: ?string, language: ?string, year: ?int, pages: ?int, description: ?string}
+     * @return array{isbn: ?string, title: ?string, authors: list<string>, translators: list<string>, publisher: ?string, language: ?string, year: ?int, pages: ?int, description: ?string, genre: ?string}
      */
     private function canonical(array $fields): array
     {
@@ -604,6 +601,7 @@ class CatalogueSync
             'year' => $number($fields['year'] ?? null),
             'pages' => $number($fields['pages'] ?? null),
             'description' => $string($fields['description'] ?? null),
+            'genre' => $string($fields['genre'] ?? null),
         ];
     }
 

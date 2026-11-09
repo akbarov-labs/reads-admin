@@ -9,7 +9,9 @@ use App\Filament\Resources\BookResource\RelationManagers\EditionsRelationManager
 use App\Filament\Support\PendingNavigationBadge;
 use App\Models\Author;
 use App\Models\Book;
+use App\Models\Category;
 use App\Models\Series;
+use App\Support\Genres;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -101,7 +103,16 @@ class BookResource extends Resource
                         ->multiple()
                         ->searchable()
                         ->preload()
-                        ->helperText('The genre and every other shelf the book belongs on.'),
+                        ->helperText('Every shelf the book belongs on, lists included.'),
+                    // Saved after the shelves, so a genre left off them is put back on.
+                    Forms\Components\Select::make('genre_id')
+                        ->label('Genre')
+                        ->options(fn () => Genres::choices()->pluck('name', 'id')->all())
+                        ->searchable()
+                        ->dehydrated(false)
+                        ->afterStateHydrated(fn (Forms\Components\Select $component, ?Book $record) => $component->state($record?->genre()?->id))
+                        ->saveRelationshipsUsing(fn (Book $record, $state) => $record->setGenre(filled($state) ? Category::find($state) : null))
+                        ->helperText('Its main shelf, shown as its genre here, on the site and in the Kitoblarim bot.'),
                     Forms\Components\Select::make('series_id')
                         ->label('Series')
                         ->relationship('series', 'name')
@@ -118,7 +129,7 @@ class BookResource extends Resource
                         ->numeric()
                         ->step(0.5),
                 ])
-                ->columns(3),
+                ->columns(2),
 
             Forms\Components\Section::make('Moderation')
                 ->schema([

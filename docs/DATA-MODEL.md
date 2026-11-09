@@ -195,9 +195,10 @@ finds or creates authors, publishers, translators and books through
 **What both sides share** (the *projection*): `isbn`, `title` (the edition's
 own, else the book's), `authors` (the book's, in order), `translators` (the
 edition's translator credits, in order), `publisher`, `language`, `year`,
-`pages`, `description`. Nothing else crosses: covers, galleries, taqrizlar,
-series and shelves stay here. The one exception is the bot's `genre` on a
-push, below, which can put a book on its first shelf.
+`pages`, `description`, `genre` (the name of the book's primary shelf).
+Nothing else crosses: covers, galleries, taqrizlar, series and the other
+shelves stay here. Genres are chosen here: the bot only ever puts a book on
+its first shelf (below) and otherwise takes the genre from the feed.
 
 ### Push: `PUT /api/sync/editions/{isbn}`
 
@@ -233,8 +234,10 @@ The answer is `{"outcome", "bookId", "editionId", "updatedAt"}`, where
 edition is not rejected, the shelf it names (`App\Support\BotGenres`: a
 shelf of that name, or one of its aliases) becomes the book's primary shelf.
 A book already on a shelf keeps exactly what it has, and an unknown genre
-does nothing. It is outside the projection, so it neither changes `outcome`
-nor the loop guard; the site is still pinged when a shelf was added. Books
+does nothing. It never changes `outcome`, but it is part of the projection:
+a genre spelt otherwise than the shelf ("Badiiy adabiyotlar" for "Badiiy
+adabiyot") leaves the loop guard unset, so the feed hands the shelf's name
+back to the bot. The site is still pinged when a shelf was added. Books
 the bot sent before it sent genres were caught up once with
 `php artisan books:shelves-from-bot` (isbn<TAB>genre lines from the bot's
 database; dry run unless `--apply`).
@@ -354,3 +357,19 @@ an admin publishes or rejects it under *Reader reviews* in the panel. A
 changed text, rating or book sends it back to pending; a new date or name
 does not. A review whose ISBN has no approved edition here is skipped. The
 book's page shows the newest 20 approved ones as `readerReviews`.
+
+### Genres
+
+A book's genre is its primary shelf (`Book::genre()`, set with
+`Book::setGenre()`, which keeps one primary per book and bumps the book's
+editions' `updated_at` so the bot's feed serves the change). The shelves in
+`App\Support\Genres::LISTS` (TOP-100, gift sets, collectors) are lists and
+never a genre. The book form has a Genre field next to Shelves; the Books
+list's "Needs attention → No genre" finds books on shelves with none marked.
+
+`php artisan books:assign-genres` (`--dry-run` to count only) gives a genre
+to every book on shelves without one when the shelves make it plain: lists
+left out, a shelf giving way to its sub-shelf, and exactly one shelf left.
+Other combinations ("Biznes + Psixologiya") are listed for a person. Each
+run logs what it set to `storage/app/private/genre-assignments/*.csv`; to
+undo, set `is_primary = 0` on those book/category pairs.

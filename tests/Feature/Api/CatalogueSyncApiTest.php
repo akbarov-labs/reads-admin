@@ -515,8 +515,8 @@ class CatalogueSyncApiTest extends TestCase
 
         $this->assertSame([[$fiction->id, 1]], $this->shelvesOf($bookId));
 
-        // Not part of what the loop guard hashes: the feed still has nothing.
-        $this->pull()->assertExactJson(['items' => [], 'next' => null]);
+        // The bot spelt the genre otherwise, so it gets the shelf's name back.
+        $this->pull()->assertJsonCount(1, 'items')->assertJsonPath('items.0.genre', 'Badiiy adabiyot');
 
         // Once a book is on a shelf, a later genre never moves it.
         $this->push(self::ISBN, ['genre' => 'Diniy adabiyotlar', 'updatedAt' => '2099-01-01T00:00:00Z']);
@@ -750,6 +750,31 @@ class CatalogueSyncApiTest extends TestCase
         $this->assertSame(Edition::where('isbn', '9789943231672')->value('id'), $page['next']['after']);
 
         $this->pull('limit=3')->assertExactJson(['items' => [], 'next' => null]);
+    }
+
+    public function test_a_push_naming_the_genre_as_stored_here_settles_the_loop_guard(): void
+    {
+        Category::create(['slug' => 'tarix', 'name' => 'Tarix']);
+
+        $this->push(self::ISBN, ['genre' => 'Tarix'])->assertJsonPath('outcome', 'created');
+
+        $this->pull()->assertExactJson(['items' => [], 'next' => null]);
+    }
+
+    public function test_a_genre_chosen_here_brings_the_edition_back_to_the_bot(): void
+    {
+        $history = Category::create(['slug' => 'tarix', 'name' => 'Tarix']);
+        $this->push(self::ISBN)->assertJsonPath('outcome', 'created');
+        $this->pull()->assertExactJson(['items' => [], 'next' => null]);
+
+        $this->travel(5)->minutes();
+        Edition::firstOrFail()->book->setGenre($history);
+
+        $this->pull()->assertJsonCount(1, 'items')->assertJsonPath('items.0.genre', 'Tarix');
+
+        // Once the bot sends it back with the genre, it is settled again.
+        $this->push(self::ISBN, ['genre' => 'Tarix', 'updatedAt' => now()->addMinute()->toIso8601String()]);
+        $this->pull()->assertExactJson(['items' => [], 'next' => null]);
     }
 
     public function test_when_this_side_won_the_push_the_bot_still_gets_our_version(): void

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Facades\DB;
 
 /**
  * The work: what a reader means by "a book". Everything that differs from
@@ -152,6 +153,42 @@ class Book extends Model
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class)->withPivot('is_primary')->orderByPivot('is_primary', 'desc');
+    }
+
+    /** The book's genre: its primary shelf. Needs `categories` loaded or loads it. */
+    public function genre(): ?Category
+    {
+        return $this->categories->first(fn (Category $category) => (bool) $category->pivot->is_primary);
+    }
+
+    /**
+     * Makes a shelf the book's genre, putting it on that shelf if it isn't
+     * yet, and every other shelf secondary; null leaves it with no genre but
+     * on all its shelves. The genre is part of what the Kitoblarim bot
+     * shares, so the book's editions are moved up the bot's feed when it
+     * changes. Returns whether it changed.
+     */
+    public function setGenre(?Category $genre): bool
+    {
+        $current = array_map('intval', DB::table('book_category')->where('book_id', $this->id)->where('is_primary', true)->pluck('category_id')->all());
+
+        if ($current === ($genre !== null ? [$genre->id] : [])) {
+            return false;
+        }
+
+        DB::transaction(function () use ($genre) {
+            DB::table('book_category')->where('book_id', $this->id)->update(['is_primary' => false]);
+
+            if ($genre !== null) {
+                $this->categories()->syncWithoutDetaching([$genre->id => ['is_primary' => true]]);
+            }
+
+            $this->editions()->toBase()->update(['updated_at' => now()]);
+        });
+
+        $this->unsetRelation('categories');
+
+        return true;
     }
 
     /** @return BelongsTo<Series, $this> */

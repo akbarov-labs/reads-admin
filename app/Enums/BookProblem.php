@@ -19,6 +19,7 @@ enum BookProblem: string implements HasLabel
     case NoDescription = 'no_description';
     case StoreBucketPublisher = 'store_bucket_publisher';
     case NoCategories = 'no_categories';
+    case NoGenre = 'no_genre';
     case NoSourceLanguage = 'no_source_language';
     case NoAuthor = 'no_author';
     case EditionWithoutIsbn = 'edition_without_isbn';
@@ -38,6 +39,7 @@ enum BookProblem: string implements HasLabel
             self::NoDescription => 'No description',
             self::StoreBucketPublisher => 'Publisher is a shop bucket',
             self::NoCategories => 'No shelves',
+            self::NoGenre => 'No genre',
             self::NoSourceLanguage => 'No original language',
             self::NoAuthor => 'No author',
             self::EditionWithoutIsbn => 'Edition without ISBN',
@@ -59,6 +61,10 @@ enum BookProblem: string implements HasLabel
             self::StoreBucketPublisher => $books->whereHas('editions', fn (Builder $editions) => $editions->approved()
                 ->whereHas('publisher', fn (Builder $publisher) => $publisher->whereIn('name', self::STORE_BUCKETS))),
             self::NoCategories => $books->whereDoesntHave('categories'),
+            // On shelves, but none marked as its genre. Books on no shelf
+            // have no genre either; NoCategories already finds those.
+            self::NoGenre => $books->whereHas('categories')
+                ->whereDoesntHave('categories', fn (Builder $shelf) => $shelf->where('book_category.is_primary', true)),
             self::NoSourceLanguage => $books->where(fn (Builder $book) => self::blank($book, 'books.source_language')),
             self::NoAuthor => $books->whereDoesntHave('authors'),
             self::EditionWithoutIsbn => $books->whereHas('editions', fn (Builder $editions) => $editions->approved()
