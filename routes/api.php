@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\LibraryController;
 use App\Http\Controllers\Api\OutboundClickController;
 use App\Http\Controllers\Api\PublisherController;
 use App\Http\Controllers\Api\QuoteController;
+use App\Http\Controllers\Api\RecommendController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SearchQueryController;
 use App\Http\Controllers\Api\SitemapController;
@@ -52,6 +53,8 @@ Route::middleware('throttle:public-read')->group(function () {
     // visitor's address and sends no token, so every visitor has a
     // stranger's 120 a minute and nobody's typing eats the site's bucket.
     Route::get('/search', SearchController::class);
+    // The site's "recommend me a book" quiz.
+    Route::get('/recommend', RecommendController::class);
     // Ids, slugs and dates for the site's sitemap, in one response.
     Route::get('/sitemap', [SitemapController::class, 'index']);
 });
