@@ -1,0 +1,201 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\ModerationStatus;
+use App\Filament\Resources\PublisherResource;
+use App\Models\Publisher;
+use App\Models\PublisherSuggestion;
+use App\Services\Telegram\TelegramChannel;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
+/**
+ * Details found for publishers, loaded for review and published by an
+ * admin. Unlike publishers:import-profiles (checked before it shipped, and
+ * filling blank fields straight away), nothing here reaches the site until
+ * an admin has looked at it and pressed Publish.
+ */
+class PublisherSuggestions
+{
+    public const LOCALES = ['uz', 'ru', 'en'];
+
+    public function __construct(private readonly TelegramChannel $telegram) {}
+
+    /**
+     * Loads found details as pending suggestions. A suggestion still waiting
+     * is refreshed; one already published or rejected is left alone.
+     * Accepts a list of objects with a "slug", or an object keyed by slug.
+     *
+     * @param  array<int|string, array<string, mixed>>  $entries
+     * @return array{created: list<string>, refreshed: list<string>, decided: list<string>, empty: list<string>, missing: list<string>}
+     */
+    public function import(array $entries, bool $logos = true): array
+    {
+        $report = ['created' => [], 'refreshed' => [], 'decided' => [], 'empty' => [], 'missing' => []];
+
+        foreach ($entries as $key => $entry) {
+            $slug = (string) (is_string($key) ? $key : ($entry['slug'] ?? ''));
+            $publisher = $slug !== '' ? (new Publisher)->resolveRouteBinding($slug) : null;
+
+            if ($publisher === null) {
+                $report['missing'][] = $slug;
+
+                continue;
+            }
+
+            $existing = PublisherSuggestion::query()->where('publisher_id', $publisher->id)->first();
+
+            if ($existing !== null && $existing->status !== ModerationStatus::Pending) {
+                $report['decided'][] = $publisher->slug;
+
+                continue;
+            }
+
+            $values = self::clean((array) $entry);
+
+            if (! self::hasDetails($values)) {
+                $report['empty'][] = $publisher->slug;
+
+                continue;
+            }
+
+            $suggestion = $existing ?? new PublisherSuggestion(['publisher_id' => $publisher->id]);
+            $channelChanged = $suggestion->telegram_channel !== $values['telegram_channel'];
+            $suggestion->fill($values);
+
+            if ($logos && $values['telegram_channel'] !== null && ($channelChanged || blank($suggestion->logo_path))) {
+                $suggestion->logo_path = $this->telegram->saveChannelPhoto($values['telegram_channel'], 'publisher-suggestions');
+            } elseif ($values['telegram_channel'] === null) {
+                $suggestion->logo_path = null;
+            }
+
+            $suggestion->save();
+            $report[$existing ? 'refreshed' : 'created'][] = $publisher->slug;
+        }
+
+        return $report;
+    }
+
+    /**
+     * Writes what the admin approved to the publisher's page, and marks the
+     * suggestion published. The form showed the publisher's current value
+     * wherever it had one, so what comes in is the page as it should be.
+     *
+     * @param  array<string, mixed>  $data  The review form: the publisher fields, bio by locale, and use_logo.
+     */
+    public function publish(PublisherSuggestion $suggestion, array $data): Publisher
+    {
+        return DB::transaction(function () use ($suggestion, $data) {
+            $publisher = $suggestion->publisher;
+
+            foreach (['telegram_channel', 'order_contact', 'website_url', 'phone', 'instagram', 'address', 'established_year'] as $field) {
+                $value = $data[$field] ?? null;
+                $publisher->{$field} = filled($value) ? $value : null;
+            }
+
+            foreach (self::LOCALES as $locale) {
+                $bio = trim((string) ($data['bio'][$locale] ?? ''));
+
+                $bio !== ''
+                    ? $publisher->setTranslation('bio', $locale, $bio)
+                    : $publisher->forgetTranslation('bio', $locale);
+            }
+
+            if (($data['use_logo'] ?? false) && $suggestion->logo_path && Storage::disk('public')->exists($suggestion->logo_path)) {
+                $logo = 'publishers/'.Str::random(32).'.'.pathinfo($suggestion->logo_path, PATHINFO_EXTENSION);
+                Storage::disk('public')->copy($suggestion->logo_path, $logo);
+                $publisher->logo_path = $logo;
+            }
+
+            $publisher->save();
+
+            $suggestion->update(['status' => ModerationStatus::Approved, 'reviewed_at' => now()]);
+
+            return $publisher;
+        });
+    }
+
+    public function reject(PublisherSuggestion $suggestion): void
+    {
+        $suggestion->update(['status' => ModerationStatus::Rejected, 'reviewed_at' => now()]);
+    }
+
+    /**
+     * The review form's starting values: the publisher's own where it has
+     * one, the suggestion's where it has none.
+     *
+     * @return array<string, mixed>
+     */
+    public static function formState(PublisherSuggestion $suggestion): array
+    {
+        $publisher = $suggestion->publisher;
+        $state = [];
+
+        foreach (['telegram_channel', 'order_contact', 'website_url', 'phone', 'instagram', 'address', 'established_year'] as $field) {
+            $state[$field] = filled($publisher->{$field}) ? $publisher->{$field} : $suggestion->{$field};
+        }
+
+        foreach (self::LOCALES as $locale) {
+            $current = $publisher->getTranslation('bio', $locale, false);
+            $state['bio'][$locale] = filled($current) ? $current : ($suggestion->bio[$locale] ?? null);
+        }
+
+        $state['use_logo'] = $suggestion->logo_path !== null && blank($publisher->logo_path);
+
+        return $state;
+    }
+
+    /**
+     * One entry of a found-details file, with anything malformed dropped
+     * rather than stored: a channel or Instagram that is not a username, a
+     * website that is not http(s), a year that cannot be one.
+     *
+     * @param  array<string, mixed>  $entry
+     * @return array<string, mixed>
+     */
+    public static function clean(array $entry): array
+    {
+        $text = fn (string $key, int $max) => filled($entry[$key] ?? null) ? Str::limit(trim((string) $entry[$key]), $max, '') : null;
+        $website = $text('website_url', 255);
+        $year = (int) ($entry['established_year'] ?? 0);
+        $bio = [];
+
+        foreach (self::LOCALES as $locale) {
+            $value = trim((string) ($entry['bio'][$locale] ?? ''));
+
+            if ($value !== '') {
+                $bio[$locale] = $value;
+            }
+        }
+
+        return [
+            'telegram_channel' => TelegramChannel::username($entry['telegram_channel'] ?? null),
+            'subscribers' => is_numeric($entry['subscribers'] ?? null) ? (int) $entry['subscribers'] : null,
+            'order_contact' => TelegramChannel::username($entry['order_contact'] ?? null),
+            'website_url' => $website !== null && preg_match('#^https?://[^\s/]+\.[^\s]+$#i', $website) ? $website : null,
+            'phone' => $text('phone', 32),
+            'instagram' => PublisherResource::instagramUsername($entry['instagram'] ?? null),
+            'address' => $text('address', 255),
+            'established_year' => $year >= 1800 && $year <= (int) date('Y') ? $year : null,
+            'bio' => $bio === [] ? null : $bio,
+            'confidence' => in_array($entry['confidence'] ?? null, ['high', 'medium', 'low'], true) ? $entry['confidence'] : null,
+            'evidence' => $text('evidence', 2000),
+            'other_channels' => $text('other_channels', 2000),
+            'note' => $text('note', 2000),
+        ];
+    }
+
+    /** @param  array<string, mixed>  $values */
+    private static function hasDetails(array $values): bool
+    {
+        foreach (['telegram_channel', 'order_contact', 'website_url', 'phone', 'instagram', 'address', 'established_year', 'bio'] as $field) {
+            if (filled($values[$field])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}

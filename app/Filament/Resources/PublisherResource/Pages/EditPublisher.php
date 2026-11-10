@@ -15,6 +15,12 @@ class EditPublisher extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('telegram')
+                ->label('Telegram channel')
+                ->icon('heroicon-o-paper-airplane')
+                ->color('gray')
+                ->visible(fn () => filled($this->record->telegram_channel))
+                ->url(fn () => "https://t.me/{$this->record->telegram_channel}", shouldOpenInNewTab: true),
             Actions\DeleteAction::make()->visible(fn () => auth()->user()?->isAdmin() ?? false),
         ];
     }
