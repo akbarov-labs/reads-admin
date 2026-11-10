@@ -119,6 +119,15 @@ class TelegramChannel
             $text = $xpath->query('.//div[contains(@class, "js-message_text")]', $node)->item(0);
             $photo = $xpath->query('.//a[contains(@class, "tgme_widget_message_photo_wrap")]/@style | .//i[contains(@class, "tgme_widget_message_video_thumb")]/@style', $node)->item(0);
             $time = $xpath->query('.//time[@datetime]/@datetime', $node)->item(0);
+            $hasPhoto = $xpath->query('.//a[contains(@class, "tgme_widget_message_photo_wrap")]', $node)->length > 0;
+            $forward = $xpath->query('.//*[contains(@class, "tgme_widget_message_forwarded_from")]', $node)->item(0);
+            $forwardedFrom = null;
+
+            if ($forward !== null) {
+                // A link to the source channel's post, or a bare name when the source is hidden.
+                $href = $xpath->query('.//a[contains(@class, "tgme_widget_message_forwarded_from_name")]/@href', $forward)->item(0);
+                $forwardedFrom = $href && preg_match('#^https?://t\.me/([A-Za-z0-9_]+)#', $href->nodeValue, $from) ? $from[1] : '';
+            }
 
             $posts[] = new TelegramPost(
                 channel: $m[1],
@@ -126,6 +135,8 @@ class TelegramChannel
                 text: $text ? self::text($document, $text) : null,
                 photoUrl: $photo && preg_match("#url\\('([^']+)'\\)#", $photo->nodeValue, $url) ? $url[1] : null,
                 postedAt: $time ? CarbonImmutable::parse($time->nodeValue) : null,
+                hasPhoto: $hasPhoto,
+                forwardedFrom: $forwardedFrom,
             );
         }
 

@@ -56,7 +56,7 @@ class AnnouncementDraftTest extends TestCase
     {
         $draft = AnnouncementDraft::fromText("Sotuvda!\nKecha va kunduz — Choʻlpon\n65000 som", $this->posted);
 
-        $this->assertSame('Sotuvda!', $draft['title']);
+        $this->assertSame('Kecha va kunduz — Choʻlpon', $draft['title']);
         $this->assertSame(65000, $draft['price']);
         $this->assertNull($draft['preorder_price']);
         $this->assertNull($draft['preorder_deadline']);
@@ -135,6 +135,65 @@ class AnnouncementDraftTest extends TestCase
         $this->assertSame(42, $second->id);
         $this->assertSame('Sotuvda!', $second->text);
         $this->assertSame('https://cdn4.telesco.pe/file/thumb42.jpg', $second->photoUrl);
+        $this->assertTrue($first->hasPhoto);
+        $this->assertFalse($second->hasPhoto);
+        $this->assertNull($first->forwardedFrom);
+    }
+
+    public function test_a_forwarded_post_says_where_it_came_from(): void
+    {
+        $post = fn (string $forward) => TelegramChannel::parsePage(<<<HTML
+            <div class="tgme_widget_message js-widget_message" data-post="anorbooks_nashr/5">
+              <div class="tgme_widget_message_forwarded_from accent_color">Forwarded from {$forward}</div>
+              <div class="tgme_widget_message_text js-message_text">Yangi kitob</div>
+            </div>
+            HTML)[0];
+
+        $linked = $post('<a class="tgme_widget_message_forwarded_from_name" href="https://t.me/Ildizkitoblari/10671">Ildiz</a>');
+        $this->assertSame('Ildizkitoblari', $linked->forwardedFrom);
+        $this->assertTrue($linked->isForwardedFromElsewhere());
+
+        $hidden = $post('<span class="tgme_widget_message_forwarded_from_name">Someone</span>');
+        $this->assertSame('', $hidden->forwardedFrom);
+        $this->assertTrue($hidden->isForwardedFromElsewhere());
+
+        $own = $post('<a class="tgme_widget_message_forwarded_from_name" href="https://t.me/AnorBooks_Nashr/3">Anor</a>');
+        $this->assertFalse($own->isForwardedFromElsewhere());
+    }
+
+    /** @return array<string, array{0: string, 1: string}> */
+    public static function titles(): array
+    {
+        return [
+            // From real channels (Akademnashr, Mitti olam, X Group Books), November 2026.
+            'after hashtag lines' => ["#yangi_nashr
+#sotuvda
+
+📘 Iste’dod aristokratiyasi
+
+Meritokratiya zamonaviy dunyoni qanday yaratgani haqida", 'Iste’dod aristokratiyasi'],
+            'after a heading' => ["⏳ TEZ KUNDA!
+
+🧠 100 ta o‘yin — zukko bolalar uchun!", '100 ta o‘yin — zukko bolalar uchun!'],
+            'quoted after a heading' => ["📚 YANGI KITOB!
+
+❤️ Jeyn Ostin — “SEVGI VA SADOQAT”
+
+Xato qilingan tanlovning bahosi", 'SEVGI VA SADOQAT'],
+            'not a quote inside a paragraph' => ["#sotuvda
+
+📘 Istisno
+
+📖 Fragment va mundarija
+
+To‘plamdagi o‘n yillik ijod mahsuli uch qismga bo‘lingan holda davriylashtirilgan. Birinchi qism “Simurg‘” – o‘ttiz qush deb nomlanishi bejiz emas.", 'Istisno'],
+        ];
+    }
+
+    #[DataProvider('titles')]
+    public function test_the_title_is_the_books_not_the_posts_heading(string $text, string $expected): void
+    {
+        $this->assertSame($expected, AnnouncementDraft::fromText($text, $this->posted)['title']);
     }
 
     /** @return array<string, array{0: string, 1: bool}> */
@@ -155,6 +214,7 @@ class AnnouncementDraftTest extends TestCase
             'bestsellers' => ["📚 Октябрь ойида энг кўп сотилган китоблар билан танишинг\n1. «Бахтиёр оила» – 78 000 сўм\nСотувда", false],
             'a priced list' => ["#sotuvda\n1. O‘zbekiston tavalludi — 150 000 so‘m\n2. Shayboniylar davrining mashhur olimlari — 120 000 so‘m\n3. Vatan tarixi — 210 000 so‘m", false],
             'a contest prize' => ["Random g‘olibi Gulsevar\nKarta raqamingizni yozib qoldiring! 50.000 so‘mdan pul mukofoti. Yangi kitob sizni kutmoqda", false],
+            'a magazine issue with words between' => ["🎉 Янгилик! «Hilol» журналининг янги 83-сони нашрдан чиқди\n👉 Нархи: 10 000 сўм", false],
             'a magazine issue' => ['#тез_кунда 🎉 Янгилик. «Ҳилол» журналининг 83-сони тез кунда барча дўконларимизда сотувга чиқади.', false],
             'a sale on what is in stock' => ["Diqqat: bayramona chegirma 🏷️\nUshbu kun munosabati bilan sotuvda mavjud barcha tarjima adabiyotlarimiz uchun 10% chegirma e’lon qilamiz.", false],
             'a one-word reply' => ['Sotuvda!', false],
