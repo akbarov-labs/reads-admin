@@ -59,6 +59,20 @@ return [
         'user_agent' => env('SOFTLY_USER_AGENT', 'KitoblarimReads/1.0 (+https://kitoblarim.uz)'),
     ],
 
+    // qamar.uz, a bookshop whose robots.txt lets crawlers in and whose book
+    // pages carry the ISBN, cover and details as JSON-LD. stores:qamar reads
+    // its sitemap each night, one page at a time, and only pages that are
+    // new or changed since the last read. See App\Services\Stores\QamarFeed.
+    'qamar' => [
+        'enabled' => (bool) env('QAMAR_FEED_ENABLED', true),
+        'sitemap' => env('QAMAR_SITEMAP', 'https://qamar.uz/sitemap.xml'),
+        'delay_ms' => (int) env('QAMAR_DELAY_MS', 2000),
+        // Pages read per run: the first nights work through the whole shop
+        // (about 3,100 books), later ones only what changed.
+        'pages_per_run' => (int) env('QAMAR_PAGES_PER_RUN', 1200),
+        'user_agent' => env('QAMAR_USER_AGENT', 'KitoblarimReads/1.0 (+https://kitoblarim.uz)'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

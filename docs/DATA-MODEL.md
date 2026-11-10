@@ -175,6 +175,37 @@ aliases, so the duplicate is not made again, and `/api/authors/{old-slug}`
 answers with the kept author, whose current slug the site redirects to.
 
 
+## Store listings (qamar.uz)
+
+```sh
+php artisan stores:qamar                 # nightly at 03:30 Tashkent, production only
+php artisan stores:qamar --dry-run       # read and compare, change no edition
+php artisan stores:qamar --no-read       # compare the saved listings again
+```
+
+Unlike the Asaxiy import, this keeps running: each night it reads qamar.uz's
+sitemap and only the book pages that are new or whose sitemap date moved,
+one at a time, `QAMAR_DELAY_MS` apart, at most `QAMAR_PAGES_PER_RUN` (1,200)
+a night, so the first nights work through the shop's ~3,100 books. Any error
+or 429 ends the run.
+
+Each page's JSON-LD Book becomes a `store_listings` row (ISBN, title, author,
+publisher, pages, language, price, image URL). The shop's own text,
+its description included, is never stored.
+
+A listing whose ISBN matches an edition fills that edition's **blanks only**
+(`StoreListingApplier`): a missing cover, downloaded once and kept as WebP
+under `covers/qamar/<isbn>.webp`, and a missing page count. Filling clears
+the edition's `sync_hash`, so the bot, which has the edition without them,
+gets them on its next pull. Where the two disagree (publisher, author, pages
+more than 8 apart), the listing records `differences` and nothing changes.
+Each run logs what it filled to `storage/app/private/store-feeds/` for undo.
+
+A listing with an ISBN the catalogue doesn't have is a book on sale that
+Reads lacks. Admin → Catalogue → Store listings shows those ("New to us"),
+the disagreements ("Differences") and what was filled ("Filled").
+
+
 ## Syncing with the Kitoblarim bot
 
 The Kitoblarim Telegram bot keeps its own moderator-approved catalogue. Two
