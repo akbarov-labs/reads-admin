@@ -49,7 +49,14 @@ class BookController extends Controller
 
         $perPage = min(self::MAX_PER_PAGE, max(1, (int) $request->query('per_page', self::PER_PAGE)));
 
-        return BookResource::collection($query->paginate($perPage)->withQueryString());
+        $page = $query->paginate($perPage)->withQueryString();
+
+        // One publisher's list shows that publisher's printing of each book.
+        if (filled($publisher = $request->query('publisher'))) {
+            $page->getCollection()->each(fn (Book $book) => $book->cardPublisherSlug = (string) $publisher);
+        }
+
+        return BookResource::collection($page);
     }
 
     public function show(Book $book): BookDetailResource

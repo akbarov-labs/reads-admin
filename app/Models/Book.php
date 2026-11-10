@@ -37,6 +37,13 @@ class Book extends Model
     use HasSearchKey;
 
     /**
+     * Set on the books of a list that asked for one publisher's
+     * (/api/books?publisher=): the card then shows that publisher's
+     * printing. Not a column; it lives for the request only.
+     */
+    public ?string $cardPublisherSlug = null;
+
+    /**
      * Mirrors the database default so a freshly built model reports its real
      * state before it has been saved and read back.
      *
@@ -77,11 +84,19 @@ class Book extends Model
      * if any has one, then the newest. Chosen in PHP from approvedEditions —
      * a book has a handful of editions, and eager-loading them all for a
      * page of twenty books is cheaper than any SQL that ranks them.
+     *
+     * In a list of one publisher's books ($cardPublisherSlug) that
+     * publisher's own printing comes first, cover or not: on Oltin qalam's
+     * page the card is Oltin qalam's edition, not a newer one from another
+     * house.
      */
     public function getPrimaryEditionAttribute(): ?Edition
     {
+        $slug = $this->cardPublisherSlug;
+
         return $this->approvedEditions
             ->sortBy(fn (Edition $edition) => [
+                $slug !== null && $edition->publisher?->slug !== $slug ? 1 : 0,
                 $edition->cover_path === null ? 1 : 0,
                 -($edition->year ?? 0),
                 $edition->sort_order,

@@ -81,6 +81,30 @@ class BookApiTest extends TestCase
             ->assertJsonPath('data.0.editionCount', 2);
     }
 
+    public function test_a_publishers_list_shows_that_publishers_own_printing(): void
+    {
+        // Taras Bulba: a newer printing with a cover from one house, an
+        // older one from another. On the older house's page the card must
+        // not wear the newer house's cover, year and name.
+        $book = $this->catalogueBook(edition: [
+            'year' => 2025,
+            'cover_path' => 'covers/new.jpg',
+            'publisher_id' => $this->publisher("G'afur G'ulom")->id,
+        ]);
+        $this->edition($book, ['year' => 2023, 'publisher_id' => $this->publisher('Oltin qalam')->id]);
+
+        $this->getJson('/api/books?publisher=oltin-qalam')
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.publisher', 'Oltin qalam')
+            ->assertJsonPath('data.0.publisherSlug', 'oltin-qalam')
+            ->assertJsonPath('data.0.year', 2023)
+            ->assertJsonPath('data.0.coverUrl', null)
+            ->assertJsonPath('data.0.editionCount', 2);
+
+        // Everywhere else the card is unchanged.
+        $this->getJson('/api/books')->assertJsonPath('data.0.publisher', "G'afur G'ulom");
+    }
+
     public function test_an_excerpt_is_only_present_when_both_halves_are_filled_in(): void
     {
         $this->catalogueBook(edition: [
@@ -248,7 +272,7 @@ class BookApiTest extends TestCase
 
     public function test_a_description_copied_from_asaxiy_credits_the_listing_it_came_from(): void
     {
-        $about = str_repeat("Totalitar tuzumda yashayotgan Uinston Smitning taqdiri haqida roman. ", 2);
+        $about = str_repeat('Totalitar tuzumda yashayotgan Uinston Smitning taqdiri haqida roman. ', 2);
         $book = $this->catalogueBook(edition: ['isbn' => '9789910679629', 'description' => $about, 'source_url' => 'https://asaxiy.uz/product/1984']);
         // A shorter text elsewhere is not the one shown, so its source is not credited.
         $this->edition($book, ['isbn' => '9789943231467', 'description' => str_repeat('Boshqa manbadan qisqaroq matn. ', 4), 'source_url' => 'https://example.uz/1984']);
