@@ -73,6 +73,12 @@ class Publisher extends Model
         return ctype_digit((string) $value) ? $this->whereKey($value)->first() : null;
     }
 
+    /** Details found for this publisher, waiting for or decided by an admin. */
+    public function suggestion(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PublisherSuggestion::class);
+    }
+
     /** The login that maintains this publisher, where one has been set up. */
     public function user(): BelongsTo
     {

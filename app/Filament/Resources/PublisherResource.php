@@ -87,6 +87,7 @@ class PublisherResource extends Resource
                     ->helperText(fn (?Publisher $record) => 'The public channel where new books and pre-orders are announced. It is read every hour, and posts that look like announcements wait in Announcements for review. '
                         .($record?->telegram_scanned_at ? 'Last read '.$record->telegram_scanned_at->timezone('Asia/Tashkent')->format('j M, H:i').'.' : 'Not read yet.'))
                     ->rule('regex:'.TelegramChannel::USERNAME)
+                    ->suffixAction(self::openTelegram())
                     ->dehydrateStateUsing(fn (?string $state) => TelegramChannel::username($state))
                     // Which posts count as this publisher's: an admin's call.
                     ->disabled(fn () => ! (auth()->user()?->isAdmin() ?? false)),
@@ -95,6 +96,7 @@ class PublisherResource extends Resource
                     ->prefix('@')
                     ->helperText('The account readers write to when they press "Order" on an announcement. The message is pre-filled and names kitoblarim.uz.')
                     ->rule('regex:'.TelegramChannel::USERNAME)
+                    ->suffixAction(self::openTelegram())
                     ->dehydrateStateUsing(fn (?string $state) => TelegramChannel::username($state)),
                 Forms\Components\TextInput::make('phone')->tel()->maxLength(32)
                     ->helperText('Shown on the publisher\'s page, e.g. +998 71 217 59 99.'),
@@ -119,6 +121,16 @@ class PublisherResource extends Resource
             ]),
             Forms\Components\TextInput::make('established_year')->numeric()->minValue(1)->maxValue(9999),
         ]);
+    }
+
+    /** Opens the username in the field on t.me, in a new tab. */
+    private static function openTelegram(): Forms\Components\Actions\Action
+    {
+        return Forms\Components\Actions\Action::make('openTelegram')
+            ->icon('heroicon-m-arrow-top-right-on-square')
+            ->tooltip('Open in Telegram')
+            ->visible(fn (?string $state) => TelegramChannel::username($state) !== null)
+            ->url(fn (?string $state) => 'https://t.me/'.TelegramChannel::username($state), shouldOpenInNewTab: true);
     }
 
     /** "@name", "instagram.com/name/" or "name" as a bare username, or null. */
@@ -147,6 +159,15 @@ class PublisherResource extends Resource
             Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
             Tables\Columns\TextColumn::make('slug')->searchable(),
             Tables\Columns\TextColumn::make('books_count')->label('Books')->sortable(),
+            Tables\Columns\TextColumn::make('telegram_channel')
+                ->label('Telegram')
+                ->formatStateUsing(fn (string $state) => "@{$state}")
+                ->color('primary')
+                ->icon('heroicon-m-arrow-top-right-on-square')
+                ->iconPosition('after')
+                ->url(fn (Publisher $record) => $record->telegram_channel ? "https://t.me/{$record->telegram_channel}" : null, shouldOpenInNewTab: true)
+                ->placeholder('—')
+                ->searchable(),
         ])->actions([
             Tables\Actions\EditAction::make(),
             self::mergeAction(),
