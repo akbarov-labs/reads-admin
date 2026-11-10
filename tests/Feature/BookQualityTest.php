@@ -43,7 +43,7 @@ class BookQualityTest extends TestCase
             authors: $authors,
         );
 
-        $work->categories()->attach(Category::firstOrCreate(['slug' => 'jahon'], ['name' => 'Jahon adabiyoti'])->id);
+        $work->categories()->attach(Category::firstOrCreate(['slug' => 'jahon'], ['name' => 'Jahon adabiyoti'])->id, ['is_primary' => true]);
 
         return $work;
     }
@@ -61,6 +61,7 @@ class BookQualityTest extends TestCase
             'no cover' => [BookProblem::NoCover, fn (self $t) => $t->wholeBook(edition: ['cover_path' => null])],
             'blank description' => [BookProblem::NoDescription, fn (self $t) => $t->wholeBook(book: ['description' => '  '])],
             'shop bucket' => [BookProblem::StoreBucketPublisher, fn (self $t) => $t->wholeBook(edition: ['publisher_id' => $t->publisher('Boshqa nashriyotlar kitoblari')->id])],
+            'no genre' => [BookProblem::NoGenre, fn (self $t) => tap($t->wholeBook(), fn (Book $book) => $book->setGenre(null))],
             'no shelves' => [BookProblem::NoCategories, fn (self $t) => tap($t->wholeBook(), fn (Book $book) => $book->categories()->detach())],
             'no original language' => [BookProblem::NoSourceLanguage, fn (self $t) => $t->wholeBook(book: ['source_language' => null])],
             'no author' => [BookProblem::NoAuthor, fn (self $t) => $t->wholeBook(authors: [])],
