@@ -4,15 +4,25 @@ namespace App\Services\Telegram;
 
 use App\Enums\ModerationStatus;
 use App\Models\Announcement;
+use App\Models\Book;
 use App\Models\Publisher;
+use App\Support\UzbekText;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Sleep;
+use Throwable;
 
 /**
  * Reads every publisher's Telegram channel for posts that came since the
  * last scan, and makes a pending draft from each that looks like a new book
  * or a pre-order (AnnouncementDraft::looksLikeAnnouncement). Nothing reaches
  * the site before an admin publishes it.
+ *
+ * Only the channel's own posts with a photo count: a new book is announced
+ * with its cover, while videos are trailers and readings, and a forward is
+ * someone else's news. A book the publisher already has, in the catalogue
+ * or as an announcement waiting or published, is not news either: channels
+ * post the same book again and again (teaser, pre-order, "now on sale").
+ * An admin can still paste any post the scan passed over.
  *
  * One request per channel in the usual hour; more pages only when a channel
  * posted more than a page since the last scan. Run by announcements:scan.
@@ -77,11 +87,15 @@ class ChannelScanner
             }
 
             try {
-                [$posts, $drafts] = $this->scan($publisher);
+                [$posts, $drafts, $failed] = $this->scan($publisher);
             } catch (TelegramChannelException $e) {
                 $report['errors'][$publisher->telegram_channel] = $e->getMessage();
 
                 continue;
+            }
+
+            if ($failed !== []) {
+                $report['errors'][$publisher->telegram_channel] = 'No draft made from '.implode(', ', $failed).': see the log. Paste the link to add it by hand.';
             }
 
             $report['channels']++;
@@ -93,7 +107,9 @@ class ChannelScanner
     }
 
     /**
-     * @return array{0: int, 1: int} New posts read, and drafts made from them.
+     * @return array{0: int, 1: int, 2: list<string>} New posts read, drafts
+     *                                                made from them, and the
+     *                                                links of posts that failed.
      */
     public function scan(Publisher $publisher): array
     {
@@ -139,10 +155,28 @@ class ChannelScanner
 
         ksort($new);
         $drafts = 0;
+        $failed = [];
+        $catalogue = null;
 
         foreach ($new as $post) {
-            if (AnnouncementDraft::looksLikeAnnouncement($post->text) && $this->importer->fromPost($post, $publisher) !== null) {
-                $drafts++;
+            if (! $post->hasPhoto || $post->isForwardedFromElsewhere() || ! AnnouncementDraft::looksLikeAnnouncement($post->text)) {
+                continue;
+            }
+
+            // One post that cannot be saved must not cost the channels after it.
+            try {
+                $catalogue ??= $this->catalogueTitles($publisher);
+
+                if ($this->alreadyKnown($post, $publisher, $catalogue)) {
+                    continue;
+                }
+
+                if ($this->importer->fromPost($post, $publisher) !== null) {
+                    $drafts++;
+                }
+            } catch (Throwable $e) {
+                report($e);
+                $failed[] = $post->url();
             }
         }
 
@@ -151,6 +185,57 @@ class ChannelScanner
             'telegram_scanned_at' => now(),
         ])->saveQuietly();
 
-        return [count($new), $drafts];
+        return [count($new), $drafts, $failed];
+    }
+
+    /**
+     * Whether the post's book is one the publisher already has: a pending
+     * or published announcement, or a catalogue book with this publisher's
+     * edition, under the same title in any alphabet or spelling. Rejected
+     * announcements do not count: an admin may have turned down a teaser,
+     * not the book. A title too short to tell books apart never matches.
+     *
+     * @param  array<string, true>  $catalogue
+     */
+    private function alreadyKnown(TelegramPost $post, Publisher $publisher, array $catalogue): bool
+    {
+        $key = UzbekText::key(AnnouncementDraft::fromText($post->text, $post->postedAt)['title']);
+
+        if (mb_strlen($key) < 3 || $key === UzbekText::key('Untitled post')) {
+            return false;
+        }
+
+        if (isset($catalogue[$key])) {
+            return true;
+        }
+
+        return Announcement::query()
+            ->where('publisher_id', $publisher->id)
+            ->where('status', '!=', ModerationStatus::Rejected)
+            ->pluck('title')
+            ->contains(fn (string $title) => UzbekText::key($title) === $key);
+    }
+
+    /**
+     * The titles of the books this publisher has an edition of, as keys.
+     *
+     * @return array<string, true>
+     */
+    private function catalogueTitles(Publisher $publisher): array
+    {
+        $keys = [];
+
+        Book::query()
+            ->whereHas('editions', fn ($editions) => $editions->where('publisher_id', $publisher->id))
+            ->select(['id', 'uzbek_title', 'original_title'])
+            ->each(function (Book $book) use (&$keys) {
+                foreach ([$book->uzbek_title, $book->original_title] as $title) {
+                    if (filled($title)) {
+                        $keys[UzbekText::key($title)] = true;
+                    }
+                }
+            });
+
+        return $keys;
     }
 }

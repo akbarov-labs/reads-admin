@@ -6,6 +6,7 @@ use App\Enums\ModerationStatus;
 use App\Enums\UserRole;
 use App\Filament\Resources\AnnouncementResource\Pages\ListAnnouncements;
 use App\Models\Announcement;
+use App\Models\Book;
 use App\Models\Publisher;
 use App\Models\User;
 use App\Services\Telegram\ChannelScanner;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Sleep;
 use Livewire\Livewire;
+use RuntimeException;
 use Tests\TestCase;
 
 /**
@@ -29,7 +31,7 @@ class ChannelScanTest extends TestCase
 
     private Publisher $hilol;
 
-    /** @var array<int, array{text: string, at: string}> The channel, by post id. */
+    /** @var array<int, array{text: string, at: string, media: string, forwardedFrom: ?string}> The channel, by post id. */
     private array $channel = [];
 
     protected function setUp(): void
@@ -69,9 +71,13 @@ class ChannelScanTest extends TestCase
         parent::tearDown();
     }
 
-    private function channelPost(int $id, string $text, string $at = '2026-10-23 09:00'): void
+    /**
+     * @param  string  $media  photo, video or none
+     * @param  ?string  $forwardedFrom  a channel, '' for a hidden source, null for the channel's own post
+     */
+    private function channelPost(int $id, string $text, string $at = '2026-10-23 09:00', string $media = 'photo', ?string $forwardedFrom = null): void
     {
-        $this->channel[$id] = ['text' => $text, 'at' => $at];
+        $this->channel[$id] = ['text' => $text, 'at' => $at, 'media' => $media, 'forwardedFrom' => $forwardedFrom];
     }
 
     /** Up to 20 posts before $before, oldest first, as t.me/s shows them (Channel "HilolNashr" in its own case). */
@@ -86,9 +92,20 @@ class ChannelScanTest extends TestCase
             $post = $this->channel[$id];
             $at = CarbonImmutable::parse($post['at'])->toIso8601String();
             $text = nl2br(htmlspecialchars($post['text']));
+            $media = match ($post['media']) {
+                'photo' => "<a class=\"tgme_widget_message_photo_wrap\" style=\"background-image:url('https://cdn4.telesco.pe/file/{$id}.jpg')\"></a>",
+                'video' => "<a class=\"tgme_widget_message_video_player\"><i class=\"tgme_widget_message_video_thumb\" style=\"background-image:url('https://cdn4.telesco.pe/file/v{$id}.jpg')\"></i></a>",
+                default => '',
+            };
+            $forward = match ($post['forwardedFrom']) {
+                null => '',
+                '' => '<div class="tgme_widget_message_forwarded_from accent_color">Forwarded from <span class="tgme_widget_message_forwarded_from_name">Someone</span></div>',
+                default => "<div class=\"tgme_widget_message_forwarded_from accent_color\">Forwarded from <a class=\"tgme_widget_message_forwarded_from_name\" href=\"https://t.me/{$post['forwardedFrom']}/7\">{$post['forwardedFrom']}</a></div>",
+            };
             $html .= <<<HTML
                 <div class="tgme_widget_message_wrap"><div class="tgme_widget_message js-widget_message" data-post="HilolNashr/{$id}">
-                  <a class="tgme_widget_message_photo_wrap" style="background-image:url('https://cdn4.telesco.pe/file/{$id}.jpg')"></a>
+                  {$forward}
+                  {$media}
                   <div class="tgme_widget_message_text js-message_text" dir="auto">{$text}</div>
                   <a class="tgme_widget_message_date"><time datetime="{$at}" class="time">x</time></a>
                 </div></div>
@@ -152,6 +169,101 @@ class ChannelScanTest extends TestCase
         $this->assertSame(1, $report['drafts']);
         $this->assertSame(2, Announcement::query()->count());
         $this->assertSame(ModerationStatus::Rejected, Announcement::query()->where('source_url', 'https://t.me/HilolNashr/100')->sole()->status);
+    }
+
+    public function test_only_posts_with_a_photo_become_drafts(): void
+    {
+        $this->channelPost(100, "#yangi_nashr «Jinoyat va jazo» — 120 000 so'm");
+        $this->channelPost(101, "#yangi_nashr «Hayola» kitobidan parcha — 79 000 so'm", media: 'video');
+        $this->channelPost(102, "#yangi_nashr «Soʻnggi kun» — 60 000 so'm", media: 'none');
+
+        $report = $this->scan();
+
+        $this->assertSame(3, $report['posts']);
+        $this->assertSame(1, $report['drafts']);
+        $this->assertSame(['Jinoyat va jazo'], Announcement::query()->pluck('title')->all());
+    }
+
+    public function test_posts_forwarded_from_other_channels_are_not_this_publishers_news(): void
+    {
+        $this->channelPost(100, "#yangi_nashr «Jinoyat va jazo» — 120 000 so'm", forwardedFrom: 'boshqa_nashriyot');
+        $this->channelPost(101, "#yangi_nashr «Hayola» — 79 000 so'm", forwardedFrom: '');
+        // Its own older post, forwarded again: still its own book.
+        $this->channelPost(102, "#yangi_nashr «Soʻnggi kun» — 60 000 so'm", forwardedFrom: 'hilolnashr');
+
+        $this->assertSame(1, $this->scan()['drafts']);
+        $this->assertSame(['Soʻnggi kun'], Announcement::query()->pluck('title')->all());
+    }
+
+    public function test_a_book_posted_again_is_not_a_second_draft(): void
+    {
+        $this->channelPost(100, "#tez_kunda\n«Jinoyat va jazo» kitobiga oldindan buyurtma: 95 000 so'm");
+        $this->channelPost(101, "📚 YANGI KITOB!\n«JINOYAT VA JAZO»\nNarxi: 120 000 so'm");
+        // The same title in Cyrillic.
+        $this->channelPost(102, "Сотувда!\n«Жиноят ва жазо»\nНархи: 120 000 сўм");
+
+        $this->assertSame(1, $this->scan()['drafts']);
+        $this->assertSame(1, Announcement::query()->count());
+    }
+
+    public function test_a_book_waiting_or_published_is_skipped_but_a_rejected_one_is_not(): void
+    {
+        $make = fn (int $id, string $title, ModerationStatus $status) => Announcement::create([
+            'publisher_id' => $this->hilol->id, 'source_url' => "https://t.me/hilolnashr/{$id}",
+            'title' => $title, 'status' => $status,
+        ]);
+        $make(1, 'Jinoyat va jazo', ModerationStatus::Pending);
+        $make(2, 'Hayola', ModerationStatus::Approved);
+        $make(3, 'Soʻnggi kun', ModerationStatus::Rejected);
+        // Another publisher's announcement of the same title is theirs.
+        Announcement::create([
+            'publisher_id' => Publisher::create(['slug' => 'boshqa', 'name' => 'Boshqa'])->id,
+            'source_url' => 'https://t.me/boshqa/1', 'title' => 'Ota', 'status' => ModerationStatus::Approved,
+        ]);
+
+        $this->channelPost(100, "#sotuvda «Jinoyat va jazo» — 120 000 so'm");
+        $this->channelPost(101, "#sotuvda «Hayola» — 79 000 so'm");
+        $this->channelPost(102, "#sotuvda «Soʻnggi kun» — 60 000 so'm");
+        $this->channelPost(103, "#sotuvda «Ota» — 50 000 so'm");
+
+        $this->assertSame(2, $this->scan()['drafts']);
+        $this->assertEqualsCanonicalizing(
+            ['https://t.me/HilolNashr/102', 'https://t.me/HilolNashr/103'],
+            Announcement::query()->where('found_by_scan', true)->pluck('source_url')->all(),
+        );
+    }
+
+    public function test_a_book_this_publisher_already_has_in_the_catalogue_is_skipped(): void
+    {
+        $own = Book::create(['uzbek_title' => 'Jinoyat va jazo', 'original_title' => 'Преступление и наказание']);
+        $own->editions()->create(['publisher_id' => $this->hilol->id, 'language' => 'uz']);
+        // Only another publisher prints this one: a new translation is news.
+        $theirs = Book::create(['uzbek_title' => 'Hayola', 'original_title' => 'Hayola']);
+        $theirs->editions()->create(['publisher_id' => Publisher::create(['slug' => 'boshqa', 'name' => 'Boshqa'])->id, 'language' => 'uz']);
+
+        $this->channelPost(100, "#sotuvda «Jinoyat va jazo» — 120 000 so'm");
+        $this->channelPost(101, "#sotuvda «Преступление и наказание» — 120 000 so'm");
+        $this->channelPost(102, "#sotuvda «Hayola» — 79 000 so'm");
+
+        $this->assertSame(1, $this->scan()['drafts']);
+        $this->assertSame(['Hayola'], Announcement::query()->pluck('title')->all());
+    }
+
+    public function test_a_post_that_cannot_be_saved_does_not_stop_the_others(): void
+    {
+        Announcement::creating(function (Announcement $announcement) {
+            if ($announcement->title === 'Buzuq') {
+                throw new RuntimeException('database said no');
+            }
+        });
+        $this->channelPost(100, "#sotuvda «Buzuq» — 50 000 so'm");
+        $this->channelPost(101, "#sotuvda «Jinoyat va jazo» — 120 000 so'm");
+
+        $report = $this->scan();
+
+        $this->assertSame(1, $report['drafts']);
+        $this->assertStringContainsString('https://t.me/HilolNashr/100', $report['errors']['hilolnashr']);
+        $this->assertSame(101, $this->hilol->refresh()->telegram_seen_post_id);
     }
 
     public function test_a_pasted_post_is_not_made_twice(): void

@@ -37,8 +37,9 @@ final class AnnouncementDraft
 
     // Posts that use those words without announcing one book: the week's
     // top five, bestsellers, contests and their prize money, a magazine's
-    // issue. (Not "mukofot" alone: a book's blurb names its author's prizes.)
-    private const NOT_ONE_BOOK = '/\btop[\s-]?\d|топ[\s-]?\d|bestseller|бестселлер|eng\s+ko[\'ʻ‘’`]?p\s+(?:sotilgan|tanlagan|xarid|o[\'ʻ‘’`]?qilgan)|энг\s+кўп\s+(?:сотилган|ўқилган)|самы\w+\s+продаваем|konkurs|конкурс|розыгрыш|random|pul\s+mukofot|пул\s+мукофот|g[\'ʻ‘’`]?olib\w*\s+aniqlan|ғолиб\w*\s+аниқлан|jurnal\w*\s+\d+|журнал\w*\s+\d+/iu';
+    // issue ("jurnalning yangi 83-soni"). (Not "mukofot" alone: a book's
+    // blurb names its author's prizes.)
+    private const NOT_ONE_BOOK = '/\btop[\s-]?\d|топ[\s-]?\d|bestseller|бестселлер|eng\s+ko[\'ʻ‘’`]?p\s+(?:sotilgan|tanlagan|xarid|o[\'ʻ‘’`]?qilgan)|энг\s+кўп\s+(?:сотилган|ўқилган)|самы\w+\s+продаваем|konkurs|конкурс|розыгрыш|random|pul\s+mukofot|пул\s+мукофот|g[\'ʻ‘’`]?olib\w*\s+aniqlan|ғолиб\w*\s+аниқлан|jurnal\w*\s+(?:\S+\s+){0,2}\d+|журнал\w*\s+(?:\S+\s+){0,2}\d+|\d+\s*-\s*(?:soni|сони)\b/iu';
 
     /**
      * Whether a channel post is worth a draft: it says a book is new, out or
@@ -108,19 +109,34 @@ final class AnnouncementDraft
         ];
     }
 
-    /** «The title» from the first lines if quoted, else the first line with words in it. */
+    /**
+     * «The title» from the first lines if quoted, else the first line with
+     * words in it. Lines that only tag or head the post ("#yangi_nashr
+     * #sotuvda", "🎉 TEZ KUNDA!") are passed over, and a quote counts only
+     * on a short line: in a paragraph it is more likely a chapter or a saying.
+     */
     private static function title(array $lines): string
     {
-        foreach (array_slice($lines, 0, 3) as $line) {
-            if (preg_match('/[«"“]([^»"”]{2,200})[»"”]/u', $line, $m)) {
+        $content = array_values(array_filter($lines, fn (string $line) => ! self::isHeading($line)));
+
+        foreach (array_slice($content, 0, 3) as $line) {
+            if (mb_strlen($line) <= 120 && preg_match('/[«"“]([^»"”]{2,200})[»"”]/u', $line, $m)) {
                 return trim($m[1]);
             }
         }
 
-        $first = $lines[0] ?? '';
+        $first = $content[0] ?? $lines[0] ?? '';
         $first = preg_replace('/^[^\p{L}\p{N}]+|[^\p{L}\p{N}?!.)]+$/u', '', $first);
 
         return Str::limit($first !== '' ? $first : 'Untitled post', 200, '');
+    }
+
+    /** Nothing but hashtags and "new / on sale / coming soon" words. */
+    private static function isHeading(string $line): bool
+    {
+        $rest = preg_replace(['/#[\p{L}\p{N}_]+/u', self::NEWS_WORDS, self::PREORDER_WORDS], ' ', $line);
+
+        return ! preg_match('/\p{L}{2,}/u', (string) $rest);
     }
 
     /** "✍️ Muallif: Name" and the like: the name after the label. */
