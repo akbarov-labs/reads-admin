@@ -28,6 +28,7 @@ use Spatie\Translatable\HasTranslations;
     'website_url',
     'telegram_channel',
     'order_contact',
+    'shop_url',
     'phone',
     'instagram',
     'address',

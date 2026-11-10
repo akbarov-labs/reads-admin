@@ -195,6 +195,37 @@ class PublisherPanelTest extends TestCase
             ->assertHasFormErrors(['instagram']);
     }
 
+    public function test_an_official_shop_is_kept_as_a_link(): void
+    {
+        $publisher = $this->publisher();
+
+        $this->actingAs($this->admin());
+
+        foreach ([
+            '@Oltinqalam_books' => 'https://t.me/Oltinqalam_books',
+            't.me/oltinqalam_books/' => 'https://t.me/oltinqalam_books',
+            'https://uzum.uz/uz/shop/tahlilnashr' => 'https://uzum.uz/uz/shop/tahlilnashr',
+        ] as $typed => $kept) {
+            Livewire::test(EditPublisher::class, ['record' => $publisher->getRouteKey()])
+                ->fillForm(['shop_url' => $typed])
+                ->call('save')
+                ->assertHasNoFormErrors();
+
+            $this->assertSame($kept, $publisher->refresh()->shop_url);
+        }
+
+        $this->getJson("/api/publishers/{$publisher->slug}")
+            ->assertOk()
+            ->assertJsonPath('data.shopUrl', 'https://uzum.uz/uz/shop/tahlilnashr');
+
+        foreach (['javascript:alert(1)', 'not a shop', 'ftp://x.uz'] as $bad) {
+            Livewire::test(EditPublisher::class, ['record' => $publisher->getRouteKey()])
+                ->fillForm(['shop_url' => $bad])
+                ->call('save')
+                ->assertHasFormErrors(['shop_url']);
+        }
+    }
+
     public function test_an_admin_can_delete_a_publisher_without_taking_its_books(): void
     {
         $publisher = $this->publisher();

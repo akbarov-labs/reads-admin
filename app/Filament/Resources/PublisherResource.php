@@ -98,6 +98,7 @@ class PublisherResource extends Resource
                     ->rule('regex:'.TelegramChannel::USERNAME)
                     ->suffixAction(self::openTelegram())
                     ->dehydrateStateUsing(fn (?string $state) => TelegramChannel::username($state)),
+                self::shopField(),
                 Forms\Components\TextInput::make('phone')->tel()->maxLength(32)
                     ->helperText('Shown on the publisher\'s page, e.g. +998 71 217 59 99.'),
                 Forms\Components\TextInput::make('instagram')->label('Instagram')->prefix('@')->maxLength(255)
@@ -131,6 +132,52 @@ class PublisherResource extends Resource
             ->tooltip('Open in Telegram')
             ->visible(fn (?string $state) => TelegramChannel::username($state) !== null)
             ->url(fn (?string $state) => 'https://t.me/'.TelegramChannel::username($state), shouldOpenInNewTab: true);
+    }
+
+    /**
+     * The official shop field, shared with the suggestions review: a
+     * Telegram "@name" or link, or any http(s) address, kept as a full URL.
+     */
+    public static function shopField(): Forms\Components\TextInput
+    {
+        return Forms\Components\TextInput::make('shop_url')
+            ->label('Official shop')
+            ->maxLength(255)
+            ->helperText('Where readers buy straight from the publisher: its shop channel on Telegram (@name), its Uzum Market page, or its own online shop. Shown on the publisher\'s page.')
+            ->rules([fn () => function (string $attribute, mixed $value, \Closure $fail) {
+                if (filled($value) && self::shopUrl($value) === null) {
+                    $fail('Give a Telegram @name or a link starting with https://.');
+                }
+            }])
+            ->suffixAction(Forms\Components\Actions\Action::make('openShop')
+                ->icon('heroicon-m-arrow-top-right-on-square')
+                ->tooltip('Open the shop')
+                ->visible(fn (?string $state) => self::shopUrl($state) !== null)
+                ->url(fn (?string $state) => self::shopUrl($state), shouldOpenInNewTab: true))
+            ->dehydrateStateUsing(fn (?string $state) => self::shopUrl($state));
+    }
+
+    /**
+     * A shop as a full URL: "@name", "name" or "t.me/name" becomes
+     * https://t.me/name, an http(s) address is kept, anything else is null.
+     */
+    public static function shopUrl(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('#^(?:@|(?:https?://)?(?:www\.)?(?:t\.me|telegram\.me)/)?([A-Za-z][A-Za-z0-9_]{3,31})/?$#i', $value, $m)) {
+            return 'https://t.me/'.$m[1];
+        }
+
+        if (preg_match('#^https?://[^\s/]+\.[^\s/]+(?:/\S*)?$#i', $value) && mb_strlen($value) <= 255) {
+            return $value;
+        }
+
+        return null;
     }
 
     /** "@name", "instagram.com/name/" or "name" as a bare username, or null. */

@@ -68,6 +68,7 @@ class PublisherSuggestionTest extends TestCase
             'evidence' => 'Title "Munir nashriyoti", 12k subscribers, posts its own books.',
             'subscribers' => 12034,
             'order_contact' => 'https://t.me/munir_admin',
+            'shop_url' => '@munirmarket_uz',
             'website_url' => 'https://munir.uz',
             'phone' => '+998 90 123 45 67',
             'instagram' => 'https://www.instagram.com/munir.nashr/',
@@ -99,6 +100,7 @@ class PublisherSuggestionTest extends TestCase
         $this->assertSame(ModerationStatus::Pending, $suggestion->status);
         $this->assertSame('munirnashr', $suggestion->telegram_channel);
         $this->assertSame('munir_admin', $suggestion->order_contact);
+        $this->assertSame('https://t.me/munirmarket_uz', $suggestion->shop_url);
         $this->assertSame('munir.nashr', $suggestion->instagram);
         $this->assertNull($suggestion->website_url);
         $this->assertNull($suggestion->established_year);
@@ -128,6 +130,23 @@ class PublisherSuggestionTest extends TestCase
         $this->assertSame('+998 90 765 43 21', PublisherSuggestion::query()->where('telegram_channel', 'munirnashr')->sole()->phone);
         $this->assertSame('wrong_one', $rejected->suggestion()->sole()->telegram_channel);
         $this->assertSame(2, PublisherSuggestion::query()->count());
+    }
+
+    public function test_a_shop_alone_is_worth_a_review(): void
+    {
+        $munir = Publisher::create(['slug' => 'munir', 'name' => 'Munir', 'telegram_channel' => 'munirnashr']);
+        $this->load([['slug' => 'munir', 'shop_url' => 'https://uzum.uz/uz/shop/munir', 'confidence' => 'high', 'evidence' => 'Linked from its channel.']]);
+
+        $suggestion = PublisherSuggestion::query()->sole();
+        $this->assertSame('https://uzum.uz/uz/shop/munir', $suggestion->shop_url);
+
+        $state = PublisherSuggestions::formState($suggestion);
+        $this->assertSame('munirnashr', $state['telegram_channel']);
+        $this->assertSame('https://uzum.uz/uz/shop/munir', $state['shop_url']);
+
+        app(PublisherSuggestions::class)->publish($suggestion, $state);
+        $this->assertSame('https://uzum.uz/uz/shop/munir', $munir->refresh()->shop_url);
+        $this->assertSame('munirnashr', $munir->telegram_channel);
     }
 
     public function test_the_review_starts_from_what_the_page_already_has(): void
@@ -165,6 +184,7 @@ class PublisherSuggestionTest extends TestCase
         $munir->refresh();
         $this->assertSame('munirnashr', $munir->telegram_channel);
         $this->assertSame('munir_admin', $munir->order_contact);
+        $this->assertSame('https://t.me/munirmarket_uz', $munir->shop_url);
         $this->assertSame('https://munir.uz', $munir->website_url);
         $this->assertSame('+998 90 111 22 33', $munir->phone);
         $this->assertSame('munir.nashr', $munir->instagram);

@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'telegram_channel',
     'subscribers',
     'order_contact',
+    'shop_url',
     'website_url',
     'phone',
     'instagram',
