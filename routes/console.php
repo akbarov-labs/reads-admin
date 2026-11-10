@@ -32,3 +32,13 @@ Schedule::command('announcements:scan')
     ->between('8:00', '23:00')
     ->timezone('Asia/Tashkent')
     ->withoutOverlapping();
+
+// qamar.uz: book pages new or changed since last night, slowly, then
+// catalogue blanks filled by ISBN (StoreListingApplier). Production only,
+// so staging doesn't read the shop a second time; QAMAR_FEED_ENABLED=false
+// turns it off there too.
+Schedule::command('stores:qamar')
+    ->dailyAt('03:30')
+    ->timezone('Asia/Tashkent')
+    ->when(fn () => config('services.qamar.enabled') && app()->environment('production'))
+    ->withoutOverlapping();

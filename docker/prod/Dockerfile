@@ -24,8 +24,8 @@ FROM php:8.4-fpm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         nginx supervisor \
-        libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libicu-dev libsqlite3-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+        libzip-dev libpng-dev libjpeg-dev libwebp-dev libfreetype6-dev libonig-dev libicu-dev libsqlite3-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" \
         opcache pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd zip intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
