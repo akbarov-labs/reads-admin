@@ -206,6 +206,19 @@ class PublisherSuggestionTest extends TestCase
         $this->assertNull($munir->refresh()->telegram_channel);
     }
 
+    public function test_a_channel_another_publisher_has_is_flagged(): void
+    {
+        $huzur = Publisher::create(['slug' => 'huzur', 'name' => 'Huzur', 'telegram_channel' => 'MunirNashr']);
+        Publisher::create(['slug' => 'munir', 'name' => 'Munir']);
+        $this->load([$this->munirEntry()]);
+
+        $this->assertTrue($huzur->is(PublisherSuggestion::query()->sole()->channelOwner()));
+
+        $this->actingAs($this->admin());
+
+        Livewire::test(ListPublisherSuggestions::class)->assertSee('Channel already belongs to Huzur');
+    }
+
     public function test_only_admins_see_the_suggestions(): void
     {
         $this->actingAs(User::create(['name' => 'P', 'email' => 'p@example.test', 'password' => 'password', 'role' => UserRole::Publisher]));

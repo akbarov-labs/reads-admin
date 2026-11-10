@@ -57,6 +57,22 @@ class PublisherSuggestion extends Model
         return $this->belongsTo(Publisher::class);
     }
 
+    /**
+     * Another publisher that already has this channel: two rows for one
+     * house, usually, which a merge fixes better than a second channel.
+     */
+    public function channelOwner(): ?Publisher
+    {
+        if ($this->telegram_channel === null) {
+            return null;
+        }
+
+        return Publisher::query()
+            ->whereKeyNot($this->publisher_id)
+            ->whereRaw('lower(telegram_channel) = ?', [strtolower($this->telegram_channel)])
+            ->first();
+    }
+
     public function channelUrl(): ?string
     {
         return $this->telegram_channel ? "https://t.me/{$this->telegram_channel}" : null;

@@ -77,10 +77,12 @@ class PublisherSuggestionResource extends Resource
                 Tables\Columns\TextColumn::make('evidence')
                     ->label('Why')
                     ->wrap()
-                    ->limit(160)
+                    ->limit(90)
                     ->tooltip(fn (PublisherSuggestion $record) => $record->evidence)
-                    ->description(fn (PublisherSuggestion $record) => $record->note ? 'Check: '.Str::limit($record->note, 120) : null),
-                Tables\Columns\TextColumn::make('status')->badge(),
+                    ->description(fn (PublisherSuggestion $record) => ($owner = $record->channelOwner())
+                        ? "Channel already belongs to {$owner->name}"
+                        : ($record->note ? 'Check: '.Str::limit($record->note, 60) : null)),
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -100,8 +102,9 @@ class PublisherSuggestionResource extends Resource
             ])
             ->actions([
                 Tables\Actions\Action::make('channel')
-                    ->label('Channel')
+                    ->label('Open the channel')
                     ->icon('heroicon-o-paper-airplane')
+                    ->iconButton()
                     ->color('gray')
                     ->visible(fn (PublisherSuggestion $record) => $record->telegram_channel !== null)
                     ->url(fn (PublisherSuggestion $record) => $record->channelUrl(), shouldOpenInNewTab: true),
@@ -109,6 +112,7 @@ class PublisherSuggestionResource extends Resource
                 Tables\Actions\Action::make('reject')
                     ->label('Reject')
                     ->icon('heroicon-o-x-mark')
+                    ->iconButton()
                     ->color('danger')
                     ->requiresConfirmation()
                     ->modalDescription('Nothing reaches the publisher\'s page, and loading the file again will not bring this back.')
@@ -231,7 +235,10 @@ class PublisherSuggestionResource extends Resource
             $link(PublisherResource::getUrl('edit', ['record' => $record->publisher]), 'Publisher in the admin'),
         ]);
 
+        $owner = $record->channelOwner();
+
         $rows = array_filter([
+            'Warning' => $owner ? '<strong style="color:rgb(220 38 38)">@'.e($record->telegram_channel).' is already the channel of '.$link(PublisherResource::getUrl('edit', ['record' => $owner]), $owner->name).'. Probably the same publisher entered twice: merge them instead of publishing the channel here.</strong>' : null,
             'Confidence' => $record->confidence ? e(ucfirst($record->confidence)) : null,
             'Why' => $record->evidence ? e($record->evidence) : null,
             'Also seen' => $record->other_channels ? e($record->other_channels) : null,
