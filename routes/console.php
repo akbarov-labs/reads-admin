@@ -51,3 +51,12 @@ Schedule::command('stores:asaxiy')
     ->timezone('Asia/Tashkent')
     ->when(fn () => config('services.asaxiy.enabled') && app()->environment('production'))
     ->withoutOverlapping();
+
+// hilolnashr.uz: price and stock for every book in its listing, then the
+// ISBNs of books it has not read yet. Before Asaxiy and Qamar, so the
+// three never overlap. Production only.
+Schedule::command('stores:hilol')
+    ->dailyAt('01:15')
+    ->timezone('Asia/Tashkent')
+    ->when(fn () => config('services.hilol.enabled') && app()->environment('production'))
+    ->withoutOverlapping();

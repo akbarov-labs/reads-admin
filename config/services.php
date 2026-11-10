@@ -76,6 +76,19 @@ return [
         'user_agent' => env('QAMAR_USER_AGENT', 'KitoblarimReads/1.0 (+https://kitoblarim.uz)'),
     ],
 
+    // hilolnashr.uz (Hilol-Nashr's own shop): price and stock from its
+    // "Kitoblar" listing each night, ISBNs from each book's page once.
+    // See App\Services\Stores\HilolFeed.
+    'hilol' => [
+        'enabled' => (bool) env('HILOL_FEED_ENABLED', true),
+        'listing' => env('HILOL_LISTING', 'https://hilolnashr.uz/index.php?route=product/category&path=37'),
+        'delay_ms' => (int) env('HILOL_DELAY_MS', 2000),
+        // The listing is about 300 pages: all of it each night.
+        'listing_pages_per_run' => (int) env('HILOL_LISTING_PAGES_PER_RUN', 400),
+        'book_pages_per_run' => (int) env('HILOL_BOOK_PAGES_PER_RUN', 600),
+        'user_agent' => env('HILOL_USER_AGENT', 'KitoblarimReads/1.0 (+https://kitoblarim.uz)'),
+    ],
+
     // asaxiy.uz: price and stock for the editions imported from it, read
     // from their own pages (Asaxiy shows no ISBN). See App\Services\Stores\AsaxiyFeed.
     'asaxiy' => [

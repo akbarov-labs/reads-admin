@@ -3,6 +3,8 @@
 namespace App\Http\Resources\Api;
 
 use App\Models\Book;
+use App\Models\StoreListing;
+use App\Support\UzbekText;
 use Illuminate\Http\Request;
 
 /**
@@ -64,7 +66,10 @@ class BookDetailResource extends BookResource
     public const STORE_SHOWN_DAYS = 10;
 
     /** Store keys as the site names them (lib/stores.ts), and how each is written. */
-    private const STORE_NAMES = ['qamar' => 'Qamar', 'asaxiy' => 'Asaxiy'];
+    private const STORE_NAMES = ['qamar' => 'Qamar', 'asaxiy' => 'Asaxiy', 'hilol-nashr' => 'Hilol-nashr'];
+
+    /** Stores that are a publisher's own shop, and that publisher's name. */
+    private const PUBLISHER_SHOPS = ['hilol-nashr' => 'Hilol-Nashr'];
 
     /**
      * One row per store: of its pages for this book's editions, the one
@@ -100,9 +105,21 @@ class BookDetailResource extends BookResource
                 'inStock' => $listing->in_stock,
                 'left' => $listing->in_stock === true ? $listing->stock_left : null,
                 'checkedAt' => $listing->fetched_at->toIso8601String(),
+                // The publisher's own shop selling its own book ("nashriyot").
+                'fromPublisher' => $this->soldByItsPublisher($listing),
             ])
             ->values()
             ->all();
+    }
+
+    /** Whether this store is the shop of the publisher of the edition it sells. */
+    private function soldByItsPublisher(StoreListing $listing): bool
+    {
+        $publisher = self::PUBLISHER_SHOPS[$listing->store] ?? null;
+        $ours = $this->approvedEditions->firstWhere('id', $listing->edition_id)?->publisher?->name;
+
+        return $publisher !== null && $ours !== null
+            && UzbekText::publisherKey($ours) === UzbekText::publisherKey($publisher);
     }
 
     /** @return list<array<string, mixed>> */
