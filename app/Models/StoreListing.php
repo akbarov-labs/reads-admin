@@ -21,6 +21,8 @@ class StoreListing extends Model
         'pages',
         'language',
         'price',
+        'in_stock',
+        'stock_left',
         'image_url',
         'edition_id',
         'lastmod',
@@ -35,6 +37,8 @@ class StoreListing extends Model
         return [
             'pages' => 'integer',
             'price' => 'integer',
+            'in_stock' => 'boolean',
+            'stock_left' => 'integer',
             'lastmod' => 'datetime',
             'fetched_at' => 'datetime',
             'applied_at' => 'datetime',

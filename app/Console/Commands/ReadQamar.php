@@ -36,8 +36,8 @@ class ReadQamar extends Command
             $read = $feed->read($sitemap, $limit);
 
             $this->line(sprintf(
-                'Sitemap: %d books; %d new or changed; read %d (%d with book details).',
-                count($sitemap), $read['due'], $read['read'], $read['books'],
+                'Sitemap: %d books; %d new or changed; read %d (%d with book details, %d re-read for price and stock).',
+                count($sitemap), $read['due'], $read['read'], $read['books'], $read['refreshed'],
             ));
 
             if ($read['stopped'] !== null) {
@@ -74,6 +74,8 @@ class ReadQamar extends Command
 
         $this->table(['', 'Listings'], collect($counts)->map(fn ($count, $what) => [$what, $count])->values()->all());
 
+        $restocked = ! $this->option('no-read') && ($read['read'] ?? 0) > 0;
+
         if (! $dryRun && count($log) > 1) {
             // To undo: clear these fields on these editions.
             $path = 'store-feeds/qamar-'.now()->format('Y-m-d_His').'.csv';
@@ -81,6 +83,9 @@ class ReadQamar extends Command
             $this->line('Logged to '.Storage::disk('local')->path($path));
 
             // Covers show on book pages, listings and author and publisher cards.
+            app(SiteRevalidator::class)->everything();
+        } elseif (! $dryRun && $restocked) {
+            // Prices and "in stock" show on book pages.
             app(SiteRevalidator::class)->everything();
         }
 

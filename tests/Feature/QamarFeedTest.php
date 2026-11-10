@@ -114,6 +114,7 @@ class QamarFeedTest extends TestCase
             'pages' => 544,
             'language' => 'uz',
             'price' => 68000,
+            'in_stock' => null,
             'image_url' => 'https://qamar.uz/media/1c/baxtli-oila.jpg',
         ], $book);
 
@@ -147,7 +148,7 @@ class QamarFeedTest extends TestCase
         $this->assertSame(0, Artisan::call('stores:qamar'));
         $output = Artisan::output();
 
-        $this->assertStringContainsString('Sitemap: 3 books; 3 new or changed; read 3 (3 with book details).', $output);
+        $this->assertStringContainsString('Sitemap: 3 books; 3 new or changed; read 3 (3 with book details, 0 re-read for price and stock).', $output);
         $this->assertStringContainsString('Filled 1 covers and 1 page counts.', $output);
 
         // The bare edition: cover kept as WebP on our own disk, pages filled,

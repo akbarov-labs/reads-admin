@@ -53,7 +53,56 @@ class BookDetailResource extends BookResource
             // Published libraries that hold it: those with a copy on the
             // shelf first, then the most recently confirmed lists.
             'libraries' => $this->whenLoaded('libraryHoldings', fn () => $this->libraries()),
+
+            // Stores whose own page for one of its editions was read lately:
+            // price and whether they had it, one row per store.
+            'stores' => $this->stores(),
         ]);
+    }
+
+    /** A store read longer ago than this is not shown: its stock is a guess by then. */
+    public const STORE_SHOWN_DAYS = 10;
+
+    /** Store keys as the site names them (lib/stores.ts), and how each is written. */
+    private const STORE_NAMES = ['qamar' => 'Qamar', 'asaxiy' => 'Asaxiy'];
+
+    /**
+     * One row per store: of its pages for this book's editions, the one
+     * it has in stock, then the cheapest, then the latest read. In stock
+     * first, then by price.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function stores(): array
+    {
+        $since = now()->subDays(self::STORE_SHOWN_DAYS);
+
+        return $this->approvedEditions
+            ->flatMap(fn ($edition) => $edition->relationLoaded('storeListings') ? $edition->storeListings : [])
+            ->filter(fn ($listing) => isset(self::STORE_NAMES[$listing->store])
+                && $listing->fetched_at !== null && $listing->fetched_at->greaterThanOrEqualTo($since)
+                && ($listing->in_stock !== null || $listing->price !== null))
+            ->groupBy('store')
+            ->map(fn ($listings) => $listings->sortBy([
+                fn ($a, $b) => ($b->in_stock === true) <=> ($a->in_stock === true),
+                fn ($a, $b) => ($a->price ?? PHP_INT_MAX) <=> ($b->price ?? PHP_INT_MAX),
+                fn ($a, $b) => $b->fetched_at <=> $a->fetched_at,
+            ])->first())
+            ->sortBy([
+                fn ($a, $b) => ($b->in_stock === true) <=> ($a->in_stock === true),
+                fn ($a, $b) => ($a->price ?? PHP_INT_MAX) <=> ($b->price ?? PHP_INT_MAX),
+            ])
+            ->map(fn ($listing) => [
+                'store' => $listing->store,
+                'name' => self::STORE_NAMES[$listing->store],
+                'url' => $listing->url,
+                'price' => $listing->price,
+                'inStock' => $listing->in_stock,
+                'left' => $listing->in_stock === true ? $listing->stock_left : null,
+                'checkedAt' => $listing->fetched_at->toIso8601String(),
+            ])
+            ->values()
+            ->all();
     }
 
     /** @return list<array<string, mixed>> */
