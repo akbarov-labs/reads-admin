@@ -70,7 +70,20 @@ return [
         // Pages read per run: the first nights work through the whole shop
         // (about 3,100 books), later ones only what changed.
         'pages_per_run' => (int) env('QAMAR_PAGES_PER_RUN', 1200),
+        // A page not re-read for this long is read again when a run has
+        // pages to spare, for its price and stock.
+        'refresh_after_hours' => (int) env('QAMAR_REFRESH_AFTER_HOURS', 20),
         'user_agent' => env('QAMAR_USER_AGENT', 'KitoblarimReads/1.0 (+https://kitoblarim.uz)'),
+    ],
+
+    // asaxiy.uz: price and stock for the editions imported from it, read
+    // from their own pages (Asaxiy shows no ISBN). See App\Services\Stores\AsaxiyFeed.
+    'asaxiy' => [
+        'enabled' => (bool) env('ASAXIY_FEED_ENABLED', true),
+        'delay_ms' => (int) env('ASAXIY_DELAY_MS', 2000),
+        'pages_per_run' => (int) env('ASAXIY_PAGES_PER_RUN', 1500),
+        'refresh_after_hours' => (int) env('ASAXIY_REFRESH_AFTER_HOURS', 20),
+        'user_agent' => env('ASAXIY_USER_AGENT', 'KitoblarimReads/1.0 (+https://kitoblarim.uz)'),
     ],
 
     'slack' => [

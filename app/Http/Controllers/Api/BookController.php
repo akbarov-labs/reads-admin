@@ -69,7 +69,7 @@ class BookController extends Controller
 
         $book->load([
             ...BookResource::relations(),
-            'approvedEditions' => fn ($query) => $query->with(['publisher', 'translators', 'images']),
+            'approvedEditions' => fn ($query) => $query->with(['publisher', 'translators', 'images', 'storeListings']),
             // `taqrizlar` is constrained to approved at the query, so a
             // pending review is never loaded and so can never be rendered
             // by mistake.

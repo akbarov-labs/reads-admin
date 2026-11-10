@@ -40,8 +40,14 @@ class QamarFeed
      * Read the due pages, at most `pages_per_run` of them, and save what
      * each says. Stops early, with what it read so far kept, on a failure.
      *
+     * Due first: pages new or changed since they were last read. Then, with
+     * what is left of the run, pages read longest ago (and at least
+     * `refresh_after_hours` ago), since a price or "in stock" can change
+     * without the sitemap's date moving. A book that left the sitemap is
+     * no longer sold there.
+     *
      * @param  array<string, ?CarbonImmutable>  $sitemap
-     * @return array{due: int, read: int, books: int, stopped: ?string}
+     * @return array{due: int, read: int, books: int, refreshed: int, stopped: ?string}
      */
     public function read(array $sitemap, ?int $limit = null): array
     {
@@ -56,12 +62,30 @@ class QamarFeed
             }
         }
 
+        if ($sitemap !== []) {
+            StoreListing::where('store', self::STORE)
+                ->whereNotIn('url', array_keys($sitemap))
+                ->where(fn ($query) => $query->whereNull('in_stock')->orWhere('in_stock', true))
+                ->update(['in_stock' => false, 'stock_left' => null]);
+        }
+
         $limit ??= (int) config('services.qamar.pages_per_run');
+        $limit = max(0, $limit);
+        $refreshBefore = now()->subHours(max(1, (int) config('services.qamar.refresh_after_hours')));
+        $stale = $known
+            ->filter(fn ($fetched, $url) => isset($sitemap[$url]) && $fetched !== null && CarbonImmutable::parse($fetched)->lessThan($refreshBefore))
+            ->sort()
+            ->keys()
+            ->diff($due)
+            ->take(max(0, $limit - count($due)))
+            ->all();
+
         $read = 0;
         $books = 0;
+        $refreshed = 0;
         $stopped = null;
 
-        foreach (array_slice($due, 0, max(0, $limit)) as $url) {
+        foreach ([...array_slice($due, 0, $limit), ...$stale] as $i => $url) {
             try {
                 $html = $this->get($url)->body();
             } catch (RuntimeException $e) {
@@ -80,9 +104,10 @@ class QamarFeed
             ]);
 
             $books += $book !== null ? 1 : 0;
+            $refreshed += $i >= min(count($due), $limit) ? 1 : 0;
         }
 
-        return ['due' => count($due), 'read' => $read, 'books' => $books, 'stopped' => $stopped];
+        return ['due' => count($due), 'read' => $read, 'books' => $books, 'refreshed' => $refreshed, 'stopped' => $stopped];
     }
 
     /** @throws RuntimeException on anything but a 2xx answer */
@@ -143,7 +168,7 @@ class QamarFeed
      * The JSON-LD Book on a product page, as listing columns, or null when
      * the page has none (a page that stopped being a book).
      *
-     * @return array{isbn: ?string, title: ?string, author: ?string, publisher: ?string, pages: ?int, language: ?string, price: ?int, image_url: ?string}|null
+     * @return array{isbn: ?string, title: ?string, author: ?string, publisher: ?string, pages: ?int, language: ?string, price: ?int, in_stock: ?bool, image_url: ?string}|null
      */
     public static function parseBook(string $html): ?array
     {
@@ -196,8 +221,28 @@ class QamarFeed
             'pages' => $pages !== null && $pages > 0 && $pages < 65535 ? $pages : null,
             'language' => is_string($node['inLanguage'] ?? null) ? mb_substr(trim($node['inLanguage']), 0, 16) : null,
             'price' => $price !== null && $price >= 0 ? $price : null,
+            'in_stock' => is_array($offer) ? self::inStock($offer['availability'] ?? null) : null,
             'image_url' => is_string($image) && str_starts_with($image, 'https://') ? mb_substr($image, 0, 1000) : null,
         ];
+    }
+
+    /**
+     * A schema.org availability ("https://schema.org/InStock", "InStock",
+     * "OutOfStock" …) as in stock or not, or null when it says neither.
+     */
+    public static function inStock(mixed $availability): ?bool
+    {
+        if (! is_string($availability) || trim($availability) === '') {
+            return null;
+        }
+
+        $value = strtolower(basename(trim($availability)));
+
+        return match ($value) {
+            'instock', 'limitedavailability', 'instoreonly', 'onlineonly' => true,
+            'outofstock', 'soldout', 'discontinued' => false,
+            default => null,
+        };
     }
 
     private function wait(): void

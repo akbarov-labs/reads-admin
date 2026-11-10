@@ -163,6 +163,12 @@ class Edition extends Model
         return $this->translators->contains(fn (Translator $t) => $t->pivot->role === BookRole::Translator);
     }
 
+    /** Store product pages read for this edition (stores:qamar, stores:asaxiy). */
+    public function storeListings(): HasMany
+    {
+        return $this->hasMany(StoreListing::class);
+    }
+
     /** @param  Builder<Edition>  $query */
     public function scopeApproved(Builder $query): void
     {

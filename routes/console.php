@@ -42,3 +42,12 @@ Schedule::command('stores:qamar')
     ->timezone('Asia/Tashkent')
     ->when(fn () => config('services.qamar.enabled') && app()->environment('production'))
     ->withoutOverlapping();
+
+// asaxiy.uz: price and stock for the editions imported from it, the pages
+// read longest ago first. An hour before Qamar, so the two never overlap.
+// Production only, like stores:qamar.
+Schedule::command('stores:asaxiy')
+    ->dailyAt('02:15')
+    ->timezone('Asia/Tashkent')
+    ->when(fn () => config('services.asaxiy.enabled') && app()->environment('production'))
+    ->withoutOverlapping();
