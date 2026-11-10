@@ -176,6 +176,7 @@ class PublisherSuggestionResource extends Resource
                             ->prefix('@')
                             ->rule('regex:'.TelegramChannel::USERNAME)
                             ->dehydrateStateUsing(fn (?string $state) => TelegramChannel::username($state)), $record),
+                        self::withFound(PublisherResource::shopField(), $record),
                         self::withFound(Forms\Components\TextInput::make('website_url')->label('Website')->url()->maxLength(255), $record),
                         self::withFound(Forms\Components\TextInput::make('phone')->tel()->maxLength(32), $record),
                         self::withFound(Forms\Components\TextInput::make('instagram')
@@ -230,6 +231,7 @@ class PublisherSuggestionResource extends Resource
         $link = fn (string $url, string $label) => '<a href="'.e($url).'" target="_blank" rel="noopener" class="text-primary-600 underline">'.e($label).'</a>';
         $links = array_filter([
             $record->channelUrl() ? $link($record->channelUrl(), '@'.$record->telegram_channel.($record->subscribers !== null ? ' ('.number_format($record->subscribers, 0, '.', ' ').' subscribers)' : '')) : null,
+            $record->shop_url ? $link($record->shop_url, 'Shop: '.(parse_url($record->shop_url, PHP_URL_HOST) === 't.me' ? '@'.ltrim((string) parse_url($record->shop_url, PHP_URL_PATH), '/') : (parse_url($record->shop_url, PHP_URL_HOST) ?: $record->shop_url))) : null,
             $record->website_url ? $link($record->website_url, parse_url($record->website_url, PHP_URL_HOST) ?: $record->website_url) : null,
             $record->instagram ? $link("https://www.instagram.com/{$record->instagram}/", 'Instagram @'.$record->instagram) : null,
             $link(PublisherResource::getUrl('edit', ['record' => $record->publisher]), 'Publisher in the admin'),

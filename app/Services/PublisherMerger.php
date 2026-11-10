@@ -23,7 +23,7 @@ use InvalidArgumentException;
 class PublisherMerger
 {
     /** Copied over only where the kept publisher has nothing. */
-    private const FILLABLE = ['user_id', 'established_year', 'logo_path', 'website_url', 'telegram_channel', 'order_contact', 'phone', 'instagram', 'address'];
+    private const FILLABLE = ['user_id', 'established_year', 'logo_path', 'website_url', 'telegram_channel', 'order_contact', 'shop_url', 'phone', 'instagram', 'address'];
 
     /** Localized, so filled per language. */
     private const TRANSLATABLE = ['bio', 'country'];

@@ -20,6 +20,7 @@ class PublisherResource extends JsonResource
             'logoUrl' => $this->logo_url,
             'websiteUrl' => $this->website_url,
             'telegramChannel' => $this->telegram_channel,
+            'shopUrl' => $this->shop_url,
             'phone' => $this->phone,
             'instagram' => $this->instagram,
             'address' => $this->address,

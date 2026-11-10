@@ -43,7 +43,7 @@
   "slug": "zumar-books",
   "telegram_channel": "zumarbooks",
   "confidence": "high",
-  "evidence": "«Zumar kitoblar doʻkoni», 12,064 subscribers, active daily; it is the brand shop of «Zumar nashriyoti» (@zumarnashriyoti, 189 subscribers, description: the publisher translates and publishes books). Both use the same order account @zumar_delivery and link to each other.",
+  "evidence": "«Zumar kitoblar doʻkoni», 12,064 subscribers, active daily; it is the brand shop of «Zumar nashriyoti» (@zumarnashriyoti, 189 subscribers, description: the publisher translates and publishes books). Both use the same order account @zumar_delivery and link to each other. Shop: Its channel is the shop “Zumar kitoblar do‘koni”.",
   "subscribers": 12064,
   "other_channels": "@zumarnashriyoti «Zumar nashriyoti», 189 subscribers, the publisher's own channel, last post October 2024",
   "order_contact": "zumar_delivery",
@@ -57,7 +57,8 @@
    "ru": "По собственным словам, цель издательства «Zumar» — переводить и предлагать читателям полезные для народа и уммы книги. Оно выпускает в основном религиозно-просветительскую литературу: серию трудов Абу Хамида аль-Газали («Таква», «Тавба», «Сабр и шукр»), книги о сподвижниках и табиинах, а также переводы турецких авторов. В Ташкенте работает книжный магазин «Zumar».",
    "en": "By its own description, Zumar aims to translate books that benefit the nation and the Muslim community and offer them to readers. It mainly publishes religious and educational books: a series of works by Abu Hamid al-Ghazali (Taqvo, Tavba, Sabr va shukr), books about the Companions and the Tabi'un, and translations of Turkish authors. It runs the Zumar bookshop in Tashkent."
   },
-  "note": "The publisher channel @zumarnashriyoti is quiet since October 2024; the shop channel is the active one. Address is «24A-uy» in the description but «24-uy» in recent posts. Instagram also has @zumarbooks (shop)."
+  "note": "The publisher channel @zumarnashriyoti is quiet since October 2024; the shop channel is the active one. Address is «24A-uy» in the description but «24-uy» in recent posts. Instagram also has @zumarbooks (shop).",
+  "shop_url": "https://t.me/zumarbooks"
  },
  {
   "slug": "arxetip",
@@ -515,7 +516,7 @@
   "slug": "hamroh-books",
   "telegram_channel": "hamroh_books",
   "confidence": "high",
-  "evidence": "Channel \"Hamroh books\" (1,153 subscribers): business and self-help books, Uzum shop uzum.uz/hamrohbooks and admin @hamroh_admin. Posts promote titles that our catalogue lists under Hamroh Books (\"Kaizen strategiyasi\", \"To'g'ri fikrlang\", manipulation books), with phrases such as \"Hamroh Books bestseller 2023\", \"HAMROH taqdim etadi\" and \"Tez kunda qayta nashr\" (reprint coming soon), so it is the publisher's own brand channel.",
+  "evidence": "Channel \"Hamroh books\" (1,153 subscribers): business and self-help books, Uzum shop uzum.uz/hamrohbooks and admin @hamroh_admin. Posts promote titles that our catalogue lists under Hamroh Books (\"Kaizen strategiyasi\", \"To'g'ri fikrlang\", manipulation books), with phrases such as \"Hamroh Books bestseller 2023\", \"HAMROH taqdim etadi\" and \"Tez kunda qayta nashr\" (reprint coming soon), so it is the publisher's own brand channel. Shop: Its sales account @hamroh_admin sends buyers to this Uzum shop.",
   "subscribers": 1153,
   "other_channels": "hamroh_booksbot — order bot linked in posts",
   "order_contact": "hamroh_admin",
@@ -529,7 +530,8 @@
    "ru": "Издательство «Hamroh Books» выпускает переводные книги по бизнесу и саморазвитию. Среди его изданий — книги Филипа Котлера, Ричарда Брэнсона, Дариуса Форукса, Роберта Маурера и Бенджамина Франклина, а также книги о психологии и манипуляции.",
    "en": "Hamroh Books publishes translated books on business and personal development. Its list includes works by Philip Kotler, Richard Branson, Darius Foroux, Robert Maurer and Benjamin Franklin, as well as books on psychology and manipulation."
   },
-  "note": "Phone was written in posts as +998(94)417-97-11. website_url is the publisher's Uzum marketplace shop, not its own site. Posts sometimes give the bot @hamroh_booksbot instead of @hamroh_admin for orders."
+  "note": "Phone was written in posts as +998(94)417-97-11. website_url is the publisher's Uzum marketplace shop, not its own site. Posts sometimes give the bot @hamroh_booksbot instead of @hamroh_admin for orders.",
+  "shop_url": "https://uzum.uz/uz/shop/hamrohbooks"
  },
  {
   "slug": "hilol-media",
@@ -571,7 +573,7 @@
   "slug": "munir",
   "telegram_channel": "munirmarket_uz",
   "confidence": "medium",
-  "evidence": "Channel \"Munir Market\" (6,657 subscribers): \"Kitoblarimizni arzon narxlarda xarid qiling\" (buy our books), contact @munirmarket_admin, and links to munir.uz (site titled \"Munir Nashriyoti\") and uzum.uz/shop/munir. The related channel @bookmarket24 (\"Bookmarket24.uz / Munir market\") posts \"Munir nashriyotidan yangilik!\" and calls titles we list under Munir \"kitobimiz\" (e.g. \"Suyukli payg'ambarim bilan 365 kun\"). It is the publisher's own shop brand; no separate publisher-only channel was found.",
+  "evidence": "Channel \"Munir Market\" (6,657 subscribers): \"Kitoblarimizni arzon narxlarda xarid qiling\" (buy our books), contact @munirmarket_admin, and links to munir.uz (site titled \"Munir Nashriyoti\") and uzum.uz/shop/munir. The related channel @bookmarket24 (\"Bookmarket24.uz / Munir market\") posts \"Munir nashriyotidan yangilik!\" and calls titles we list under Munir \"kitobimiz\" (e.g. \"Suyukli payg'ambarim bilan 365 kun\"). It is the publisher's own shop brand; no separate publisher-only channel was found. Shop: “Munir Market” (6.6k subscribers): “Kitoblarimizni arzon narxlarda xarid qiling”. Also on Uzum: uzum.uz/shop/munir.",
   "subscribers": 6657,
   "other_channels": "bookmarket24 — Bookmarket24.uz / Munir market, 1,891 subscribers (says the brand was renamed and points to @munirmarket); munirmarket — Munirmarket, 97 subscribers (the new name it points to, nearly empty); munir_market — linked for orders in a post",
   "order_contact": "munirmarket_admin",
@@ -585,7 +587,8 @@
    "ru": "Издательство «Munir» выпускает в основном религиозную и просветительскую литературу: переводы книг имама аль-Газали, Аида аль-Карни, Адхама Шаркави, Мутавалли Шаарави, «Рассказы о веке счастья» и «Тарихи Мухаммади» Алихан-торы Сагуни. Также оно издало познавательные детские книги серии «Hamma narsani bilishni istayman» («Хочу всё знать»), сборник «365 дней с любимым Пророком» и «Гулистан» Саади Ширази. Электронные версии книг продаются в приложении Munir.",
    "en": "Munir publishes mainly religious and educational books: translations of al-Ghazali, Aid al-Qarni, Adham Sharqawi and Mutawalli al-Sha'rawi, the \"Saodat asri qissalari\" stories, and Alikhan Tura Saguni's \"Tarixi Muhammadiy\". It has also published the children's knowledge series \"Hamma narsani bilishni istayman\" (I want to know everything), the \"365 days with my beloved Prophet\" set, and Saadi's Gulistan. E-book editions are sold in the Munir app."
   },
-  "note": "Other phones in @bookmarket24 posts: +998 71 244 45 45 and +998 94 582 14 08. Instagram: older handle bookmarket24.uz, newer munirmarket.uz; YouTube @Munir_uz. munir.uz is a JS app titled 'Munir Nashriyoti' (no contacts readable); an older link app.munir-nashriyoti.uz did not resolve. Channel choice: munirmarket_uz is the largest active one; the old @bookmarket24 says the channel moved to @munirmarket, which is nearly empty, so double-check which one the publisher wants."
+  "note": "Other phones in @bookmarket24 posts: +998 71 244 45 45 and +998 94 582 14 08. Instagram: older handle bookmarket24.uz, newer munirmarket.uz; YouTube @Munir_uz. munir.uz is a JS app titled 'Munir Nashriyoti' (no contacts readable); an older link app.munir-nashriyoti.uz did not resolve. Channel choice: munirmarket_uz is the largest active one; the old @bookmarket24 says the channel moved to @munirmarket, which is nearly empty, so double-check which one the publisher wants.",
+  "shop_url": "https://t.me/munirmarket_uz"
  },
  {
   "slug": "matbaachi",
@@ -911,7 +914,7 @@
   "slug": "qamar-media",
   "telegram_channel": "qamarmedia",
   "confidence": "medium",
-  "evidence": "Channel \"\\\"Qamar media\\\" nashriyoti\", 51 subscribers, no description. A 2025 post quotes a book imprint \"Нашриёт: Qamar media, Тошкент, 2024\"; most posts are religious reflections and news commentary signed QAMAR MEDIA.",
+  "evidence": "Channel \"\\\"Qamar media\\\" nashriyoti\", 51 subscribers, no description. A 2025 post quotes a book imprint \"Нашриёт: Qamar media, Тошкент, 2024\"; most posts are religious reflections and news commentary signed QAMAR MEDIA. Shop: Same name as the Qamar bookshop chain (qamar.uz, @qamarbooks); check that the publisher belongs to it.",
   "subscribers": 51,
   "other_channels": "@qamarbooks \"Qamar kitoblar do'koni\", 44,869 subscribers: a bookshop chain (Chorsu, Seoul Mun, Chimgan; qamar.uz) selling many publishers' books, likely the same Qamar brand",
   "order_contact": null,
@@ -925,7 +928,8 @@
    "ru": "«Qamar media» — издательство в Ташкенте. В основном выпускает исламско-просветительские книги, в том числе переводы трудов имама Газали и Хатидже Кюбры Тонгар, а также книги о суфийских учёных. Издавало также книгу Дункана Кларка об Alibaba и словарь.",
    "en": "Qamar media is a publishing house in Tashkent. It mainly publishes Islamic educational books, including translations of al-Ghazali and Hatice Kübra Tongar and books about Sufi scholars. It has also published Duncan Clark's book on Alibaba and a dictionary."
   },
-  "note": "The publisher channel is tiny and posts little about its own books. The big @qamarbooks shop (phone +998 99 845 44 00, orders @qamar_delivery, Instagram qamarbooks, qamar.uz) never calls itself a publisher in what I saw, so I did not use its contacts; confirm with Qamar whether shop and publisher are one company before linking them. 'Toshkent' in the bio comes from the imprint line."
+  "note": "The publisher channel is tiny and posts little about its own books. The big @qamarbooks shop (phone +998 99 845 44 00, orders @qamar_delivery, Instagram qamarbooks, qamar.uz) never calls itself a publisher in what I saw, so I did not use its contacts; confirm with Qamar whether shop and publisher are one company before linking them. 'Toshkent' in the bio comes from the imprint line.",
+  "shop_url": "https://qamar.uz"
  },
  {
   "slug": "yoshlar",
@@ -1047,7 +1051,7 @@
   "slug": "davr-press",
   "telegram_channel": "zamon_kitob_uz",
   "confidence": "medium",
-  "evidence": "Active channel \"Zamon Kitob.uz SMG+DAVR PRESS Nashriyoti\", 13,716 subscribers, linked from the user account @davr_press \"Davr Press Admin\"; posts 'nashriyotimiz' news and its test books and guides. Davr Press's older official channel @davrpressuz (\"Davr Press nashriyot-matbaa uyining rasmiy telegram kanali\") has 37 subscribers and last posted in 2020.",
+  "evidence": "Active channel \"Zamon Kitob.uz SMG+DAVR PRESS Nashriyoti\", 13,716 subscribers, linked from the user account @davr_press \"Davr Press Admin\"; posts 'nashriyotimiz' news and its test books and guides. Davr Press's older official channel @davrpressuz (\"Davr Press nashriyot-matbaa uyining rasmiy telegram kanali\") has 37 subscribers and last posted in 2020. Shop: Its channel (“Zamon Kitob.uz SMG+DAVR PRESS”) links this Uzum shop 7 times; it may be a reseller.",
   "subscribers": 13716,
   "other_channels": "@davrpressuz, official 'Davr Press' channel, 37 subs, inactive since 2020; @davr_press is a user account 'Davr Press Admin'",
   "order_contact": "yoqubbek_zamon_kitob",
@@ -1061,7 +1065,8 @@
    "ru": "«Davr Press» — издательско-полиграфический дом в Ташкенте. Выпускает на узбекском и русском языках детские энциклопедии, развивающие книги и сказки для дошкольников, пособия для абитуриентов и переводные книги по саморазвитию.",
    "en": "Davr Press is a publishing and printing house in Tashkent. It publishes children's encyclopedias, activity books and fairy tales for preschoolers, guides for university applicants, and translated self-development books, in Uzbek and Russian."
   },
-  "note": "The active channel is shared by 'SMG' (also contact @Spectrum_nashriyoti, +998 33 446 11 22) and Davr Press, so it may be a joint or successor brand; confirm. Address, Instagram, Facebook (facebook.com/davrpressuz), order bot @davrpress83 and phone +998 71 216 90 14 come from the old 2020 official channel; phone +998 94 622 71 33 and @yoqubbek_zamon_kitob come from the active channel."
+  "note": "The active channel is shared by 'SMG' (also contact @Spectrum_nashriyoti, +998 33 446 11 22) and Davr Press, so it may be a joint or successor brand; confirm. Address, Instagram, Facebook (facebook.com/davrpressuz), order bot @davrpress83 and phone +998 71 216 90 14 come from the old 2020 official channel; phone +998 94 622 71 33 and @yoqubbek_zamon_kitob come from the active channel.",
+  "shop_url": "https://uzum.uz/uz/shop/buybookuz"
  },
  {
   "slug": "trust-and-support",
@@ -1267,7 +1272,7 @@
   "slug": "oltin-qalam",
   "telegram_channel": "oltinqalam_books",
   "confidence": "medium",
-  "evidence": "'Oltin Qalam doʻkoni' (17,100 subscribers), the publisher's own-brand bookshop channel; it announces the publisher's releases such as «Koʻzlaringni haromdan saqla» (an Oltin qalam book in our catalogue) and a job ad for 'yangi nashriyot jamoasi'. The official '“Oltin Qalam” nashriyoti' channel @oltinqalam_nashriyoti has only 26 subscribers and no posts since Nov 2024.",
+  "evidence": "'Oltin Qalam doʻkoni' (17,100 subscribers), the publisher's own-brand bookshop channel; it announces the publisher's releases such as «Koʻzlaringni haromdan saqla» (an Oltin qalam book in our catalogue) and a job ad for 'yangi nashriyot jamoasi'. The official '“Oltin Qalam” nashriyoti' channel @oltinqalam_nashriyoti has only 26 subscribers and no posts since Nov 2024. Shop: Its channel @oltinqalam_books is itself the shop “Oltin Qalam do’koni” (17.6k subscribers). @oltin_qalam_nashriyot is a person's account for orders, not a channel.",
   "subscribers": 17100,
   "other_channels": "@oltinqalam_nashriyoti '“Oltin Qalam” nashriyoti' (26 subscribers, official publisher channel, inactive since Nov 2024)",
   "order_contact": "oltinqalam_admin",
@@ -1281,7 +1286,8 @@
    "ru": "Издательство «Oltin qalam» выпускает переводы зарубежных авторов и книги о личностном росте и духовности. Среди его изданий — узбекская классика (Абдулла Кадыри, Чулпан, Аскад Мухтар, Мирмухсин), произведения Достоевского и Толстого, книги турецких авторов. У издательства есть книжный магазин в Чиланзарском районе Ташкента.",
    "en": "Oltin qalam publishes translations of foreign authors and books on personal growth and spirituality. Its list includes Uzbek classics (Abdulla Qodiriy, Choʻlpon, Asqad Muxtor, Mirmuhsin), works by Dostoevsky and Tolstoy, and books by Turkish authors. The publisher runs a bookshop in Chilonzor district, Tashkent."
   },
-  "note": "The main channel is a shop that also sells other publishers' books; the official publisher channel is tiny and dormant — pick whichever you prefer. Phone written as '(97) 139-22-22' without country code; +998 added."
+  "note": "The main channel is a shop that also sells other publishers' books; the official publisher channel is tiny and dormant — pick whichever you prefer. Phone written as '(97) 139-22-22' without country code; +998 added.",
+  "shop_url": "https://t.me/oltinqalam_books"
  },
  {
   "slug": "yangi-kitob",
@@ -1639,7 +1645,7 @@
   "slug": "manaviyat",
   "telegram_channel": "manaviyat_nashriyoti",
   "confidence": "medium",
-  "evidence": "'\"Ma'naviyat\" nashriyoti' (15 subscribers), description '“Ma'naviyat” nashriyotining rasmiy telegram sahifasi', links manaviyat-nashr.uz. Official, but tiny and inactive since Feb 2025, and its last posts are stray image links rather than books.",
+  "evidence": "'\"Ma'naviyat\" nashriyoti' (15 subscribers), description '“Ma'naviyat” nashriyotining rasmiy telegram sahifasi', links manaviyat-nashr.uz. Official, but tiny and inactive since Feb 2025, and its last posts are stray image links rather than books. Shop: Its own site, linked 7 times from the channel; check that books can be bought there.",
   "subscribers": 15,
   "other_channels": null,
   "order_contact": "Otabek_Rahim",
@@ -1653,7 +1659,8 @@
    "ru": "Издательство «Ma'naviyat» — государственное учреждение, созданное указом Президента в 1996 году. Оно выпускает художественную, учебную и научную литературу, детские книги, словари и специальные альбомы; среди его изданий — «Атлас национальных ценностей», альбом «Самарканд — шлифованный лик Земли», произведения Эркина Агзама и «Маленький принц».",
    "en": "Ma'naviyat is a state publishing house established by presidential decree in 1996. It publishes fiction, educational and scholarly books, children's books, dictionaries and special albums; its list includes the 'Atlas of National Values', the album 'Samarkand – the Polished Face of the Earth', works by Erkin Aʼzam and 'The Little Prince'."
   },
-  "note": "Founding year from the website's 'Nashriyot haqida' text, which cites a presidential decree of 9 September 1996 (the sentence is cut off on the home page; confirm it is the founding act)."
+  "note": "Founding year from the website's 'Nashriyot haqida' text, which cites a presidential decree of 9 September 1996 (the sentence is cut off on the home page; confirm it is the founding act).",
+  "shop_url": "https://manaviyat-nashr.uz"
  },
  {
   "slug": "booktopia",
@@ -2410,5 +2417,75 @@
    "en": "Books by the writer Tohir Malik have been published under the 'Tohir Malik' imprint. They include Samum (two parts), The Merciless Snake, When Will the Gauze Scarf Dry and Tohir Malik in the Memories of His Contemporaries, compiled by Sherkon Qodiriy."
   },
   "note": "Very likely a duplicate of 'tohir-malik-nomidagi-nashriyot-uyi' (Tohir Malik nomidagi nashriyot uyi); low only because the catalogue entry may just be the author's name entered as publisher. Consider merging rather than giving both the same channel. English renderings of book titles are rough translations."
+ },
+ {
+  "slug": "akademnashr",
+  "telegram_channel": "akademnashr",
+  "confidence": "high",
+  "evidence": "Official shop. Shop channel “Akademnashr do‘koni” (153 subscribers), linked as “Do‘kon” from the publisher's @akademkitoblar channel; shop at Toshkent kitob markazi, Navoiy 40.",
+  "shop_url": "https://t.me/akademnashr_kitoblari"
+ },
+ {
+  "slug": "hilol-nashr",
+  "telegram_channel": "hilolnashr",
+  "confidence": "high",
+  "evidence": "Official shop. hilolnashr.uz is an online shop with prices (“Kitoblar dunyosi”); Hilol Nashr's channel links its books there.",
+  "shop_url": "https://hilolnashr.uz"
+ },
+ {
+  "slug": "nasim-kutub",
+  "telegram_channel": "nasimkutub",
+  "confidence": "high",
+  "evidence": "Official shop. Its admin account says to buy from “Uzum marketdagi rasmiy sahifamiz”; the channel links this shop 9 times.",
+  "shop_url": "https://uzum.uz/uz/shop/nasimkutub"
+ },
+ {
+  "slug": "tahlil",
+  "telegram_channel": "tahlilnashriyoti",
+  "confidence": "high",
+  "evidence": "Official shop. The channel links this Uzum shop 7 times.",
+  "shop_url": "https://uzum.uz/uz/shop/tahlilnashr"
+ },
+ {
+  "slug": "tasnim",
+  "telegram_channel": "tasnimbooks",
+  "confidence": "medium",
+  "evidence": "Official shop. The channel links this Uzum shop and books in it.",
+  "shop_url": "https://uzum.uz/uz/shop/tasnimbooks"
+ },
+ {
+  "slug": "chinor",
+  "telegram_channel": "chinor_nashriyoti",
+  "confidence": "medium",
+  "evidence": "Official shop. The channel links this Uzum shop.",
+  "shop_url": "https://uzum.uz/uz/shop/chinor-nashriyoti"
+ },
+ {
+  "slug": "asaxiy",
+  "telegram_channel": "asaxiybooks",
+  "confidence": "high",
+  "evidence": "Official shop. Asaxiy Books is the publishing arm of the asaxiy.uz shop.",
+  "shop_url": "https://asaxiy.uz"
+ },
+ {
+  "slug": "factor-books",
+  "telegram_channel": "factor_books",
+  "confidence": "high",
+  "evidence": "Official shop. Its own site sells its books with prices.",
+  "shop_url": "https://factorbooks.uz"
+ },
+ {
+  "slug": "anorbooks",
+  "telegram_channel": "anorbooks_nashr",
+  "confidence": "medium",
+  "evidence": "Official shop. “Anorbooks onlayn kitob do‘koni” (40 subscribers) points to taplink.cc/anorbooks, which the publisher's channel links 7 times.",
+  "shop_url": "https://t.me/anorbooks_kitoblari"
+ },
+ {
+  "slug": "yuridik-adabiyotlar-publish",
+  "telegram_channel": "yuridikadabiyotlar",
+  "confidence": "medium",
+  "evidence": "Official shop. Its channel links this site 16 times; it sells law books with prices.",
+  "shop_url": "https://yuridikadabiyotlar.uz"
  }
 ]

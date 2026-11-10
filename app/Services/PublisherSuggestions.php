@@ -90,7 +90,7 @@ class PublisherSuggestions
         return DB::transaction(function () use ($suggestion, $data) {
             $publisher = $suggestion->publisher;
 
-            foreach (['telegram_channel', 'order_contact', 'website_url', 'phone', 'instagram', 'address', 'established_year'] as $field) {
+            foreach (['telegram_channel', 'order_contact', 'shop_url', 'website_url', 'phone', 'instagram', 'address', 'established_year'] as $field) {
                 $value = $data[$field] ?? null;
                 $publisher->{$field} = filled($value) ? $value : null;
             }
@@ -133,7 +133,7 @@ class PublisherSuggestions
         $publisher = $suggestion->publisher;
         $state = [];
 
-        foreach (['telegram_channel', 'order_contact', 'website_url', 'phone', 'instagram', 'address', 'established_year'] as $field) {
+        foreach (['telegram_channel', 'order_contact', 'shop_url', 'website_url', 'phone', 'instagram', 'address', 'established_year'] as $field) {
             $state[$field] = filled($publisher->{$field}) ? $publisher->{$field} : $suggestion->{$field};
         }
 
@@ -174,6 +174,7 @@ class PublisherSuggestions
             'telegram_channel' => TelegramChannel::username($entry['telegram_channel'] ?? null),
             'subscribers' => is_numeric($entry['subscribers'] ?? null) ? (int) $entry['subscribers'] : null,
             'order_contact' => TelegramChannel::username($entry['order_contact'] ?? null),
+            'shop_url' => PublisherResource::shopUrl($entry['shop_url'] ?? null),
             'website_url' => $website !== null && preg_match('#^https?://[^\s/]+\.[^\s]+$#i', $website) ? $website : null,
             'phone' => $text('phone', 32),
             'instagram' => PublisherResource::instagramUsername($entry['instagram'] ?? null),
@@ -190,7 +191,7 @@ class PublisherSuggestions
     /** @param  array<string, mixed>  $values */
     private static function hasDetails(array $values): bool
     {
-        foreach (['telegram_channel', 'order_contact', 'website_url', 'phone', 'instagram', 'address', 'established_year', 'bio'] as $field) {
+        foreach (['telegram_channel', 'order_contact', 'shop_url', 'website_url', 'phone', 'instagram', 'address', 'established_year', 'bio'] as $field) {
             if (filled($values[$field])) {
                 return true;
             }
