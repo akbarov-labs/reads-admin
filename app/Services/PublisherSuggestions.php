@@ -26,7 +26,7 @@ class PublisherSuggestions
     /**
      * Loads found details as pending suggestions. A suggestion still waiting
      * is refreshed; one already published or rejected is left alone, unless
-     * $reopen is set and the file brings an About text it was not decided
+     * $reopen is set and the file brings an About text or motto it was not decided
      * with: then it waits for review again.
      * Accepts a list of objects with a "slug", or an object keyed by slug.
      *
@@ -53,7 +53,10 @@ class PublisherSuggestions
             $reopening = false;
 
             if ($existing !== null && $existing->status !== ModerationStatus::Pending) {
-                if (! $reopen || $values['bio'] === null || $values['bio'] == $existing->bio) {
+                $newText = ($values['bio'] !== null && $values['bio'] != $existing->bio)
+                    || ($values['motto'] !== null && $values['motto'] != $existing->motto);
+
+                if (! $reopen || ! $newText) {
                     $report['decided'][] = $publisher->slug;
 
                     continue;
@@ -104,12 +107,14 @@ class PublisherSuggestions
                 $publisher->{$field} = filled($value) ? $value : null;
             }
 
-            foreach (self::LOCALES as $locale) {
-                $bio = trim((string) ($data['bio'][$locale] ?? ''));
+            foreach (['bio', 'motto'] as $attribute) {
+                foreach (self::LOCALES as $locale) {
+                    $text = trim((string) ($data[$attribute][$locale] ?? ''));
 
-                $bio !== ''
-                    ? $publisher->setTranslation('bio', $locale, $bio)
-                    : $publisher->forgetTranslation('bio', $locale);
+                    $text !== ''
+                        ? $publisher->setTranslation($attribute, $locale, $text)
+                        : $publisher->forgetTranslation($attribute, $locale);
+                }
             }
 
             if (($data['use_logo'] ?? false) && $suggestion->logo_path && Storage::disk('public')->exists($suggestion->logo_path)) {
@@ -146,9 +151,11 @@ class PublisherSuggestions
             $state[$field] = filled($publisher->{$field}) ? $publisher->{$field} : $suggestion->{$field};
         }
 
-        foreach (self::LOCALES as $locale) {
-            $current = $publisher->getTranslation('bio', $locale, false);
-            $state['bio'][$locale] = filled($current) ? $current : ($suggestion->bio[$locale] ?? null);
+        foreach (['bio', 'motto'] as $attribute) {
+            foreach (self::LOCALES as $locale) {
+                $current = $publisher->getTranslation($attribute, $locale, false);
+                $state[$attribute][$locale] = filled($current) ? $current : ($suggestion->{$attribute}[$locale] ?? null);
+            }
         }
 
         $state['use_logo'] = $suggestion->logo_path !== null && blank($publisher->logo_path);
@@ -169,15 +176,8 @@ class PublisherSuggestions
         $text = fn (string $key, int $max) => filled($entry[$key] ?? null) ? Str::limit(trim((string) $entry[$key]), $max, '') : null;
         $website = $text('website_url', 255);
         $year = (int) ($entry['established_year'] ?? 0);
-        $bio = [];
-
-        foreach (self::LOCALES as $locale) {
-            $value = trim((string) ($entry['bio'][$locale] ?? ''));
-
-            if ($value !== '') {
-                $bio[$locale] = $value;
-            }
-        }
+        $bio = self::byLocale($entry['bio'] ?? null, 5000);
+        $motto = self::byLocale($entry['motto'] ?? null, 160);
 
         return [
             'telegram_channel' => TelegramChannel::username($entry['telegram_channel'] ?? null),
@@ -189,13 +189,34 @@ class PublisherSuggestions
             'instagram' => PublisherResource::instagramUsername($entry['instagram'] ?? null),
             'address' => $text('address', 255),
             'established_year' => $year >= 1800 && $year <= (int) date('Y') ? $year : null,
-            'bio' => $bio === [] ? null : $bio,
+            'bio' => $bio,
+            'motto' => $motto,
             'about_sources' => self::sources($entry['about_sources'] ?? null),
             'confidence' => in_array($entry['confidence'] ?? null, ['high', 'medium', 'low'], true) ? $entry['confidence'] : null,
             'evidence' => $text('evidence', 2000),
             'other_channels' => $text('other_channels', 2000),
             'note' => $text('note', 2000),
         ];
+    }
+
+    /**
+     * A text by locale, empty ones dropped, or null when none is left.
+     *
+     * @return array<string, string>|null
+     */
+    private static function byLocale(mixed $value, int $max): ?array
+    {
+        $texts = [];
+
+        foreach (self::LOCALES as $locale) {
+            $text = trim((string) (is_array($value) ? ($value[$locale] ?? '') : ''));
+
+            if ($text !== '') {
+                $texts[$locale] = Str::limit($text, $max, '');
+            }
+        }
+
+        return $texts === [] ? null : $texts;
     }
 
     /**
@@ -216,7 +237,7 @@ class PublisherSuggestions
     /** @param  array<string, mixed>  $values */
     private static function hasDetails(array $values): bool
     {
-        foreach (['telegram_channel', 'order_contact', 'shop_url', 'website_url', 'phone', 'instagram', 'address', 'established_year', 'bio'] as $field) {
+        foreach (['telegram_channel', 'order_contact', 'shop_url', 'website_url', 'phone', 'instagram', 'address', 'established_year', 'bio', 'motto'] as $field) {
             if (filled($values[$field])) {
                 return true;
             }

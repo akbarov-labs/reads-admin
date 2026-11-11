@@ -26,7 +26,7 @@ class PublisherMerger
     private const FILLABLE = ['user_id', 'established_year', 'logo_path', 'website_url', 'telegram_channel', 'order_contact', 'shop_url', 'phone', 'instagram', 'address'];
 
     /** Localized, so filled per language. */
-    private const TRANSLATABLE = ['bio', 'country'];
+    private const TRANSLATABLE = ['bio', 'motto', 'country'];
 
     public function __construct(private readonly SiteRevalidator $revalidator) {}
 

@@ -15,6 +15,7 @@ class PublisherResource extends JsonResource
             'slug' => $this->slug,
             'name' => $this->name,
             'bio' => $this->bio,
+            'motto' => $this->motto,
             'country' => $this->country,
             'establishedYear' => $this->established_year,
             'logoUrl' => $this->logo_url,

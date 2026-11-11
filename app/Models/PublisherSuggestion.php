@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'address',
     'established_year',
     'bio',
+    'motto',
     'about_sources',
     'logo_path',
     'confidence',
@@ -47,6 +48,7 @@ class PublisherSuggestion extends Model
     {
         return [
             'bio' => 'array',
+            'motto' => 'array',
             'about_sources' => 'array',
             'subscribers' => 'integer',
             'established_year' => 'integer',

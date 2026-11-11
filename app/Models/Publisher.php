@@ -22,6 +22,7 @@ use Spatie\Translatable\HasTranslations;
     'slug',
     'name',
     'bio',
+    'motto',
     'country',
     'established_year',
     'logo_path',
@@ -40,7 +41,7 @@ class Publisher extends Model
     use HasTranslations;
 
     /** @var array<int, string> */
-    public array $translatable = ['bio', 'country'];
+    public array $translatable = ['bio', 'motto', 'country'];
 
     protected function casts(): array
     {
