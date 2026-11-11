@@ -36,6 +36,8 @@ class ProfileSuggestionResource extends Resource
 
     protected static ?string $modelLabel = 'author or translator suggestion';
 
+    protected static ?string $pluralModelLabel = 'Author & translator suggestions';
+
     protected static ?string $navigationGroup = 'Catalogue';
 
     protected static ?int $navigationSort = 6;
