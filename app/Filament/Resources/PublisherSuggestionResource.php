@@ -191,9 +191,18 @@ class PublisherSuggestionResource extends Resource
                         self::withFound(Forms\Components\TextInput::make('established_year')->label('Founded')->numeric()->minValue(1800)->maxValue((int) date('Y')), $record),
                         self::withFound(Forms\Components\TextInput::make('address')->maxLength(255)->columnSpanFull(), $record),
                         Forms\Components\Tabs::make('About')->tabs([
-                            Forms\Components\Tabs\Tab::make('Uzbek')->schema([self::withFound(Forms\Components\Textarea::make('bio.uz')->label('About')->rows(7), $record, 'uz')]),
-                            Forms\Components\Tabs\Tab::make('Russian')->schema([self::withFound(Forms\Components\Textarea::make('bio.ru')->label('About')->rows(7), $record, 'ru')]),
-                            Forms\Components\Tabs\Tab::make('English')->schema([self::withFound(Forms\Components\Textarea::make('bio.en')->label('About')->rows(7), $record, 'en')]),
+                            Forms\Components\Tabs\Tab::make('Uzbek')->schema([
+                                self::withFound(Forms\Components\TextInput::make('motto.uz')->label('Motto')->maxLength(160), $record, 'uz'),
+                                self::withFound(Forms\Components\Textarea::make('bio.uz')->label('About')->rows(7), $record, 'uz'),
+                            ]),
+                            Forms\Components\Tabs\Tab::make('Russian')->schema([
+                                self::withFound(Forms\Components\TextInput::make('motto.ru')->label('Motto')->maxLength(160), $record, 'ru'),
+                                self::withFound(Forms\Components\Textarea::make('bio.ru')->label('About')->rows(7), $record, 'ru'),
+                            ]),
+                            Forms\Components\Tabs\Tab::make('English')->schema([
+                                self::withFound(Forms\Components\TextInput::make('motto.en')->label('Motto')->maxLength(160), $record, 'en'),
+                                self::withFound(Forms\Components\Textarea::make('bio.en')->label('About')->rows(7), $record, 'en'),
+                            ]),
                         ])->columnSpanFull(),
                     ])->columns(2),
             ])
@@ -210,9 +219,10 @@ class PublisherSuggestionResource extends Resource
      */
     private static function withFound(Forms\Components\Field $field, PublisherSuggestion $record, ?string $locale = null): Forms\Components\Field
     {
-        $name = $locale !== null ? 'bio' : $field->getName();
-        $found = $locale !== null ? ($record->bio[$locale] ?? null) : $record->{$name};
-        $current = $locale !== null ? $record->publisher->getTranslation('bio', $locale, false) : $record->publisher->{$name};
+        // A text by locale ("bio.uz", "motto.ru") or a plain field.
+        $name = $locale !== null ? explode('.', $field->getName())[0] : $field->getName();
+        $found = $locale !== null ? ($record->{$name}[$locale] ?? null) : $record->{$name};
+        $current = $locale !== null ? $record->publisher->getTranslation($name, $locale, false) : $record->publisher->{$name};
 
         if (blank($found) || blank($current) || (string) $found === (string) $current) {
             return $field;
@@ -224,8 +234,8 @@ class PublisherSuggestionResource extends Resource
             return $field->hintAction(
                 Forms\Components\Actions\Action::make('useFound')
                     // From the first tab, one press takes all three languages.
-                    ->label($locale === 'uz' ? 'Use the found texts (all 3 languages)' : 'Use the found text')
-                    ->action(function (Forms\Set $set) use ($field, $found, $locale, $record) {
+                    ->label($locale === 'uz' ? 'Use the found '.($name === 'motto' ? 'mottos' : 'texts').' (all 3 languages)' : 'Use the found '.($name === 'motto' ? 'motto' : 'text'))
+                    ->action(function (Forms\Set $set) use ($field, $found, $locale, $record, $name) {
                         if ($locale !== 'uz') {
                             $set($field->getName(), $found);
 
@@ -233,8 +243,8 @@ class PublisherSuggestionResource extends Resource
                         }
 
                         foreach (PublisherSuggestions::LOCALES as $each) {
-                            if (filled($record->bio[$each] ?? null)) {
-                                $set("bio.{$each}", $record->bio[$each]);
+                            if (filled($record->{$name}[$each] ?? null)) {
+                                $set("{$name}.{$each}", $record->{$name}[$each]);
                             }
                         }
                     }),

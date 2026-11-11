@@ -71,7 +71,12 @@
    "https://t.me/s/zumarnashriyoti?before=30",
    "https://t.me/zumarbooks",
    "https://dashboard.kitoblarim.uz/api/books?publisher=zumar-books&per_page=50&locale=uz"
-  ]
+  ],
+  "motto": {
+   "uz": "Zumar — yaxshi kitob tugamaydi!",
+   "ru": "Зумар — хорошая книга не кончается!",
+   "en": "Zumar: a good book never ends!"
+  }
  },
  {
   "slug": "arxetip",
@@ -119,7 +124,12 @@
   "about_sources": [
    "https://www.goldenpages.uz/rubrics/?Id=110160",
    "https://t.me/sarmoyabooks"
-  ]
+  ],
+  "motto": {
+   "uz": "Eng yaxshi sarmoya — bilimga tikilgan sarmoyadir",
+   "ru": "Лучшая инвестиция — инвестиция в знания",
+   "en": "The best investment is an investment in knowledge"
+  }
  },
  {
   "slug": "ildiz",
@@ -481,7 +491,12 @@
    "https://iptd-uzbekistan.uz/open/default/leaderships",
    "https://uz.wikipedia.org/wiki/Oʻzbekiston_(nashriyot)",
    "https://t.me/iptduzbekistan"
-  ]
+  ],
+  "motto": {
+   "uz": "I asrlik oqlangan ishonch",
+   "ru": "Доверие, оправданное веком",
+   "en": "A trust proven over a century"
+  }
  },
  {
   "slug": "zukko-kitobxon",
@@ -587,7 +602,12 @@
    "https://t.me/hamroh_books",
    "https://t.me/s/hamroh_books?before=25",
    "https://uzum.uz/hamrohbooks"
-  ]
+  ],
+  "motto": {
+   "uz": "Muvaffaqiyat sari hamrohingiz!",
+   "ru": "Ваш спутник на пути к успеху!",
+   "en": "Your companion on the way to success!"
+  }
  },
  {
   "slug": "hilol-media",
@@ -936,7 +956,12 @@
    "https://t.me/s/ziyo_nashr?before=100",
    "https://t.me/s/ziyo_nashr?before=170",
    "https://www.goldenpages.uz/uz/rubrics/?Id=1207"
-  ]
+  ],
+  "motto": {
+   "uz": "Kitoblar dunyosi va dunyo kitoblari siz bilan!",
+   "ru": "Мир книг и книги мира — с вами!",
+   "en": "The world of books and the books of the world, with you!"
+  }
  },
  {
   "slug": "muharrir",
@@ -1007,7 +1032,12 @@
    "https://t.me/naqshiuz",
    "https://t.me/s/naqshiuz?before=30",
    "https://t.me/s/naqshiuz"
-  ]
+  ],
+  "motto": {
+   "uz": "Naqshi — yaxshilik yoʻlida birgamiz!",
+   "ru": "Naqshi — вместе на пути добра!",
+   "en": "Naqshi: together on the path of goodness!"
+  }
  },
  {
   "slug": "qamar-media",
@@ -1143,7 +1173,12 @@
   "about_sources": [
    "https://ast.ru/izdatelstvo/neoclassic/",
    "https://fantlab.ru/series3513"
-  ]
+  ],
+  "motto": {
+   "uz": "Biz klassikani va klassikaga aylanadigan kitoblarni chiqaramiz",
+   "ru": "Мы издаём классику и те книги, которые станут классикой!",
+   "en": "We publish the classics and the books that will become classics"
+  }
  },
  {
   "slug": "alpina-pablisher",
@@ -1340,7 +1375,12 @@
    "https://eksmo.ru/articles/kak-iskushennye-chitateli-izmenili-rynok-01-23-ID15621351/",
    "https://www.labirint.ru/now/freedom-5-let/",
    "https://t.me/eksmofreedom"
-  ]
+  ],
+  "motto": {
+   "uz": "Freedom — kitoblar, ular haqida gapirging keladi!",
+   "ru": "Freedom — книги, о которых хочется говорить!",
+   "en": "Freedom: books you want to talk about!"
+  }
  },
  {
   "slug": "foliant",
@@ -2495,7 +2535,12 @@
    "https://t.me/alp_publishing",
    "https://t.me/s/alp_publishing?before=40",
    "https://dashboard.kitoblarim.uz/api/books?publisher=alp&per_page=50&locale=uz"
-  ]
+  ],
+  "motto": {
+   "uz": "Aqlga ozuqa!",
+   "ru": "Пища для ума!",
+   "en": "Food for the mind!"
+  }
  },
  {
   "slug": "davlatov-s",
@@ -2662,7 +2707,12 @@
    "https://german-stories.de/node/3416"
   ],
   "established_year": 2004,
-  "note": "About text (high confidence): Founder is not named anywhere; Sanjar Nazarov is listed as director on the team page (Kun.uz 2025 also calls him head of Akademnashr). The site does not say who named it 'Yilning eng yaxshi nashriyoti' in 2014. The Navoi book's prize year is not given on the site (book published 2013)."
+  "note": "About text (high confidence): Founder is not named anywhere; Sanjar Nazarov is listed as director on the team page (Kun.uz 2025 also calls him head of Akademnashr). The site does not say who named it 'Yilning eng yaxshi nashriyoti' in 2014. The Navoi book's prize year is not given on the site (book published 2013).",
+  "motto": {
+   "uz": "Mutolaa qiling!",
+   "ru": "Читайте!",
+   "en": "Read!"
+  }
  },
  {
   "slug": "hilol-nashr",
@@ -2717,7 +2767,12 @@
    "https://t.me/s/tahlilnashriyoti?before=25",
    "https://t.me/s/tahlilnashriyoti"
   ],
-  "note": "About text (medium confidence): All facts from the publisher's own channel (mission in posts 9 and 12, March 2025). A March 2025 teaser post on the channel is signed @qamarnashriyoti, so Tahlil may be linked to Qamar publishing house; unconfirmed. English titles in brackets are my glosses."
+  "note": "About text (medium confidence): All facts from the publisher's own channel (mission in posts 9 and 12, March 2025). A March 2025 teaser post on the channel is signed @qamarnashriyoti, so Tahlil may be linked to Qamar publishing house; unconfirmed. English titles in brackets are my glosses.",
+  "motto": {
+   "uz": "Tafakkurni boyituvchi kitoblar",
+   "ru": "Книги, обогащающие мышление",
+   "en": "Books that enrich thinking"
+  }
  },
  {
   "slug": "tasnim",
@@ -2734,7 +2789,12 @@
    "https://t.me/tasnimbooks",
    "https://t.me/s/tasnimbooks?before=3550"
   ],
-  "note": "About text (medium confidence): Channel-only facts; no founder or city found. An Aug 2023 post mentions the house's 'yangi yoshimiz' (new year of age) around the channel's anniversary, which hints at a 2021 start but does not state it, so no year given."
+  "note": "About text (medium confidence): Channel-only facts; no founder or city found. An Aug 2023 post mentions the house's 'yangi yoshimiz' (new year of age) around the channel's anniversary, which hints at a 2021 start but does not state it, so no year given.",
+  "motto": {
+   "uz": "Moziy qatidan ibratlar!",
+   "ru": "Уроки из глубины прошлого!",
+   "en": "Lessons from the folds of the past!"
+  }
  },
  {
   "slug": "chinor",
@@ -2751,7 +2811,12 @@
    "https://t.me/chinor_nashriyoti",
    "https://t.me/s/chinor_nashriyoti"
   ],
-  "note": "About text (medium confidence): Channel-only facts; no founder or founding year. 'Manzil: Toshkent, Samarqand va Namangan' appears in a channel post; activity is concentrated in Namangan region."
+  "note": "About text (medium confidence): Channel-only facts; no founder or founding year. 'Manzil: Toshkent, Samarqand va Namangan' appears in a channel post; activity is concentrated in Namangan region.",
+  "motto": {
+   "uz": "Asosida mehr bor",
+   "ru": "В основе — любовь",
+   "en": "Built on love"
+  }
  },
  {
   "slug": "asaxiy",
@@ -2793,7 +2858,12 @@
    "https://dashboard.kitoblarim.uz/api/books?publisher=factor-books&per_page=50&locale=uz"
   ],
   "established_year": 2021,
-  "note": "About text (high confidence): Founding date and founder from Spot.uz (2023). Self-description, motto and principle are from factorbooks.uz; the About text there is the site's built-in fallback text (the 'haqida_matn' setting is empty), so check the publisher is happy with it. Legal name on the site: 'NEW FACTOR BOOKS' MChJ. Monthly university book fairs are as of the 2023 article."
+  "note": "About text (high confidence): Founding date and founder from Spot.uz (2023). Self-description, motto and principle are from factorbooks.uz; the About text there is the site's built-in fallback text (the 'haqida_matn' setting is empty), so check the publisher is happy with it. Legal name on the site: 'NEW FACTOR BOOKS' MChJ. Monthly university book fairs are as of the 2023 article.",
+  "motto": {
+   "uz": "Kitob najot – ilm mulk!",
+   "ru": "Книга — спасение, знание — богатство!",
+   "en": "A book is salvation, knowledge is wealth!"
+  }
  },
  {
   "slug": "anorbooks",
@@ -2864,7 +2934,12 @@
    "https://t.me/s/huzurkitoblari?before=1430"
   ],
   "established_year": 2022,
-  "note": "About text (high confidence): Start date from the channel's own announcement of 27 Oct 2022 ('«Huzur» nashriyoti oʻz faoliyatini boshladi'). On 11 Nov 2026 the channel posted an official statement denying that any of its books are banned; not mentioned in the bio. Some posts point to @qamarbooks (see Pingvin books note)."
+  "note": "About text (high confidence): Start date from the channel's own announcement of 27 Oct 2022 ('«Huzur» nashriyoti oʻz faoliyatini boshladi'). On 11 Nov 2026 the channel posted an official statement denying that any of its books are banned; not mentioned in the bio. Some posts point to @qamarbooks (see Pingvin books note).",
+  "motto": {
+   "uz": "Huzur sari",
+   "ru": "К покою",
+   "en": "Towards peace"
+  }
  },
  {
   "slug": "tavfiqnashr",
@@ -2881,7 +2956,12 @@
    "https://t.me/s/tavfiqnashr?before=15",
    "https://t.me/s/tavfiqnashr?before=620"
   ],
-  "note": "About text (high confidence): Channel created 21 Feb 2022, first post 7 Mar 2022; the publisher's founding year itself is not stated, so established_year left null. Whether «Qutadgʻu bilig» actually came out is not confirmed (only announced). Sales contact @Odiljon_Yusupov; also uses Qamar delivery (see Pingvin books note)."
+  "note": "About text (high confidence): Channel created 21 Feb 2022, first post 7 Mar 2022; the publisher's founding year itself is not stated, so established_year left null. Whether «Qutadgʻu bilig» actually came out is not confirmed (only announced). Sales contact @Odiljon_Yusupov; also uses Qamar delivery (see Pingvin books note).",
+  "motto": {
+   "uz": "Oʻqiladigan kitoblar bulogʻi",
+   "ru": "Родник книг, которые читают",
+   "en": "A spring of books that get read"
+  }
  },
  {
   "slug": "innovatsiya-nashriyoti",
@@ -2916,7 +2996,12 @@
    "https://t.me/s/mittiolamnashriyoti?before=10",
    "https://t.me/s/mittiolamnashriyoti"
   ],
-  "note": "About text (medium confidence): All facts from the publisher's own channel (mission in post 4, 28 July 2026). Founding year of the publisher itself is not stated; channel opened 27 July 2026."
+  "note": "About text (medium confidence): All facts from the publisher's own channel (mission in post 4, 28 July 2026). Founding year of the publisher itself is not stated; channel opened 27 July 2026.",
+  "motto": {
+   "uz": "Mitti olam bilan katta kelajak sari!",
+   "ru": "С маленьким миром к большому будущему!",
+   "en": "With Mitti olam towards a big future!"
+  }
  },
  {
   "slug": "turon-nashr",
@@ -2950,7 +3035,12 @@
    "https://t.me/s/yogdu_nashriyoti"
   ],
   "established_year": 2024,
-  "note": "About text (high confidence): All facts from the publisher's own channel: launch post 48 (10 Sept 2024), director's post 62 (Apr 2025, quoting Maxfiratbegim Azizova; she says Yogʻdu was 'handed over' to her, so she may not be the founder), posts 116–117 (Oyina.uz top-10 list, first Canadian translation). The Oyina.uz article itself was not opened. Which of the licensed titles are already printed (besides «Oqsoch hikoyasi») is not confirmed; the bio says 'works with rights' to avoid claiming all are out."
+  "note": "About text (high confidence): All facts from the publisher's own channel: launch post 48 (10 Sept 2024), director's post 62 (Apr 2025, quoting Maxfiratbegim Azizova; she says Yogʻdu was 'handed over' to her, so she may not be the founder), posts 116–117 (Oyina.uz top-10 list, first Canadian translation). The Oyina.uz article itself was not opened. Which of the licensed titles are already printed (besides «Oqsoch hikoyasi») is not confirmed; the bio says 'works with rights' to avoid claiming all are out.",
+  "motto": {
+   "uz": "Koʻzlarimiz, kitoblarimiz va qalbimiz yogʻdu taratsin!",
+   "ru": "Пусть сияют наши глаза, наши книги и наши сердца!",
+   "en": "May our eyes, our books and our hearts shine!"
+  }
  },
  {
   "slug": "zabarjad-media",
@@ -2969,7 +3059,12 @@
    "https://t.me/s/zabarjadmedia?before=3226"
   ],
   "established_year": 2019,
-  "note": "About text (medium confidence): Year inferred: earliest channel posts (Apr 2020) give 'Nashr yili: 2019' for its books, and an Oct 2023 post speaks of '4 yillik faoliyati'; the channel was created Feb 2020. Founder named in a Jan 2025 channel post ('nashriyotimiz asoschisi va rahbari Ma'mura Qutliyeva'); the same post calls her the first woman publisher, which I left out as unverified. Russian/English renderings of the motto 'Eng yaxshisini ilinamiz!' are free translations."
+  "note": "About text (medium confidence): Year inferred: earliest channel posts (Apr 2020) give 'Nashr yili: 2019' for its books, and an Oct 2023 post speaks of '4 yillik faoliyati'; the channel was created Feb 2020. Founder named in a Jan 2025 channel post ('nashriyotimiz asoschisi va rahbari Ma'mura Qutliyeva'); the same post calls her the first woman publisher, which I left out as unverified. Russian/English renderings of the motto 'Eng yaxshisini ilinamiz!' are free translations.",
+  "motto": {
+   "uz": "Eng yaxshisini ilinamiz!",
+   "ru": "Дарим вам лучшее!",
+   "en": "We offer you the best!"
+  }
  },
  {
   "slug": "pir-nashriyoti",
@@ -3001,7 +3096,12 @@
    "https://t.me/sahhof_nashriyoti",
    "https://t.me/s/sahhof_nashriyoti"
   ],
-  "note": "About text (medium confidence): '5 yildan beri' and '400 dan ortiq asar' are the publisher's own claims (channel post 2025-07-28, also in channel description); that points to about 2020 but no year is stated, so left null. City not found."
+  "note": "About text (medium confidence): '5 yildan beri' and '400 dan ortiq asar' are the publisher's own claims (channel post 2025-07-28, also in channel description); that points to about 2020 but no year is stated, so left null. City not found.",
+  "motto": {
+   "uz": "Oʻqing. Yuring. Rivojlaning.",
+   "ru": "Читайте. Идите. Развивайтесь.",
+   "en": "Read. Walk on. Grow."
+  }
  },
  {
   "slug": "qaldirgoch",
@@ -3093,7 +3193,12 @@
    "https://dashboard.kitoblarim.uz/api/books?publisher=tirilish&per_page=50&locale=uz"
   ],
   "established_year": 2022,
-  "note": "About text (high confidence): 2022: the channel opened in April 2022 and post #41 (May 2022) calls «Tirilish nasli» 'yangi nashriyotdagi ilk ishimiz'. That the name comes from the Karakoç book is my inference from the title and the channel's #Tirilish_nasli posts; drop the 'nomi ham shu asar bilan bogʻliq' clause if that is too strong. «Oʻsmir» (Dostoevsky) is taken from the present bio and the channel description era, not seen in our catalogue list."
+  "note": "About text (high confidence): 2022: the channel opened in April 2022 and post #41 (May 2022) calls «Tirilish nasli» 'yangi nashriyotdagi ilk ishimiz'. That the name comes from the Karakoç book is my inference from the title and the channel's #Tirilish_nasli posts; drop the 'nomi ham shu asar bilan bogʻliq' clause if that is too strong. «Oʻsmir» (Dostoevsky) is taken from the present bio and the channel description era, not seen in our catalogue list.",
+  "motto": {
+   "uz": "Bizning kitoblar fikrlashingizni oʻzgartiradi",
+   "ru": "Наши книги меняют ваше мышление",
+   "en": "Our books change the way you think"
+  }
  },
  {
   "slug": "sahifa",
@@ -3112,7 +3217,12 @@
    "https://dashboard.kitoblarim.uz/api/books?publisher=sahifa&per_page=50&locale=uz"
   ],
   "established_year": 2023,
-  "note": "About text (high confidence): The site also calls itself 'Oʻzbekistonning yosh va gʻayratli nashriyotlaridan biri'; left out as self-praise."
+  "note": "About text (high confidence): The site also calls itself 'Oʻzbekistonning yosh va gʻayratli nashriyotlaridan biri'; left out as self-praise.",
+  "motto": {
+   "uz": "Yangi sahifa oching",
+   "ru": "Откройте новую страницу",
+   "en": "Open a new page"
+  }
  },
  {
   "slug": "nido",
@@ -3148,7 +3258,12 @@
    "https://t.me/sakurabooksuz/5",
    "https://dashboard.kitoblarim.uz/api/books?publisher=sakura-books&per_page=50&locale=uz"
   ],
-  "note": "About text (medium confidence): Channel created May 2025; that is the start of its channel, not a confirmed founding year. I did not find whether the Kumon books are licensed."
+  "note": "About text (medium confidence): Channel created May 2025; that is the start of its channel, not a confirmed founding year. I did not find whether the Kumon books are licensed.",
+  "motto": {
+   "uz": "Sakura books — bilim gullaydigan sahifa!",
+   "ru": "Sakura books — страница, где расцветает знание!",
+   "en": "Sakura books: the page where knowledge blossoms!"
+  }
  },
  {
   "slug": "intellekt-books",

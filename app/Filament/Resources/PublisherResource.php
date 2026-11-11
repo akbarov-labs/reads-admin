@@ -194,6 +194,8 @@ class PublisherResource extends Resource
     private static function localizedFields(string $locale): array
     {
         return [
+            Forms\Components\TextInput::make("motto.{$locale}")->label('Motto')->maxLength(160)
+                ->helperText('The publisher\'s own slogan, word for word. Shown under its name.'),
             Forms\Components\Textarea::make("bio.{$locale}")->label('About')->rows(3),
             Forms\Components\TextInput::make("country.{$locale}")->label('Country'),
         ];

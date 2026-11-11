@@ -75,6 +75,7 @@ class PublisherSuggestionTest extends TestCase
             'address' => 'Toshkent, Navoiy 1',
             'established_year' => 2012,
             'bio' => ['uz' => 'Diniy kitoblar.', 'ru' => 'Религиозные книги.', 'en' => 'Religious books.'],
+            'motto' => ['uz' => 'Ilm — nur!', 'ru' => '', 'en' => 'Knowledge is light!'],
             'note' => null,
             ...$overrides,
         ];
@@ -105,6 +106,7 @@ class PublisherSuggestionTest extends TestCase
         $this->assertNull($suggestion->website_url);
         $this->assertNull($suggestion->established_year);
         $this->assertSame('Religious books.', $suggestion->bio['en']);
+        $this->assertSame(['uz' => 'Ilm — nur!', 'en' => 'Knowledge is light!'], $suggestion->motto);
         $this->assertStringStartsWith('publisher-suggestions/', $suggestion->logo_path);
         Storage::disk('public')->assertExists($suggestion->logo_path);
 
@@ -176,6 +178,13 @@ class PublisherSuggestionTest extends TestCase
         // The page keeps its text until the admin publishes the new one.
         $this->assertSame('Diniy kitoblar.', $munir->refresh()->getTranslation('bio', 'uz'));
 
+        // A new motto alone is reason enough to look again.
+        app(PublisherSuggestions::class)->publish($suggestion->refresh(), PublisherSuggestions::formState($suggestion));
+        file_put_contents($this->file, json_encode([$this->munirEntry(['bio' => $richer, 'motto' => ['uz' => 'Yangi shior!']])]));
+        $this->artisan('publishers:import-suggestions', ['--file' => $this->file, '--reopen' => true])
+            ->expectsOutputToContain('1 reopened')
+            ->assertSuccessful();
+
         // The same text again does not reopen what was decided with it.
         app(PublisherSuggestions::class)->reject($suggestion);
         $this->artisan('publishers:import-suggestions', ['--file' => $this->file, '--reopen' => true])
@@ -224,6 +233,9 @@ class PublisherSuggestionTest extends TestCase
         $this->assertSame('munir.nashr', $munir->instagram);
         $this->assertSame(2012, $munir->established_year);
         $this->assertSame('Tuzatilgan matn.', $munir->getTranslation('bio', 'uz'));
+        $this->assertSame('Ilm — nur!', $munir->getTranslation('motto', 'uz'));
+        $this->assertSame('', $munir->getTranslation('motto', 'ru', false));
+        $this->getJson('/api/publishers/munir?locale=en')->assertJsonPath('data.motto', 'Knowledge is light!');
         $this->assertSame('', $munir->getTranslation('bio', 'en', false));
         $this->assertStringStartsWith('publishers/', $munir->logo_path);
         Storage::disk('public')->assertExists($munir->logo_path);

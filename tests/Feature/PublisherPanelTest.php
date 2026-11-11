@@ -109,6 +109,7 @@ class PublisherPanelTest extends TestCase
                 'website_url' => 'https://example.test/akademnashr',
                 'established_year' => 1991,
                 'bio.uz' => 'Toshkentdagi nashriyot.',
+                'motto.uz' => 'Kitob — bilim manbai!',
                 'bio.ru' => 'Издательство в Ташкенте.',
                 'bio.en' => 'A Tashkent publishing house.',
                 'country.uz' => "O'zbekiston",
@@ -122,6 +123,7 @@ class PublisherPanelTest extends TestCase
         $this->assertSame('Akademnashr', $publisher->name);
         $this->assertSame(1991, $publisher->established_year);
         $this->assertSame('Издательство в Ташкенте.', $publisher->getTranslation('bio', 'ru'));
+        $this->assertSame('Kitob — bilim manbai!', $publisher->getTranslation('motto', 'uz'));
         $this->assertSame("O'zbekiston", $publisher->getTranslation('country', 'uz'));
         $this->assertSame('Uzbekistan', $publisher->getTranslation('country', 'en'));
     }
