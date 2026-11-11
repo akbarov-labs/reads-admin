@@ -93,7 +93,7 @@ class PublisherSuggestionTest extends TestCase
 
         $this->artisan('publishers:import-suggestions', ['--file' => $this->file])
             ->expectsOutputToContain('missing  no-such-house')
-            ->expectsOutputToContain('1 new and 0 refreshed suggestion(s) waiting for review; 0 already decided, 1 with nothing found, 1 not found.')
+            ->expectsOutputToContain('1 new, 0 refreshed and 0 reopened suggestion(s) waiting for review; 0 already decided, 1 with nothing found, 1 not found.')
             ->assertSuccessful();
 
         $suggestion = PublisherSuggestion::query()->sole();
@@ -147,6 +147,40 @@ class PublisherSuggestionTest extends TestCase
         app(PublisherSuggestions::class)->publish($suggestion, $state);
         $this->assertSame('https://uzum.uz/uz/shop/munir', $munir->refresh()->shop_url);
         $this->assertSame('munirnashr', $munir->telegram_channel);
+    }
+
+    public function test_a_new_about_text_reopens_a_decided_publisher_only_when_asked(): void
+    {
+        $munir = Publisher::create(['slug' => 'munir', 'name' => 'Munir']);
+        $this->load([$this->munirEntry()]);
+        $suggestion = PublisherSuggestion::query()->sole();
+        app(PublisherSuggestions::class)->publish($suggestion, PublisherSuggestions::formState($suggestion));
+
+        $richer = ['uz' => 'Nashriyot 2012-yilda tashkil topgan. Maqsadi — maʼrifat.', 'ru' => 'Основано в 2012 году.', 'en' => 'Founded in 2012.'];
+        file_put_contents($this->file, json_encode([$this->munirEntry(['bio' => $richer, 'about_sources' => ['https://munir.uz/about', 'javascript:alert(1)']])]));
+
+        // Without --reopen a decided publisher stays decided.
+        $this->artisan('publishers:import-suggestions', ['--file' => $this->file])
+            ->expectsOutputToContain('0 reopened suggestion(s) waiting for review; 1 already decided')
+            ->assertSuccessful();
+
+        $this->artisan('publishers:import-suggestions', ['--file' => $this->file, '--reopen' => true])
+            ->expectsOutputToContain('0 new, 0 refreshed and 1 reopened suggestion(s) waiting for review; 0 already decided')
+            ->assertSuccessful();
+
+        $suggestion->refresh();
+        $this->assertSame(['https://munir.uz/about'], $suggestion->about_sources);
+        $this->assertSame(ModerationStatus::Pending, $suggestion->status);
+        $this->assertNull($suggestion->reviewed_at);
+        $this->assertSame($richer, $suggestion->bio);
+        // The page keeps its text until the admin publishes the new one.
+        $this->assertSame('Diniy kitoblar.', $munir->refresh()->getTranslation('bio', 'uz'));
+
+        // The same text again does not reopen what was decided with it.
+        app(PublisherSuggestions::class)->reject($suggestion);
+        $this->artisan('publishers:import-suggestions', ['--file' => $this->file, '--reopen' => true])
+            ->expectsOutputToContain('0 reopened suggestion(s) waiting for review; 1 already decided')
+            ->assertSuccessful();
     }
 
     public function test_the_review_starts_from_what_the_page_already_has(): void

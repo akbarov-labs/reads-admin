@@ -191,9 +191,9 @@ class PublisherSuggestionResource extends Resource
                         self::withFound(Forms\Components\TextInput::make('established_year')->label('Founded')->numeric()->minValue(1800)->maxValue((int) date('Y')), $record),
                         self::withFound(Forms\Components\TextInput::make('address')->maxLength(255)->columnSpanFull(), $record),
                         Forms\Components\Tabs::make('About')->tabs([
-                            Forms\Components\Tabs\Tab::make('Uzbek')->schema([self::withFound(Forms\Components\Textarea::make('bio.uz')->label('About')->rows(4), $record, 'uz')]),
-                            Forms\Components\Tabs\Tab::make('Russian')->schema([self::withFound(Forms\Components\Textarea::make('bio.ru')->label('About')->rows(4), $record, 'ru')]),
-                            Forms\Components\Tabs\Tab::make('English')->schema([self::withFound(Forms\Components\Textarea::make('bio.en')->label('About')->rows(4), $record, 'en')]),
+                            Forms\Components\Tabs\Tab::make('Uzbek')->schema([self::withFound(Forms\Components\Textarea::make('bio.uz')->label('About')->rows(7), $record, 'uz')]),
+                            Forms\Components\Tabs\Tab::make('Russian')->schema([self::withFound(Forms\Components\Textarea::make('bio.ru')->label('About')->rows(7), $record, 'ru')]),
+                            Forms\Components\Tabs\Tab::make('English')->schema([self::withFound(Forms\Components\Textarea::make('bio.en')->label('About')->rows(7), $record, 'en')]),
                         ])->columnSpanFull(),
                     ])->columns(2),
             ])
@@ -216,6 +216,29 @@ class PublisherSuggestionResource extends Resource
 
         if (blank($found) || blank($current) || (string) $found === (string) $current) {
             return $field;
+        }
+
+        // An About text is too long for a hint: show the whole find under
+        // the field, so the two can be read side by side.
+        if ($locale !== null) {
+            return $field->hintAction(
+                Forms\Components\Actions\Action::make('useFound')
+                    // From the first tab, one press takes all three languages.
+                    ->label($locale === 'uz' ? 'Use the found texts (all 3 languages)' : 'Use the found text')
+                    ->action(function (Forms\Set $set) use ($field, $found, $locale, $record) {
+                        if ($locale !== 'uz') {
+                            $set($field->getName(), $found);
+
+                            return;
+                        }
+
+                        foreach (PublisherSuggestions::LOCALES as $each) {
+                            if (filled($record->bio[$each] ?? null)) {
+                                $set("bio.{$each}", $record->bio[$each]);
+                            }
+                        }
+                    }),
+            )->helperText(new HtmlString('<strong>Found:</strong> '.nl2br(e((string) $found))));
         }
 
         return $field->hintAction(
@@ -245,6 +268,9 @@ class PublisherSuggestionResource extends Resource
             'Why' => $record->evidence ? e($record->evidence) : null,
             'Also seen' => $record->other_channels ? e($record->other_channels) : null,
             'Check' => $record->note ? '<strong>'.e($record->note).'</strong>' : null,
+            'About text from' => $record->about_sources
+                ? implode(' · ', array_map(fn (string $url) => $link($url, Str::limit(preg_replace('#^https?://(www\.)?#i', '', rtrim($url, '/')), 45)), $record->about_sources))
+                : null,
             'Links' => implode(' · ', $links),
         ]);
 
