@@ -1,0 +1,1700 @@
+{
+ "note": "Authors kept under several spellings (Latin, Cyrillic, initials, reversed order), found by a catalogue-wide scan on 2026-11-12 and checked by hand. Uzbek names that share only an initial were left out (see author-duplicates-to-check.csv).",
+ "merge_authors": [
+  {
+   "into": "shayx-muhammad-sodiq-muhammad-yusuf",
+   "from": [
+    "shayx-muxammad-sodiq-muhammad-yusuf"
+   ]
+  },
+  {
+   "into": "abu-homid-gazzoliy",
+   "from": [
+    "imom-abu-homid-gazzoliy",
+    "abu-xomid-gazzoliy",
+    "imom-abu-homid-muhammad-ibn-muhammad-gazzoliy",
+    "imom-abu-homid-muhammad-ibn-muhammad-al-gazzoliy"
+   ]
+  },
+  {
+   "into": "tohir-malik",
+   "from": [
+    "toxir-malik"
+   ]
+  },
+  {
+   "into": "fyodor-dostoyevskiy",
+   "from": [
+    "fedor-dostoevskii",
+    "fmdostoyevskiy",
+    "fyoder-dostoyevsky",
+    "fyodor-dostoyevsky",
+    "dostoyevskiy",
+    "fyodor-mixaylovich-dostoyevskiy",
+    "fyodor-dostoevsky",
+    "fyodor-mikhailovich-dostoyevsky",
+    "fyodor-mihaylovic-dostoyevski",
+    "fedor-mixailovic-dostoevskii"
+   ]
+  },
+  {
+   "into": "artur-konan-doyl",
+   "from": [
+    "arthur-conan-doyle"
+   ]
+  },
+  {
+   "into": "jorj-oruell",
+   "from": [
+    "jorj-oruel",
+    "dzordz-oruell-2",
+    "dzordz-oruell",
+    "dzorz-oruell"
+   ]
+  },
+  {
+   "into": "colleen-hoover",
+   "from": [
+    "kolin-huver"
+   ]
+  },
+  {
+   "into": "jon-ronald-ruel-tolkin",
+   "from": [
+    "dzon-ronald-ruel-tolkin",
+    "jrr-tolkien"
+   ]
+  },
+  {
+   "into": "ahmad-lutfiy-qozonchi",
+   "from": [
+    "ahmad-lutfi-qozonchi",
+    "axmad-lutfiy-qozonchi"
+   ]
+  },
+  {
+   "into": "anton-chexov",
+   "from": [
+    "anton-chekhov"
+   ]
+  },
+  {
+   "into": "hans-kristian-andersen",
+   "from": [
+    "xans-kristian-andersen",
+    "hc-andersen",
+    "hkandersen",
+    "xk-andersen",
+    "hans-christian-andersen"
+   ]
+  },
+  {
+   "into": "alisher-navoiy",
+   "from": [
+    "alisher-navoi"
+   ]
+  },
+  {
+   "into": "gabriel-garsia-markes",
+   "from": [
+    "gabriel-garsia-markes-2"
+   ]
+  },
+  {
+   "into": "robert-kiyosaki",
+   "from": [
+    "robert-t-kiyosaki"
+   ]
+  },
+  {
+   "into": "ziyovuddin-rahim",
+   "from": [
+    "ziyovuddin-raxim"
+   ]
+  },
+  {
+   "into": "abu-iyso-muhammad-at-termiziy",
+   "from": [
+    "imom-abu-iso-muhammad-termiziy",
+    "imom-abu-iso-termiziy",
+    "abu-iso-at-termiziy",
+    "abu-iso-termiziy"
+   ]
+  },
+  {
+   "into": "frans-kafka",
+   "from": [
+    "frants-kafka"
+   ]
+  },
+  {
+   "into": "luiza-xey",
+   "from": [
+    "luiza-l-xei"
+   ]
+  },
+  {
+   "into": "mixail-bulgakov",
+   "from": [
+    "mikhail-bulgakov"
+   ]
+  },
+  {
+   "into": "olga-uzorova",
+   "from": [
+    "ov-uzorova"
+   ]
+  },
+  {
+   "into": "jaloliddin-rumiy",
+   "from": [
+    "mavlono-jaloliddin-rumiy"
+   ]
+  },
+  {
+   "into": "dilnoza-niyazaxunova",
+   "from": [
+    "dilnoza-niyazahunova"
+   ]
+  },
+  {
+   "into": "robert-grin",
+   "from": [
+    "robert-greene"
+   ]
+  },
+  {
+   "into": "usmon-nuriy-topbosh",
+   "from": [
+    "usmon-nuri-topboshi",
+    "usmon-nuri-topbosh",
+    "usmon-nuriy-topboshi"
+   ]
+  },
+  {
+   "into": "ahmad-hodiy-maqsudiy",
+   "from": [
+    "ahmad-xodiy-maqsudiy"
+   ]
+  },
+  {
+   "into": "brayan-treysi",
+   "from": [
+    "treisi-braian"
+   ]
+  },
+  {
+   "into": "xaruki-murakami",
+   "from": [
+    "haruki-murakami"
+   ]
+  },
+  {
+   "into": "irodabonu-avvalboyeva",
+   "from": [
+    "irodabonu-awalboyeva"
+   ]
+  },
+  {
+   "into": "stiven-rkovi",
+   "from": [
+    "stiven-kovi"
+   ]
+  },
+  {
+   "into": "orhan-pamuk",
+   "from": [
+    "orxan-pamuk",
+    "pamuk-orxan"
+   ]
+  },
+  {
+   "into": "liudmila-peterson",
+   "from": [
+    "lg-peterson"
+   ]
+  },
+  {
+   "into": "napoleon-xill",
+   "from": [
+    "napoleon-hill"
+   ]
+  },
+  {
+   "into": "djen-sinsero",
+   "from": [
+    "jen-sinsero"
+   ]
+  },
+  {
+   "into": "danielle-steel",
+   "from": [
+    "daniela-stil"
+   ]
+  },
+  {
+   "into": "jojo-moyes",
+   "from": [
+    "dzodzo-moies"
+   ]
+  },
+  {
+   "into": "francis-scott-fitzgerald",
+   "from": [
+    "frensis-skott-fitsjerald",
+    "frensis-skott-ficdzerald",
+    "frensis-ficdzerald",
+    "fs-ficdzerald",
+    "frensis-skott-key-fitsjerald",
+    "f-s-fitzgerald",
+    "fitzgerald-francis-scott-key",
+    "frangis-scott-fitzgerald"
+   ]
+  },
+  {
+   "into": "dilnoz-muhamediyeva",
+   "from": [
+    "dilnoz-muxamedieva"
+   ]
+  },
+  {
+   "into": "filip-kotler",
+   "from": [
+    "philip-kotler"
+   ]
+  },
+  {
+   "into": "ibn-xaldun",
+   "from": [
+    "ibn-khaldun"
+   ]
+  },
+  {
+   "into": "mahmud-asad-joshon",
+   "from": [
+    "joshon-mahmud-asad"
+   ]
+  },
+  {
+   "into": "nikolay-nosov",
+   "from": [
+    "nosov-nikolai"
+   ]
+  },
+  {
+   "into": "nargiza-erkaboyeva",
+   "from": [
+    "erkaboyeva-nargiza"
+   ]
+  },
+  {
+   "into": "odilxon-qori-yunusxon-ogli",
+   "from": [
+    "odilhon-qori-yunusxon-ogli"
+   ]
+  },
+  {
+   "into": "rebecca-yarros",
+   "from": [
+    "rebekka-iarros"
+   ]
+  },
+  {
+   "into": "hakim-termiziy",
+   "from": [
+    "al-hakim-at-termiziy"
+   ]
+  },
+  {
+   "into": "robert-chaldini",
+   "from": [
+    "caldini-robert",
+    "caldini-r"
+   ]
+  },
+  {
+   "into": "victoria-aveyard",
+   "from": [
+    "viktoriia-aveiard"
+   ]
+  },
+  {
+   "into": "ali-tantoviy",
+   "from": [
+    "shayx-ali-tantoviy"
+   ]
+  },
+  {
+   "into": "emili-bronte",
+   "from": [
+    "emily-bronte"
+   ]
+  },
+  {
+   "into": "ibn-kasir",
+   "from": [
+    "imom-ibn-kasir"
+   ]
+  },
+  {
+   "into": "shayx-muhammad-mutavalli-sharoviy",
+   "from": [
+    "muhammad-mutavalliy-sharoviy"
+   ]
+  },
+  {
+   "into": "somerset-moem",
+   "from": [
+    "moem-somerset"
+   ]
+  },
+  {
+   "into": "dzek-kenfild",
+   "from": [
+    "kenfild-dzek"
+   ]
+  },
+  {
+   "into": "shayx-zulfiqor-ahmad-naqshbandiy",
+   "from": [
+    "shayx-mavlono-zulfiqor-ahmad-naqshbandiy",
+    "zulfiqor-ahmad-naqshbandiy"
+   ]
+  },
+  {
+   "into": "seth-godin",
+   "from": [
+    "set-godin"
+   ]
+  },
+  {
+   "into": "tomas-erikson",
+   "from": [
+    "thomas-erikson"
+   ]
+  },
+  {
+   "into": "rick-riordan",
+   "from": [
+    "rik-riordan"
+   ]
+  },
+  {
+   "into": "jonatan-svift",
+   "from": [
+    "dzonatan-svift",
+    "jonathan-swift"
+   ]
+  },
+  {
+   "into": "muftiy-muhammad-taqiy-usmoniy",
+   "from": [
+    "mufti-muhammad-taqiy-usmoniy"
+   ]
+  },
+  {
+   "into": "shayx-abdulaziz-mansur",
+   "from": [
+    "abdulaziz-mansur"
+   ]
+  },
+  {
+   "into": "dzon-streleki",
+   "from": [
+    "dzon-p-streleki"
+   ]
+  },
+  {
+   "into": "daniel-defo",
+   "from": [
+    "daniel-defoe"
+   ]
+  },
+  {
+   "into": "gulnoz-tojiboyeva",
+   "from": [
+    "gulnoz-tojiboeva"
+   ]
+  },
+  {
+   "into": "nevzat-tarxan",
+   "from": [
+    "nevzat-tarhan"
+   ]
+  },
+  {
+   "into": "elif-shafak",
+   "from": [
+    "elif-shafaq"
+   ]
+  },
+  {
+   "into": "sobirjon-arziqulov",
+   "from": [
+    "arziqulov-sobirjon"
+   ]
+  },
+  {
+   "into": "herbert-george-wells",
+   "from": [
+    "h-g-wells",
+    "herbert-uells",
+    "herbert-uyells"
+   ]
+  },
+  {
+   "into": "muhabbat-yoldosheva",
+   "from": [
+    "yoldosheva-muhabbat"
+   ]
+  },
+  {
+   "into": "ohenry",
+   "from": [
+    "o-henri"
+   ]
+  },
+  {
+   "into": "sayfiddin-sayfulloh",
+   "from": [
+    "sayfiddin-sayfullox"
+   ]
+  },
+  {
+   "into": "xolid-ertugrul",
+   "from": [
+    "holid-ertugrul"
+   ]
+  },
+  {
+   "into": "dominik-spenst",
+   "from": [
+    "spenst-dominik"
+   ]
+  },
+  {
+   "into": "muhammad-said-ramazon-butiy",
+   "from": [
+    "shayx-muhammad-said-ibn-ramazon-butiy"
+   ]
+  },
+  {
+   "into": "sadiy-sheroziy",
+   "from": [
+    "shayx-sadiy-sheroziy"
+   ]
+  },
+  {
+   "into": "emi-niumark",
+   "from": [
+    "niumark-emi"
+   ]
+  },
+  {
+   "into": "jon-steynbek",
+   "from": [
+    "dzon-steinbek"
+   ]
+  },
+  {
+   "into": "mirzaahmedov-ma",
+   "from": [
+    "mamirzaamedov"
+   ]
+  },
+  {
+   "into": "aleksandr-kuprin",
+   "from": [
+    "kuprin-a"
+   ]
+  },
+  {
+   "into": "ivan-aleksandrovich-goncharov",
+   "from": [
+    "ivan-goncarov",
+    "i-a-goncarov"
+   ]
+  },
+  {
+   "into": "ali-hazelwood",
+   "from": [
+    "ali-hazelvud"
+   ]
+  },
+  {
+   "into": "ernest-seton-tompson",
+   "from": [
+    "seton-ernest-thompson"
+   ]
+  },
+  {
+   "into": "ibn-atoulloh-sakandariy",
+   "from": [
+    "ibn-atoulloh-saqandariy"
+   ]
+  },
+  {
+   "into": "muhammad-ali-sobuniy",
+   "from": [
+    "shayx-muhammad-aliy-sobuniy"
+   ]
+  },
+  {
+   "into": "tolqin-nurmuhammad",
+   "from": [
+    "tolkin-nurmuxammad"
+   ]
+  },
+  {
+   "into": "tatiana-muzickaia",
+   "from": [
+    "tatiana-muzicka"
+   ]
+  },
+  {
+   "into": "fredrik-backman",
+   "from": [
+    "fredrik-bakman"
+   ]
+  },
+  {
+   "into": "jon-kexo",
+   "from": [
+    "dzon-kexo"
+   ]
+  },
+  {
+   "into": "zeus-qabadayi",
+   "from": [
+    "zeus-kabadayi"
+   ]
+  },
+  {
+   "into": "cixin-liu",
+   "from": [
+    "liu-cixin"
+   ]
+  },
+  {
+   "into": "tomas-harris",
+   "from": [
+    "tomas-xarris",
+    "xarris-tomas"
+   ]
+  },
+  {
+   "into": "viktor-yuzefovich-dragunskiy",
+   "from": [
+    "viktor-dragunskii",
+    "vdragunskii"
+   ]
+  },
+  {
+   "into": "ashraf-ali-tahonaviy",
+   "from": [
+    "ashraf-ali-taxonaviy"
+   ]
+  },
+  {
+   "into": "edit-yeva-eger",
+   "from": [
+    "edit-eva-eger"
+   ]
+  },
+  {
+   "into": "erik-bern",
+   "from": [
+    "eric-berne"
+   ]
+  },
+  {
+   "into": "ganisher-matisaev",
+   "from": [
+    "ganisher-matisayev"
+   ]
+  },
+  {
+   "into": "jim-ron",
+   "from": [
+    "dzim-ron"
+   ]
+  },
+  {
+   "into": "jo-vitale",
+   "from": [
+    "dzo-vitale"
+   ]
+  },
+  {
+   "into": "kadir-akel",
+   "from": [
+    "qadir-akel"
+   ]
+  },
+  {
+   "into": "abdulhakim-qori-komiljon-ogli",
+   "from": [
+    "abdulhakim-kori-komiljon-ogli"
+   ]
+  },
+  {
+   "into": "doktor-abdulloh-muhammad-abdulmuti",
+   "from": [
+    "doktor-muhammad-abdulloh-abdulmuti"
+   ]
+  },
+  {
+   "into": "grant-kardon",
+   "from": [
+    "grant-cardone"
+   ]
+  },
+  {
+   "into": "harper-li",
+   "from": [
+    "harper-lee",
+    "xarper-li"
+   ]
+  },
+  {
+   "into": "janni-rodari",
+   "from": [
+    "djanni-rodari"
+   ]
+  },
+  {
+   "into": "robert-lyuis-stivenson",
+   "from": [
+    "robert-luis-stivenson",
+    "rl-stivenson"
+   ]
+  },
+  {
+   "into": "uinston-cherchill",
+   "from": [
+    "cercill-uinston"
+   ]
+  },
+  {
+   "into": "xorxe-luis-borxes",
+   "from": [
+    "borxes-xorxe-luis"
+   ]
+  },
+  {
+   "into": "emile-zola",
+   "from": [
+    "emil-zolia"
+   ]
+  },
+  {
+   "into": "entoni-byorjess",
+   "from": [
+    "entoni-berdzess",
+    "byordjess-entoni"
+   ]
+  },
+  {
+   "into": "carlo-collodi",
+   "from": [
+    "karlo-kollodi",
+    "kkollodi"
+   ]
+  },
+  {
+   "into": "tatiana-skliarova",
+   "from": [
+    "tvskliarova"
+   ]
+  },
+  {
+   "into": "abdulqodir-abdur-rahim",
+   "from": [
+    "abdulqodir-abdur-raxim"
+   ]
+  },
+  {
+   "into": "ali-jobir-fayfiy",
+   "from": [
+    "ali-ibn-jobir-fayfiy"
+   ]
+  },
+  {
+   "into": "andre-morua",
+   "from": [
+    "morua-andre"
+   ]
+  },
+  {
+   "into": "anthony-trollope",
+   "from": [
+    "antony-trollope"
+   ]
+  },
+  {
+   "into": "doktor-ayman-rushdiy-suvayd",
+   "from": [
+    "doktor-ayman-rushdi-suvayd"
+   ]
+  },
+  {
+   "into": "edgar-allan-po",
+   "from": [
+    "po-edgar-allan"
+   ]
+  },
+  {
+   "into": "genki-kavamura",
+   "from": [
+    "kavamura-genki"
+   ]
+  },
+  {
+   "into": "julia-quinn",
+   "from": [
+    "dzuliia-kuin"
+   ]
+  },
+  {
+   "into": "lyusi-m-montgomeri",
+   "from": [
+    "liusi-montgomeri"
+   ]
+  },
+  {
+   "into": "malkolm-gladuell",
+   "from": [
+    "gladuell-malkolm"
+   ]
+  },
+  {
+   "into": "margaret-atwood",
+   "from": [
+    "margaret-atvud"
+   ]
+  },
+  {
+   "into": "margaret-mitchell",
+   "from": [
+    "mitcell-margaret"
+   ]
+  },
+  {
+   "into": "mixail-lermontov",
+   "from": [
+    "mikhail-lermontov"
+   ]
+  },
+  {
+   "into": "sadriddin-ayniy",
+   "from": [
+    "sadriddin-aini"
+   ]
+  },
+  {
+   "into": "shayx-ahmad-ibn-muhammad-ibn-abdulloh",
+   "from": [
+    "shayx-ahmad-ibn-muhammad-abdulloh"
+   ]
+  },
+  {
+   "into": "zahiriddin-muhammad-bobur",
+   "from": [
+    "zahiriddin-muhammmad-bobur"
+   ]
+  },
+  {
+   "into": "darren-hardy",
+   "from": [
+    "darren-xardi"
+   ]
+  },
+  {
+   "into": "jon-maksvell",
+   "from": [
+    "dzon-maksvell"
+   ]
+  },
+  {
+   "into": "morgan-hauzel",
+   "from": [
+    "morgan-xauzel"
+   ]
+  },
+  {
+   "into": "meg-jey",
+   "from": [
+    "meg-dzei"
+   ]
+  },
+  {
+   "into": "soman-cainani",
+   "from": [
+    "cainani-soman"
+   ]
+  },
+  {
+   "into": "syu-jonson",
+   "from": [
+    "siu-dzonson"
+   ]
+  },
+  {
+   "into": "jorj-r-r-martin",
+   "from": [
+    "dzordz-rr-martin"
+   ]
+  },
+  {
+   "into": "maurice-leblanc",
+   "from": [
+    "maurice-leblance"
+   ]
+  },
+  {
+   "into": "boland-piter",
+   "from": [
+    "piter-boland"
+   ]
+  },
+  {
+   "into": "kollinz-siuzen",
+   "from": [
+    "siuzen-kollinz"
+   ]
+  },
+  {
+   "into": "kouell-kressida",
+   "from": [
+    "kressida-kouell"
+   ]
+  },
+  {
+   "into": "valentin-rasputin",
+   "from": [
+    "valentina-rasputina",
+    "v-rasputin",
+    "valentin-grigorevic-rasputin"
+   ]
+  },
+  {
+   "into": "anostrovskiy",
+   "from": [
+    "aleksand-ostrovskii",
+    "aleksandr-ostrovskii"
+   ]
+  },
+  {
+   "into": "aleksandr-grin",
+   "from": [
+    "a-s-grin",
+    "alexander-grin"
+   ]
+  },
+  {
+   "into": "abdugafur-iskandar",
+   "from": [
+    "iskandar-abdugafur"
+   ]
+  },
+  {
+   "into": "aka-uka-grimlar",
+   "from": [
+    "aka-uka-grimmlar"
+   ]
+  },
+  {
+   "into": "arnold-bennet",
+   "from": [
+    "arnold-bennett"
+   ]
+  },
+  {
+   "into": "bekzod-muxtorov",
+   "from": [
+    "bekzod-muhtorov"
+   ]
+  },
+  {
+   "into": "doktor-ibrohim-al-fiqiy",
+   "from": [
+    "doktor-ibrohim-fiqiy"
+   ]
+  },
+  {
+   "into": "fahd-omir-ahmadiy",
+   "from": [
+    "faxd-omir-ahmadiy"
+   ]
+  },
+  {
+   "into": "giyosiddin-habibulloh",
+   "from": [
+    "giyosiddin-habibullox"
+   ]
+  },
+  {
+   "into": "gulchexra-raximova",
+   "from": [
+    "gulchehra-raximova"
+   ]
+  },
+  {
+   "into": "hvang-bo-reum",
+   "from": [
+    "hwang-bo-reum"
+   ]
+  },
+  {
+   "into": "jordan-belfort",
+   "from": [
+    "dzordan-belfort"
+   ]
+  },
+  {
+   "into": "jozef-redyard-kipling",
+   "from": [
+    "dzozef-rediard-kipling"
+   ]
+  },
+  {
+   "into": "kenneth-grahame",
+   "from": [
+    "grahame-kenneth"
+   ]
+  },
+  {
+   "into": "mahatma-gandi",
+   "from": [
+    "maxatma-gandi"
+   ]
+  },
+  {
+   "into": "malik-badri",
+   "from": [
+    "badri-malik"
+   ]
+  },
+  {
+   "into": "muftiy-shuaybulloh-xon-miftahiy",
+   "from": [
+    "muftiy-shuayibulloh-xon-miftahiy"
+   ]
+  },
+  {
+   "into": "muhammadolim-muhammadsiddiqov",
+   "from": [
+    "muhammadolim-muhammadsidiqov"
+   ]
+  },
+  {
+   "into": "mustafo-najoti-bursali",
+   "from": [
+    "mustafo-najotiy-bursali"
+   ]
+  },
+  {
+   "into": "n-sotvoldiyeva",
+   "from": [
+    "sotvoldiyeva-n"
+   ]
+  },
+  {
+   "into": "olim-toshboyev",
+   "from": [
+    "olim-toshboev"
+   ]
+  },
+  {
+   "into": "otabek-muhammad",
+   "from": [
+    "muhammad-otabek"
+   ]
+  },
+  {
+   "into": "prosper-merimee",
+   "from": [
+    "prosper-merime"
+   ]
+  },
+  {
+   "into": "ravshan-mamadaliyev",
+   "from": [
+    "mamadaliyev-ravshan"
+   ]
+  },
+  {
+   "into": "reychel-lippinkott",
+   "from": [
+    "reychell-lippinkot"
+   ]
+  },
+  {
+   "into": "sariyev-sharafjon",
+   "from": [
+    "sharafjon-sariyev"
+   ]
+  },
+  {
+   "into": "shayx-muhammad-xuzariy",
+   "from": [
+    "shayx-muhammad-al-xuzariy"
+   ]
+  },
+  {
+   "into": "stieg-larsson",
+   "from": [
+    "stig-larsson"
+   ]
+  },
+  {
+   "into": "tahsin-posho",
+   "from": [
+    "taxsin-poshsho"
+   ]
+  },
+  {
+   "into": "terry-pratchett",
+   "from": [
+    "terri-pratcett"
+   ]
+  },
+  {
+   "into": "toshikazu-kawaguchi",
+   "from": [
+    "toshikazu-kawaguch"
+   ]
+  },
+  {
+   "into": "victoria-schwab",
+   "from": [
+    "svab-viktoriia"
+   ]
+  },
+  {
+   "into": "artem-senatorov",
+   "from": [
+    "artema-senatorova"
+   ]
+  },
+  {
+   "into": "jeyms-metyu-barri",
+   "from": [
+    "barri-dzeims-metiu"
+   ]
+  },
+  {
+   "into": "benjamin-grem",
+   "from": [
+    "bendzamin-grem"
+   ]
+  },
+  {
+   "into": "dzeims-xous",
+   "from": [
+    "xous-dzeims"
+   ]
+  },
+  {
+   "into": "jeyn-osten",
+   "from": [
+    "dzein-osten"
+   ]
+  },
+  {
+   "into": "jeff-koks",
+   "from": [
+    "dzef-koks"
+   ]
+  },
+  {
+   "into": "jo-navarro",
+   "from": [
+    "dzo-navarro"
+   ]
+  },
+  {
+   "into": "jon-grey",
+   "from": [
+    "dzon-grei"
+   ]
+  },
+  {
+   "into": "jonathan-safran-foer",
+   "from": [
+    "dzonatan-safran-foer"
+   ]
+  },
+  {
+   "into": "icxak-pintosevic",
+   "from": [
+    "pintosevic-icxak"
+   ]
+  },
+  {
+   "into": "kelli-makgonigal",
+   "from": [
+    "makgonigal-kelli"
+   ]
+  },
+  {
+   "into": "matveev-sa",
+   "from": [
+    "s-a-matveev"
+   ]
+  },
+  {
+   "into": "patrick-king",
+   "from": [
+    "patrik-king"
+   ]
+  },
+  {
+   "into": "emili-nagoski",
+   "from": [
+    "nagoski-emili"
+   ]
+  },
+  {
+   "into": "abu-abdurahmon-as-sulamiy",
+   "from": [
+    "abu-abdurrahmon-sulamiy",
+    "imom-abu-abdurahmon-sulamiy"
+   ]
+  },
+  {
+   "into": "david-herbert-lawrence",
+   "from": [
+    "dh-lawrence"
+   ]
+  },
+  {
+   "into": "nmkaramzin",
+   "from": [
+    "nikolai-karamzin"
+   ]
+  },
+  {
+   "into": "azam-hoshimiy",
+   "from": [
+    "azam-oshimiy"
+   ]
+  },
+  {
+   "into": "ax-saidov",
+   "from": [
+    "saidov-a-x"
+   ]
+  },
+  {
+   "into": "ahmad-ibn-abdurazzoq-muhammad-oli-ibrohim-anqariy",
+   "from": [
+    "ahmad-ibn-abdurazzoq-ibn-muhammad-oli-ibrohim-anqariy"
+   ]
+  },
+  {
+   "into": "ali-ibn-xijoziy-ibn-muxammad-bayyumiy",
+   "from": [
+    "ali-ibn-hijoziy-ibn-muhammad-bayyumiy"
+   ]
+  },
+  {
+   "into": "arthur-c-clarke",
+   "from": [
+    "artur-klark"
+   ]
+  },
+  {
+   "into": "azizahon-tashhodjaeva",
+   "from": [
+    "azizaxon-tashxodjayeva"
+   ]
+  },
+  {
+   "into": "baxtiyor-muhammadamin-abdurahim-ogli",
+   "from": [
+    "baxtiyor-muhammadamin-abdurrahim-ogli"
+   ]
+  },
+  {
+   "into": "brayan-p-moran",
+   "from": [
+    "moran-braian"
+   ]
+  },
+  {
+   "into": "doktor-muhiddin-ibn-muhammad-avvoma",
+   "from": [
+    "doktor-muhyiddin-muhammad-avvoma"
+   ]
+  },
+  {
+   "into": "doktor-ubayd-muhamad-abdulhalim",
+   "from": [
+    "doktor-ubayd-muhammad-abdulhalim"
+   ]
+  },
+  {
+   "into": "douglas-adams",
+   "from": [
+    "duglas-adams"
+   ]
+  },
+  {
+   "into": "eric-yorgenson",
+   "from": [
+    "erik-yorgenson"
+   ]
+  },
+  {
+   "into": "feya-moran",
+   "from": [
+    "moran-feia"
+   ]
+  },
+  {
+   "into": "firogiy-maxtumquli",
+   "from": [
+    "maxtumquli-firogiy"
+   ]
+  },
+  {
+   "into": "frensis-hojson-byornett",
+   "from": [
+    "frensis-xodzson-bernett"
+   ]
+  },
+  {
+   "into": "gari-keller",
+   "from": [
+    "gary-keller"
+   ]
+  },
+  {
+   "into": "gustav-lebon",
+   "from": [
+    "giustav-lebon"
+   ]
+  },
+  {
+   "into": "ha-joon-chang",
+   "from": [
+    "xa-dzun-cang"
+   ]
+  },
+  {
+   "into": "hanya-yanagihara",
+   "from": [
+    "xania-ianagixara"
+   ]
+  },
+  {
+   "into": "hoja-yusuf-hamadoniy",
+   "from": [
+    "xoja-yusuf-hamadoniy"
+   ]
+  },
+  {
+   "into": "igor-nosov",
+   "from": [
+    "nosov-igor"
+   ]
+  },
+  {
+   "into": "isxak-kalderon-adizes",
+   "from": [
+    "icxak-kalderon-adizes"
+   ]
+  },
+  {
+   "into": "jan-lafonten",
+   "from": [
+    "jan-de-lafonten"
+   ]
+  },
+  {
+   "into": "jerom-klapka-jerom",
+   "from": [
+    "dzerom-klapka-dzerom"
+   ]
+  },
+  {
+   "into": "jim-louless",
+   "from": [
+    "dzim-louless"
+   ]
+  },
+  {
+   "into": "jo-jirard",
+   "from": [
+    "dzo-dzirard"
+   ]
+  },
+  {
+   "into": "joanne-harris",
+   "from": [
+    "dzoann-xarris"
+   ]
+  },
+  {
+   "into": "jocko-willink",
+   "from": [
+    "dzoko-villink"
+   ]
+  },
+  {
+   "into": "jon-baldoni",
+   "from": [
+    "dzon-baldoni"
+   ]
+  },
+  {
+   "into": "jon-boyn",
+   "from": [
+    "dzon-boin"
+   ]
+  },
+  {
+   "into": "jon-koleman",
+   "from": [
+    "koleman-dzon"
+   ]
+  },
+  {
+   "into": "joshua-bekker",
+   "from": [
+    "dzosua-bekker"
+   ]
+  },
+  {
+   "into": "keren-lyusyen",
+   "from": [
+    "lyusen-keren"
+   ]
+  },
+  {
+   "into": "laura-imai-messina",
+   "from": [
+    "laura-imai-messina-2"
+   ]
+  },
+  {
+   "into": "laziza-riqsiyeva",
+   "from": [
+    "laziza-riksieva"
+   ]
+  },
+  {
+   "into": "leif-babin",
+   "from": [
+    "leif-babin-2"
+   ]
+  },
+  {
+   "into": "leskov-nikolai",
+   "from": [
+    "nikolay-leskov"
+   ]
+  },
+  {
+   "into": "lola-orokova",
+   "from": [
+    "lola-oroqova"
+   ]
+  },
+  {
+   "into": "mark-uollin",
+   "from": [
+    "mark-uolinn"
+   ]
+  },
+  {
+   "into": "mich-elbom",
+   "from": [
+    "mitc-elbom"
+   ]
+  },
+  {
+   "into": "milton-fridman",
+   "from": [
+    "fridman-milton"
+   ]
+  },
+  {
+   "into": "mirqobil-hasanov",
+   "from": [
+    "mirqobil-xasanov"
+   ]
+  },
+  {
+   "into": "muhammad-abdulhay-lakhnavi",
+   "from": [
+    "muhammad-abdulhay-lakhnaviy"
+   ]
+  },
+  {
+   "into": "muhammad-rotib-nobulsiy",
+   "from": [
+    "shayx-muhammad-rotib-nobulsiy"
+   ]
+  },
+  {
+   "into": "muhitdinov-nuriddin",
+   "from": [
+    "nuriddin-muhitdinov"
+   ]
+  },
+  {
+   "into": "mulla-aliy-qoriy",
+   "from": [
+    "mulla-aliy-qori"
+   ]
+  },
+  {
+   "into": "nicola-yoon",
+   "from": [
+    "iun-nikola"
+   ]
+  },
+  {
+   "into": "nodirabegim-said-yoldoshali-qizi",
+   "from": [
+    "said-yoldoshali-qizi-nodirabegim"
+   ]
+  },
+  {
+   "into": "nujud-ali",
+   "from": [
+    "nudzud-ali"
+   ]
+  },
+  {
+   "into": "ozoda-turmuhammedova",
+   "from": [
+    "ozoda-turmuxamedova"
+   ]
+  },
+  {
+   "into": "philip-pullman",
+   "from": [
+    "filip-pulman"
+   ]
+  },
+  {
+   "into": "philippa-perry",
+   "from": [
+    "filippa-perri"
+   ]
+  },
+  {
+   "into": "rahima-shomansurova",
+   "from": [
+    "shomansurova-rahima"
+   ]
+  },
+  {
+   "into": "safiyurrahmon-muborakfuriy",
+   "from": [
+    "safiyurrahmon-muboraqfuriy"
+   ]
+  },
+  {
+   "into": "said-ibn-ali-vahf-al-qahtoniy",
+   "from": [
+    "said-ibn-ali-ibn-vahf-al-qahtoniy"
+   ]
+  },
+  {
+   "into": "sara-jio",
+   "from": [
+    "sara-dzio"
+   ]
+  },
+  {
+   "into": "shayh-muhammad-solih-furfur",
+   "from": [
+    "shayx-muhammad-solih-furfur"
+   ]
+  },
+  {
+   "into": "sherzod-komil-halil",
+   "from": [
+    "sherzod-komil-xalil"
+   ]
+  },
+  {
+   "into": "solih-suruj",
+   "from": [
+    "solix-suruj"
+   ]
+  },
+  {
+   "into": "txarv-eker",
+   "from": [
+    "eker-xarv"
+   ]
+  },
+  {
+   "into": "tohir-hamut-izgil",
+   "from": [
+    "toxir-xamut-izgil"
+   ]
+  },
+  {
+   "into": "viktoria-hislop",
+   "from": [
+    "viktoriia-xislop"
+   ]
+  },
+  {
+   "into": "virjiniya-vulf",
+   "from": [
+    "virdziniia-vulf"
+   ]
+  },
+  {
+   "into": "washington-irving",
+   "from": [
+    "vasington-irving"
+   ]
+  },
+  {
+   "into": "william-glasser",
+   "from": [
+    "william-glasser-md"
+   ]
+  },
+  {
+   "into": "yu-hua",
+   "from": [
+    "yu-xua"
+   ]
+  },
+  {
+   "into": "yusuf-tovasli",
+   "from": [
+    "yusuf-tovasliy"
+   ]
+  },
+  {
+   "into": "zbignev-bjezinskiy",
+   "from": [
+    "bzezinskii-zbignev"
+   ]
+  },
+  {
+   "into": "zulayho-rahmonova",
+   "from": [
+    "zulayxo-raxmonova"
+   ]
+  },
+  {
+   "into": "azadi-xusein",
+   "from": [
+    "xusein-azadi"
+   ]
+  },
+  {
+   "into": "armentrout-dzennifer",
+   "from": [
+    "dzennifer-armentrout"
+   ]
+  },
+  {
+   "into": "boris-pasternak",
+   "from": [
+    "pasternak-boris"
+   ]
+  },
+  {
+   "into": "vulf-naomi",
+   "from": [
+    "naomi-vulf"
+   ]
+  },
+  {
+   "into": "viaceslav-semencuk",
+   "from": [
+    "semencuk-viaceslav"
+   ]
+  },
+  {
+   "into": "gandri-stiven",
+   "from": [
+    "stiven-gandri"
+   ]
+  },
+  {
+   "into": "garriet-mankaster",
+   "from": [
+    "mankaster-garriet"
+   ]
+  },
+  {
+   "into": "dzenni-kolgan",
+   "from": [
+    "kolgan-dzenni"
+   ]
+  },
+  {
+   "into": "devid-erika",
+   "from": [
+    "erika-devid"
+   ]
+  },
+  {
+   "into": "irvin-ialom",
+   "from": [
+    "ialom-irvin"
+   ]
+  },
+  {
+   "into": "matveev-sergei",
+   "from": [
+    "sergei-matveev"
+   ]
+  },
+  {
+   "into": "raim-farxadi",
+   "from": [
+    "raim-farxadii"
+   ]
+  },
+  {
+   "into": "taidzi-tanaka",
+   "from": [
+    "tanaka-taidzi"
+   ]
+  },
+  {
+   "into": "umberto-eko",
+   "from": [
+    "eko-umberto"
+   ]
+  },
+  {
+   "into": "alan-aleksandr-miln",
+   "from": [
+    "a-a-milne"
+   ]
+  },
+  {
+   "into": "pavel-bazov",
+   "from": [
+    "bazov-p"
+   ]
+  },
+  {
+   "into": "evgenii-svarc",
+   "from": [
+    "e-svarc"
+   ]
+  },
+  {
+   "into": "spirica-evgenii-valerevic",
+   "from": [
+    "spirica-ev"
+   ]
+  }
+ ]
+}

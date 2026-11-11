@@ -22,8 +22,10 @@ use Illuminate\Support\Facades\DB;
  * do. Every step checks the catalogue still looks the way the list
  * expects, and leaves alone anything that has changed since.
  *
- * The list shipped with the app (database/data/catalogue-fixes-2026-11.json)
- * comes from the author and translator research of 2026-11-12.
+ * The lists shipped with the app come from 2026-11-12:
+ * catalogue-fixes-2026-11.json from the author and translator research,
+ * catalogue-fixes-2026-11-duplicates.json from a scan of every author for
+ * one person kept under several spellings (pass it with --file).
  */
 #[Signature('catalogue:apply-fixes
     {--file= : JSON file to read (default: database/data/catalogue-fixes-2026-11.json)}
@@ -199,7 +201,7 @@ class ApplyCatalogueFixes extends Command
             $this->done++;
 
             if ($apply) {
-                $merger->merge($duplicate, $into);
+                $merger->merge($duplicate, $into, revalidate: false);
                 $into->refresh();
             }
         }

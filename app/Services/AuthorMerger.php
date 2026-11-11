@@ -32,7 +32,11 @@ class AuthorMerger
 
     public function __construct(private readonly SiteRevalidator $revalidator) {}
 
-    public function merge(Author $duplicate, Author $into): void
+    /**
+     * @param  bool  $revalidate  False when merging many in a row: the caller
+     *                            clears the site once at the end instead.
+     */
+    public function merge(Author $duplicate, Author $into, bool $revalidate = true): void
     {
         if ($duplicate->is($into)) {
             throw new InvalidArgumentException('An author cannot be merged into itself.');
@@ -69,7 +73,9 @@ class AuthorMerger
         });
 
         // Book pages, both author pages, every listing: drop the lot.
-        $this->revalidator->everything();
+        if ($revalidate) {
+            $this->revalidator->everything();
+        }
     }
 
     /**
