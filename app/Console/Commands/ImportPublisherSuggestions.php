@@ -17,7 +17,8 @@ use Illuminate\Console\Command;
  */
 #[Signature('publishers:import-suggestions
     {--file= : JSON file to read (default: database/data/publisher-suggestions.json)}
-    {--no-logos : Do not download channel photos from Telegram}')]
+    {--no-logos : Do not download channel photos from Telegram}
+    {--reopen : Put a published or rejected publisher back for review when the file has a new About text for it}')]
 #[Description('Load found publisher details (channel, contacts, about text) for review')]
 class ImportPublisherSuggestions extends Command
 {
@@ -32,15 +33,15 @@ class ImportPublisherSuggestions extends Command
             return self::FAILURE;
         }
 
-        $report = $suggestions->import($entries, logos: ! $this->option('no-logos'));
+        $report = $suggestions->import($entries, logos: ! $this->option('no-logos'), reopen: (bool) $this->option('reopen'));
 
         foreach ($report['missing'] as $slug) {
             $this->warn("  missing  {$slug}");
         }
 
         $this->info(sprintf(
-            '%d new and %d refreshed suggestion(s) waiting for review; %d already decided, %d with nothing found, %d not found.',
-            count($report['created']), count($report['refreshed']), count($report['decided']), count($report['empty']), count($report['missing']),
+            '%d new, %d refreshed and %d reopened suggestion(s) waiting for review; %d already decided, %d with nothing found, %d not found.',
+            count($report['created']), count($report['refreshed']), count($report['reopened']), count($report['decided']), count($report['empty']), count($report['missing']),
         ));
 
         return self::SUCCESS;

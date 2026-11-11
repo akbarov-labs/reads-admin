@@ -25,15 +25,17 @@ class PublisherSuggestions
 
     /**
      * Loads found details as pending suggestions. A suggestion still waiting
-     * is refreshed; one already published or rejected is left alone.
+     * is refreshed; one already published or rejected is left alone, unless
+     * $reopen is set and the file brings an About text it was not decided
+     * with: then it waits for review again.
      * Accepts a list of objects with a "slug", or an object keyed by slug.
      *
      * @param  array<int|string, array<string, mixed>>  $entries
-     * @return array{created: list<string>, refreshed: list<string>, decided: list<string>, empty: list<string>, missing: list<string>}
+     * @return array{created: list<string>, refreshed: list<string>, reopened: list<string>, decided: list<string>, empty: list<string>, missing: list<string>}
      */
-    public function import(array $entries, bool $logos = true): array
+    public function import(array $entries, bool $logos = true, bool $reopen = false): array
     {
-        $report = ['created' => [], 'refreshed' => [], 'decided' => [], 'empty' => [], 'missing' => []];
+        $report = ['created' => [], 'refreshed' => [], 'reopened' => [], 'decided' => [], 'empty' => [], 'missing' => []];
 
         foreach ($entries as $key => $entry) {
             $slug = (string) (is_string($key) ? $key : ($entry['slug'] ?? ''));
@@ -47,13 +49,20 @@ class PublisherSuggestions
 
             $existing = PublisherSuggestion::query()->where('publisher_id', $publisher->id)->first();
 
-            if ($existing !== null && $existing->status !== ModerationStatus::Pending) {
-                $report['decided'][] = $publisher->slug;
-
-                continue;
-            }
-
             $values = self::clean((array) $entry);
+            $reopening = false;
+
+            if ($existing !== null && $existing->status !== ModerationStatus::Pending) {
+                if (! $reopen || $values['bio'] === null || $values['bio'] == $existing->bio) {
+                    $report['decided'][] = $publisher->slug;
+
+                    continue;
+                }
+
+                $existing->status = ModerationStatus::Pending;
+                $existing->reviewed_at = null;
+                $reopening = true;
+            }
 
             if (! self::hasDetails($values)) {
                 $report['empty'][] = $publisher->slug;
@@ -72,7 +81,7 @@ class PublisherSuggestions
             }
 
             $suggestion->save();
-            $report[$existing ? 'refreshed' : 'created'][] = $publisher->slug;
+            $report[$reopening ? 'reopened' : ($existing ? 'refreshed' : 'created')][] = $publisher->slug;
         }
 
         return $report;
@@ -181,11 +190,27 @@ class PublisherSuggestions
             'address' => $text('address', 255),
             'established_year' => $year >= 1800 && $year <= (int) date('Y') ? $year : null,
             'bio' => $bio === [] ? null : $bio,
+            'about_sources' => self::sources($entry['about_sources'] ?? null),
             'confidence' => in_array($entry['confidence'] ?? null, ['high', 'medium', 'low'], true) ? $entry['confidence'] : null,
             'evidence' => $text('evidence', 2000),
             'other_channels' => $text('other_channels', 2000),
             'note' => $text('note', 2000),
         ];
+    }
+
+    /**
+     * Up to ten http(s) addresses an About text was written from.
+     *
+     * @return list<string>|null
+     */
+    private static function sources(mixed $value): ?array
+    {
+        $urls = array_values(array_filter(
+            is_array($value) ? $value : [],
+            fn ($url) => is_string($url) && strlen($url) <= 500 && preg_match('#^https?://[^\s/]+\.[^\s]+$#i', $url),
+        ));
+
+        return $urls === [] ? null : array_slice($urls, 0, 10);
     }
 
     /** @param  array<string, mixed>  $values */
