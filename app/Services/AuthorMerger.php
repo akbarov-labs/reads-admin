@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Author;
 use App\Models\AuthorAlias;
+use App\Models\ProfileSuggestion;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -62,11 +63,30 @@ class AuthorMerger
                 AuthorAlias::create(['author_id' => $into->id, 'name' => $name]);
             }
 
+            $this->moveSuggestion($duplicate, $into);
+
             $duplicate->delete();
         });
 
         // Book pages, both author pages, every listing: drop the lot.
         $this->revalidator->everything();
+    }
+
+    /**
+     * Researched facts waiting for review follow the person: the kept author
+     * takes the duplicate's suggestion when it has none of its own.
+     */
+    private function moveSuggestion(Author $duplicate, Author $into): void
+    {
+        $own = ProfileSuggestion::query()->where('subject_type', Author::class);
+
+        if ((clone $own)->where('subject_id', $into->id)->exists()) {
+            (clone $own)->where('subject_id', $duplicate->id)->delete();
+
+            return;
+        }
+
+        (clone $own)->where('subject_id', $duplicate->id)->update(['subject_id' => $into->id]);
     }
 
     private function moveBooks(Author $duplicate, Author $into): void

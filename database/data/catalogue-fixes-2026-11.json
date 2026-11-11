@@ -1,0 +1,53 @@
+{
+ "note": "Problems found while researching authors and translators on 2026-11-12. Each book move names the author it is credited to now; a book credited otherwise is left alone.",
+ "move_books": [
+  {"book": 5406, "from": "stephen-hawking", "to": "stiven-king", "why": "Стивен Кинг: Кристина"},
+  {"book": 5749, "from": "stephen-hawking", "to": "stiven-king", "why": "Стивен Кинг: Лавка дурных снов"},
+  {"book": 6210, "from": "stephen-hawking", "to": "stiven-king", "why": "Стивен Кинг: Волки Кальи"},
+  {"book": 5400, "from": "stephen-hawking", "to": "stiven-king", "why": "Стивен Кинг: Ветер сквозь замочную скважину"},
+  {"book": 6217, "from": "stephen-hawking", "to": "stiven-king", "why": "Стивен Кинг: Жребий Салема"},
+  {"book": 6342, "from": "agata-kristi", "to_name": "Liz Tomforde", "why": "Liz Tomforde: Caught Up"},
+  {"book": 3366, "from": "aleksandr-pushkin", "to": "kornei-cukovskii", "why": "Корней Чуковский: Стихи и сказки для малышей"},
+  {"book": 6942, "from": "oskar-uayld", "to_name": "Rafael Sabatini", "why": "Rafael Sabatini: Captain Blood"},
+  {"book": 8093, "from": "lev-tolstoi", "to": "aleksey-tolstoy", "why": "Гиперболоид инженера Гарина. Аэлита is Aleksey Tolstoy's"},
+  {"book": 7415, "from": "viktor-gyugo", "to_name": "Kanae Minato", "why": "Канаэ Минато: Искупление"},
+  {"book": 3249, "from": "uilyam-shekspir", "to": "jek-london", "why": "Jek London: Yovvoyi tabiat chaqirigʻi"},
+  {"book": 3138, "from": "stefan-sveyg", "to": "nikolay-gogol", "why": "Nikolay Vasilyeviç Gogol: Bir Delinin Hatıra Defteri"},
+  {"book": 1008, "from": "abdurauf-fitrat", "to": "abdulla-avloniy", "why": "Abdulla Avloniy: Afgʻon sayohati"},
+  {"book": 5141, "from": "djen-sinsero", "to_name": "Maxwell Maltz", "why": "Мольц М.: Психокибернетика"},
+  {"book": 7465, "from": "anton-chexov", "to_name": "Vladimir Korolenko", "why": "Владимир Короленко: Дети подземелья"},
+  {"book": 2840, "from": "nazar-eshonqul", "to_name": "Baraka Boqiy", "why": "Baraka Boqiy: Chang"},
+  {"book": 4147, "from": "nazar-eshonqul", "to_name": "Qosimjon Sodiqov", "why": "Qosimjon Sodiqov: Oʻzbek mumtoz adabiyoti"},
+  {"book": 13745, "from": "abu-iyso-muhammad-at-termiziy", "to": "hakim-termiziy", "why": "Nafs tarbiyasi (Hakim Termiziy) is al-Hakim at-Tirmidhi's"},
+  {"book": 3233, "from": "abu-homid-gazzoliy", "to_name": "Muhammadziyo Vohidjon oʻgʻli", "why": "Muhammadziyo Vohidjon oʻgʻli: Kim jannatni istasa"},
+  {"book": 7354, "from": "scott-cawthon", "to_name": "James Tynion IV", "why": "James Tynion IV: Batman: Secret Files"}
+ ],
+ "add_first_author": [
+  {"author": "burhonuddin-marginoniy", "books": [9435, 14687, 14688, 14689, 14690, 14691, 14692, 14693], "why": "«Hidoya» is Burhonuddin Margʻinoniy's; A'zamxon Qambarov stays credited, his role unproven"}
+ ],
+ "merge_authors": [
+  {"into": "charlz-dikkens", "from": ["charles-dickens"], "original_name": "Charles Dickens"},
+  {"into": "j-k-rowling", "from": ["joanna-ketlin-rouling", "dzoan-ketlin-rouling", "rouling-dzk"], "name": "J. K. Rouling", "original_name": "J. K. Rowling"},
+  {"into": "shayx-muhammad-sodiq-muhammad-yusuf", "from": ["seix-muxammad-sadyk-muxammad-iusuf", "shayx-muhammad-sodiq-muhammad-yusuf-va-tarjimonlar-guruhi"]},
+  {"into": "lev-nikolayevich-tolstoy", "from": ["lev-tolstoi", "lntolstoy", "leo-tolstoy", "lyev-tolstoy"], "name": "Lev Tolstoy", "original_name": "Лев Толстой"},
+  {"into": "aleksey-tolstoy", "from": ["an-tolstoy", "aleksei-nikolaevic-tolstoi"], "original_name": "Алексей Толстой"},
+  {"into": "nikolay-gogol", "from": ["nvgogol", "nikolai-vasilevic-gogol", "nikolai-vasilievich-gogol"], "original_name": "Николай Гоголь"},
+  {"into": "ivan-turgenev", "from": ["isturgenev", "ivan-sergeevic-turgenev", "ivan-sergeevich-turgenev"], "original_name": "Иван Тургенев"},
+  {"into": "ernest-xeminguey", "from": ["ernest-xemihguey", "xeminguei-ernest", "ernest-xeminguei", "ernest-xemingue", "ernest-hemingway"], "original_name": "Ernest Hemingway"},
+  {"into": "jeff-kinney", "from": ["kinni-dzeff", "dzeff-kinni"], "original_name": "Jeff Kinney"},
+  {"into": "jek-london", "from": ["dzek-london", "jack-london"], "original_name": "Jack London"},
+  {"into": "stephen-hawking", "from": ["stiven-xoking"], "name": "Stiven Xoking", "original_name": "Stephen Hawking"},
+  {"into": "kornei-cukovskii", "from": ["chukovskiy"], "name": "Korney Chukovskiy", "original_name": "Корней Чуковский"},
+  {"into": "aleksandr-pushkin", "from": ["aleksandr-sergeyevich-pushkin", "aspushkin", "alexander-pushkin"], "original_name": "Александр Пушкин"},
+  {"into": "lyuis-kerroll", "from": ["lyuis-keroll", "lewis-carroll", "carroll-lewis"], "original_name": "Lewis Carroll"}
+ ],
+ "rename_authors": [
+  {"slug": "alexander-mccall-smith", "name": "Alexander McCall Smith"}
+ ],
+ "rename_translators": [
+  {"slug": "igoria-egorova", "name": "Игорь Егоров"},
+  {"slug": "viktora-gorensteina", "name": "Виктор Горенштейн"},
+  {"slug": "mixaila-gasparova", "name": "Михаил Гаспаров"},
+  {"slug": "sergeia-blazeevskogo", "name": "Сергей Блажеевский"}
+ ]
+}
