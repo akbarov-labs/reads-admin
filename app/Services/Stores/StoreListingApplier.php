@@ -23,10 +23,16 @@ use Throwable;
  */
 class StoreListingApplier
 {
+    /** Covers are a few hundred KB; anything past this is not one. */
+    private const MAX_COVER_BYTES = 6 * 1024 * 1024;
+
+    /** 3000 × 4000: more than any cover needs, and GD decodes it in under 50 MB. */
+    private const MAX_COVER_PIXELS = 12_000_000;
+
     /**
      * @return array{matched: bool, filled: list<string>, differences: array<string, array{0: mixed, 1: mixed}>}
      */
-    public function apply(StoreListing $listing, bool $dryRun = false): array
+    public function apply(StoreListing $listing, bool $dryRun = false, bool $withCover = true): array
     {
         $edition = $listing->isbn !== null
             ? Edition::with(['book.authors', 'publisher'])->where('isbn', $listing->isbn)->first()
@@ -40,10 +46,24 @@ class StoreListingApplier
             return ['matched' => false, 'filled' => [], 'differences' => []];
         }
 
+        // A cover the edition lacks, but tonight's cap on downloads is spent:
+        // linked and compared, but left "not compared" so the next night
+        // comes back for the cover.
+        $wantsCover = blank($edition->cover_path) && $listing->image_url !== null;
+        $coverLater = $wantsCover && ! $withCover;
+
+        // Linked, and marked compared, before anything that can fail or take
+        // long (the cover download): its price shows on the book page from
+        // here on, and a listing whose cover can't be had is not tried
+        // again and again, holding up every listing after it.
+        if (! $dryRun) {
+            $listing->forceFill(['edition_id' => $edition->id, 'applied_at' => $coverLater ? null : now()])->save();
+        }
+
         $filled = [];
         $changes = [];
 
-        if (blank($edition->cover_path) && $listing->image_url !== null) {
+        if ($wantsCover && $withCover) {
             $path = $dryRun ? 'dry-run' : $this->storeCover($listing);
 
             if ($path !== null) {
@@ -66,7 +86,7 @@ class StoreListingApplier
 
             $listing->forceFill([
                 'edition_id' => $edition->id,
-                'applied_at' => now(),
+                'applied_at' => $coverLater ? null : now(),
                 'filled' => $filled !== [] ? $filled : $listing->filled,
                 'differences' => $differences !== [] ? $differences : null,
             ])->save();
@@ -120,7 +140,20 @@ class StoreListingApplier
             return null;
         }
 
-        $webp = $response->successful() ? WebpImage::from($response->body()) : null;
+        $body = $response->successful() ? $response->body() : '';
+
+        // A huge file or picture is not a cover worth the memory: decoding a
+        // poster-sized image can exhaust PHP's memory and end the whole run.
+        if ($body === '' || strlen($body) > self::MAX_COVER_BYTES) {
+            return null;
+        }
+
+        $size = @getimagesizefromstring($body);
+        if ($size === false || $size[0] * $size[1] > self::MAX_COVER_PIXELS) {
+            return null;
+        }
+
+        $webp = WebpImage::from($body);
 
         if ($webp === null) {
             return null;
