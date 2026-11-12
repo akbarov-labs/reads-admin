@@ -17,7 +17,7 @@ return new class extends Migration
     {
         Schema::create('deals', function (Blueprint $table) {
             $table->id();
-            // App\Enums\DealKind: discount | contest.
+            // App\Enums\DealKind: discount | contest | event.
             $table->string('kind', 16)->default('discount');
             // Who runs it: a publisher in the catalogue, or else a shop by
             // name (Asaxiy, Qamar) that isn't one.

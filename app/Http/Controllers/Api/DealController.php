@@ -12,10 +12,10 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Discounts and contests on the site today (Deal::live): the Chegirmalar
+ * Discounts, contests and events on the site today (Deal::live): the Chegirmalar
  * page, the home page's few, a publisher's own, and the button's redirect.
  *
- *   ?kind=       discount | contest
+ *   ?kind=       discount | contest | event
  *   ?publisher=  a publisher's slug
  *   ?limit=      at most 48
  */
