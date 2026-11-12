@@ -155,9 +155,20 @@ class ApplyCatalogueFixesTest extends TestCase
         $this->assertSame('Игорь Егоров', Translator::query()->where('slug', 'igoria-egorova')->value('name'));
     }
 
-    public function test_the_shipped_list_reads(): void
+    public function test_the_shipped_lists_read(): void
     {
         $this->artisan('catalogue:apply-fixes')
+            ->expectsOutputToContain('Dry run')
+            ->assertSuccessful();
+
+        $file = database_path('data/catalogue-fixes-2026-11-duplicates.json');
+        $merges = json_decode((string) file_get_contents($file), true)['merge_authors'];
+        $slugs = array_merge(...array_map(fn ($m) => [$m['into'], ...$m['from']], $merges));
+
+        // One person per entry: no slug is kept in one and merged away in another.
+        $this->assertSame(count($slugs), count(array_unique($slugs)));
+
+        $this->artisan('catalogue:apply-fixes', ['--file' => $file])
             ->expectsOutputToContain('Dry run')
             ->assertSuccessful();
     }
