@@ -173,6 +173,62 @@ class ProfileSuggestionTest extends TestCase
         $this->assertSame('Amerikalik yozuvchi, «Yashil mil» muallifi.', $suggestion->bio['uz']);
     }
 
+    public function test_all_high_confidence_findings_publish_in_one_go_and_the_site_rebuilds_once(): void
+    {
+        config(['seo.revalidate.url' => 'https://site.test/api/revalidate', 'seo.revalidate.secret' => 'secret']);
+        \Illuminate\Support\Facades\Http::fake();
+
+        $king = Author::create(['slug' => 'stiven-king', 'name' => 'Stiven King']);
+        $said = Author::create(['slug' => 'said-ahmad', 'name' => 'Said Ahmad']);
+        $doubtful = Author::create(['slug' => 'm-ahmedov', 'name' => 'M. Ahmedov']);
+        $zarina = Translator::create(['slug' => 'zarina-tojiyeva', 'name' => 'Zarina Tojiyeva']);
+        $zarina->setTranslation('bio', 'uz', 'Oʻzim yozgan matn.')->save();
+
+        $this->load([
+            $this->kingEntry(),
+            ['type' => 'author', 'slug' => 'said-ahmad', 'bio' => ['uz' => 'Oʻzbek yozuvchisi.'], 'birth_year' => 1920, 'death_year' => 2007, 'confidence' => 'high'],
+            ['type' => 'author', 'slug' => 'm-ahmedov', 'bio' => ['uz' => 'Balki u.'], 'confidence' => 'medium'],
+            ['type' => 'translator', 'slug' => 'zarina-tojiyeva', 'bio' => ['uz' => 'Boshqa matn.', 'en' => 'Translator.'], 'confidence' => 'high'],
+        ])->assertSuccessful();
+        \Illuminate\Support\Facades\Http::fake();
+
+        $this->actingAs($this->admin());
+
+        Livewire::test(ListProfileSuggestions::class)
+            ->assertTableActionVisible('publishHigh')
+            ->callTableAction('publishHigh');
+
+        $this->assertSame(1947, $king->refresh()->birth_year);
+        $this->assertSame(2007, $said->refresh()->death_year);
+        // Medium waits for a person.
+        $this->assertNull($doubtful->refresh()->getTranslation('bio', 'uz', false) ?: null);
+        $this->assertSame(ModerationStatus::Pending, ProfileSuggestion::query()->where('subject_id', $doubtful->id)->where('subject_type', Author::class)->value('status'));
+        // What the page had stays; only its blanks are filled.
+        $zarina->refresh();
+        $this->assertSame('Oʻzim yozgan matn.', $zarina->getTranslation('bio', 'uz'));
+        $this->assertSame('Translator.', $zarina->getTranslation('bio', 'en'));
+
+        \Illuminate\Support\Facades\Http::assertSentCount(1);
+    }
+
+    public function test_selected_rows_publish_together(): void
+    {
+        Author::create(['slug' => 'stiven-king', 'name' => 'Stiven King']);
+        $said = Author::create(['slug' => 'said-ahmad', 'name' => 'Said Ahmad']);
+        $this->load([
+            $this->kingEntry(['confidence' => 'medium']),
+            ['type' => 'author', 'slug' => 'said-ahmad', 'birth_year' => 1920, 'confidence' => 'low'],
+        ])->assertSuccessful();
+
+        $this->actingAs($this->admin());
+
+        Livewire::test(ListProfileSuggestions::class)
+            ->callTableBulkAction('publishSelected', ProfileSuggestion::query()->get());
+
+        $this->assertSame(1920, $said->refresh()->birth_year);
+        $this->assertSame(0, ProfileSuggestion::query()->where('status', ModerationStatus::Pending->value)->count());
+    }
+
     public function test_only_admins_see_the_suggestions(): void
     {
         $user = User::create(['name' => 'T', 'email' => 't@example.test', 'password' => 'password', 'role' => UserRole::Translator]);

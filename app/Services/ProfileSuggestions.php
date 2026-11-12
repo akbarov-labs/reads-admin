@@ -117,9 +117,41 @@ class ProfileSuggestions
 
             $subject->save();
 
+            // Translators ping their own page on save; authors have no
+            // observer, and their facts show on book pages too.
+            if ($subject instanceof Author) {
+                app(SiteRevalidator::class)->everything();
+            }
+
             $suggestion->update(['status' => ModerationStatus::Approved, 'reviewed_at' => now()]);
 
             return $subject;
+        });
+    }
+
+    /**
+     * Publishes each waiting suggestion as its review would start: the
+     * page's own values stay, the findings fill only what it lacks. One
+     * site rebuild for the lot.
+     *
+     * @param  iterable<ProfileSuggestion>  $suggestions
+     * @return int How many were published.
+     */
+    public function publishMany(iterable $suggestions): int
+    {
+        return SiteRevalidator::batch(function () use ($suggestions) {
+            $count = 0;
+
+            foreach ($suggestions as $suggestion) {
+                if ($suggestion->status !== ModerationStatus::Pending || $suggestion->subject === null) {
+                    continue;
+                }
+
+                $this->publish($suggestion, self::formState($suggestion));
+                $count++;
+            }
+
+            return $count;
         });
     }
 

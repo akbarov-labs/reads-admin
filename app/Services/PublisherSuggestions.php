@@ -131,6 +131,33 @@ class PublisherSuggestions
         });
     }
 
+    /**
+     * Publishes each waiting suggestion as its review would start: the
+     * page's own values stay, the findings fill only what it lacks, and the
+     * channel photo becomes the logo only where there is none. One site
+     * rebuild for the lot.
+     *
+     * @param  iterable<PublisherSuggestion>  $suggestions
+     * @return int How many were published.
+     */
+    public function publishMany(iterable $suggestions): int
+    {
+        return SiteRevalidator::batch(function () use ($suggestions) {
+            $count = 0;
+
+            foreach ($suggestions as $suggestion) {
+                if ($suggestion->status !== ModerationStatus::Pending) {
+                    continue;
+                }
+
+                $this->publish($suggestion, self::formState($suggestion));
+                $count++;
+            }
+
+            return $count;
+        });
+    }
+
     public function reject(PublisherSuggestion $suggestion): void
     {
         $suggestion->update(['status' => ModerationStatus::Rejected, 'reviewed_at' => now()]);

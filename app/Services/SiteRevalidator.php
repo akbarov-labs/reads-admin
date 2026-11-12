@@ -17,6 +17,37 @@ use Illuminate\Support\Facades\Log;
  */
 class SiteRevalidator
 {
+    /** How many batch() calls are running; while any is, pings wait. */
+    private static int $holding = 0;
+
+    private static bool $missed = false;
+
+    /**
+     * Runs $work with pings held back, then clears the whole site once if
+     * anything asked for a ping meanwhile: publishing two hundred profiles
+     * is one rebuild, not two hundred.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $work
+     * @return T
+     */
+    public static function batch(callable $work): mixed
+    {
+        self::$holding++;
+
+        try {
+            return $work();
+        } finally {
+            self::$holding--;
+
+            if (self::$holding === 0 && self::$missed) {
+                self::$missed = false;
+                app(self::class)->everything();
+            }
+        }
+    }
+
     public function translator(?string $slug): void
     {
         $this->ping(['type' => 'translator', 'slug' => $slug]);
@@ -62,6 +93,12 @@ class SiteRevalidator
      */
     private function ping(array $payload): void
     {
+        if (self::$holding > 0) {
+            self::$missed = true;
+
+            return;
+        }
+
         $url = config('seo.revalidate.url');
         $secret = config('seo.revalidate.secret');
 
