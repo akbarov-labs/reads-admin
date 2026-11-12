@@ -119,6 +119,28 @@ class PublisherSuggestionResource extends Resource
                     ->visible(fn (PublisherSuggestion $record) => $record->status === ModerationStatus::Pending)
                     ->action(fn (PublisherSuggestion $record) => app(PublisherSuggestions::class)->reject($record)),
             ])
+            ->headerActions([
+                Tables\Actions\Action::make('publishHigh')
+                    ->label(fn () => 'Publish all high-confidence ('.self::highWaiting()->count().')')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->visible(fn () => self::highWaiting()->exists())
+                    ->requiresConfirmation()
+                    ->modalHeading('Publish every high-confidence finding?')
+                    ->modalDescription(fn () => self::highWaiting()->count().' publishers. Fills only what the page does not have yet; anything already on it stays, exactly as pressing Publish without changing the form. The channel photo becomes the logo only where there is none. A channel another publisher already has is left for you.')
+                    ->modalSubmitActionLabel('Publish them')
+                    ->action(fn () => self::published(app(PublisherSuggestions::class)->publishMany(self::highWaiting()->with('publisher')->get()))),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkAction::make('publishSelected')
+                    ->label('Publish selected')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalDescription('Fills only what the page does not have yet; anything already on it stays, exactly as pressing Publish without changing the form.')
+                    ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => self::published(app(PublisherSuggestions::class)->publishMany($records->load('publisher'))))
+                    ->deselectRecordsAfterCompletion(),
+            ])
             ->recordAction('review')
             ->emptyStateHeading('Nothing waiting')
             ->emptyStateDescription('Details found for publishers appear here after php artisan publishers:import-suggestions.');
@@ -211,6 +233,29 @@ class PublisherSuggestionResource extends Resource
 
                 Notification::make()->success()->title("{$publisher->name}: published on the site.")->send();
             });
+    }
+
+    /**
+     * Waiting, high-confidence, and not a channel some other publisher
+     * already has (two rows for one house want a merge, not a bulk click).
+     *
+     * @return Builder<PublisherSuggestion>
+     */
+    private static function highWaiting(): Builder
+    {
+        return PublisherSuggestion::query()
+            ->where('status', ModerationStatus::Pending->value)
+            ->where('confidence', 'high')
+            ->where(fn (Builder $query) => $query
+                ->whereNull('telegram_channel')
+                ->orWhereNotExists(fn ($sub) => $sub->selectRaw('1')->from('publishers')
+                    ->whereColumn('publishers.id', '!=', 'publisher_suggestions.publisher_id')
+                    ->whereRaw('lower(publishers.telegram_channel) = lower(publisher_suggestions.telegram_channel)')));
+    }
+
+    private static function published(int $count): void
+    {
+        Notification::make()->success()->title("{$count} published on the site.")->send();
     }
 
     /**

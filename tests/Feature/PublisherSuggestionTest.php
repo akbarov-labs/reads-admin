@@ -192,6 +192,33 @@ class PublisherSuggestionTest extends TestCase
             ->assertSuccessful();
     }
 
+    public function test_all_high_confidence_publishers_publish_in_one_go_but_not_a_taken_channel(): void
+    {
+        $munir = Publisher::create(['slug' => 'munir', 'name' => 'Munir', 'phone' => '+998 71 000 00 00']);
+        $adabiyot = Publisher::create(['slug' => 'adabiyot', 'name' => 'Adabiyot']);
+        $copy = Publisher::create(['slug' => 'munir-nashr', 'name' => 'Munir nashr']);
+        Publisher::create(['slug' => 'huzur', 'name' => 'Huzur', 'telegram_channel' => 'huzurkitoblari']);
+
+        $this->load([
+            $this->munirEntry(),
+            ['slug' => 'adabiyot', 'telegram_channel' => 'adabiyotnashr', 'confidence' => 'medium', 'bio' => ['uz' => 'Matn.']],
+            ['slug' => 'munir-nashr', 'telegram_channel' => 'huzurkitoblari', 'confidence' => 'high', 'bio' => ['uz' => 'Matn.']],
+        ]);
+
+        $this->actingAs($this->admin());
+
+        Livewire::test(ListPublisherSuggestions::class)->callTableAction('publishHigh');
+
+        $munir->refresh();
+        $this->assertSame('munirnashr', $munir->telegram_channel);
+        $this->assertSame('+998 71 000 00 00', $munir->phone);
+        $this->assertSame('Diniy kitoblar.', $munir->getTranslation('bio', 'uz'));
+        $this->assertStringStartsWith('publishers/', $munir->logo_path);
+        // Medium, and a channel another publisher has, wait for a person.
+        $this->assertNull($adabiyot->refresh()->telegram_channel);
+        $this->assertNull($copy->refresh()->telegram_channel);
+    }
+
     public function test_the_review_starts_from_what_the_page_already_has(): void
     {
         $munir = Publisher::create(['slug' => 'munir', 'name' => 'Munir', 'phone' => '+998 71 000 00 00', 'logo_path' => 'publishers/own.png']);

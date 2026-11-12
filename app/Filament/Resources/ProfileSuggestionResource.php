@@ -106,6 +106,28 @@ class ProfileSuggestionResource extends Resource
                     ->visible(fn (ProfileSuggestion $record) => $record->status === ModerationStatus::Pending)
                     ->action(fn (ProfileSuggestion $record) => app(ProfileSuggestions::class)->reject($record)),
             ])
+            ->headerActions([
+                Tables\Actions\Action::make('publishHigh')
+                    ->label(fn () => 'Publish all high-confidence ('.self::highWaiting()->count().')')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->visible(fn () => self::highWaiting()->exists())
+                    ->requiresConfirmation()
+                    ->modalHeading('Publish every high-confidence finding?')
+                    ->modalDescription(fn () => self::highWaiting()->count().' authors and translators. Fills only what the page does not have yet; anything already on it stays, exactly as pressing Publish without changing the form. Medium and low ones stay for you.')
+                    ->modalSubmitActionLabel('Publish them')
+                    ->action(fn () => self::published(app(ProfileSuggestions::class)->publishMany(self::highWaiting()->with('subject')->get()))),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkAction::make('publishSelected')
+                    ->label('Publish selected')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalDescription('Fills only what the page does not have yet; anything already on it stays, exactly as pressing Publish without changing the form.')
+                    ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => self::published(app(ProfileSuggestions::class)->publishMany($records->load('subject'))))
+                    ->deselectRecordsAfterCompletion(),
+            ])
             ->defaultSort(fn (Builder $query) => $query
                 ->orderByRaw("case confidence when 'high' then 0 when 'medium' then 1 when 'low' then 2 else 3 end")
                 ->orderBy('id'))
@@ -234,6 +256,20 @@ class ProfileSuggestionResource extends Resource
         }
 
         return new HtmlString($html.'</dl>');
+    }
+
+    /** @return Builder<ProfileSuggestion> */
+    private static function highWaiting(): Builder
+    {
+        return ProfileSuggestion::query()
+            ->where('status', ModerationStatus::Pending->value)
+            ->where('confidence', 'high')
+            ->whereHasMorph('subject', [Author::class, Translator::class]);
+    }
+
+    private static function published(int $count): void
+    {
+        Notification::make()->success()->title("{$count} published on the site.")->send();
     }
 
     private static function years(ProfileSuggestion $record): ?string
