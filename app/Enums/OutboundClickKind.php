@@ -33,6 +33,12 @@ enum OutboundClickKind: string implements HasLabel
      */
     case SharedList = 'shared_list';
 
+    /**
+     * A deal's button on the site's Chegirmalar page: the shop's page or
+     * the post. Its target is Deal::clickTarget(), "deal-<id>".
+     */
+    case Deal = 'deal';
+
     /** The one place a review button leads. */
     public const BOT_TARGET = 'bot';
 
@@ -50,6 +56,7 @@ enum OutboundClickKind: string implements HasLabel
             self::AskAi => 'Ask AI',
             self::BotReview => 'Write a review',
             self::SharedList => 'Shared reading list',
+            self::Deal => 'Deal',
         };
     }
 }

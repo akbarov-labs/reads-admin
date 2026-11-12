@@ -37,12 +37,14 @@ class OutboundClickController extends Controller
             // looked up here rather than taken from the request.
             'announcement_id' => ['required_if:kind,'.OutboundClickKind::PublisherOrder->value, 'nullable', 'integer', 'exists:announcements,id'],
             'target' => [
-                'required_if:kind,'.OutboundClickKind::Store->value.','.OutboundClickKind::AskAi->value,
+                'required_if:kind,'.OutboundClickKind::Store->value.','.OutboundClickKind::AskAi->value.','.OutboundClickKind::Deal->value,
                 'nullable',
                 'string',
                 'regex:/^[a-z0-9.-]{1,64}$/',
                 // An ask-AI click names the kind of page it came from.
                 Rule::when($request->input('kind') === OutboundClickKind::AskAi->value, [Rule::in(OutboundClickKind::ASK_AI_SUBJECTS)]),
+                // A deal's click names the deal: "deal-<id>".
+                Rule::when($request->input('kind') === OutboundClickKind::Deal->value, ['regex:/^deal-\d{1,10}$/']),
             ],
             'locale' => ['nullable', Rule::in(['uz', 'ru', 'en'])],
             // The visitor's, as the site saw them. Hashed below, never stored.

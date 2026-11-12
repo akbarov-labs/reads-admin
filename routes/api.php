@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\BookViewController;
 use App\Http\Controllers\Api\CatalogueSyncController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CollectionController;
+use App\Http\Controllers\Api\DealController;
 use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\LibraryController;
 use App\Http\Controllers\Api\OutboundClickController;
@@ -48,6 +49,9 @@ Route::middleware('throttle:public-read')->group(function () {
     // Publishers' new books and pre-orders on the site today.
     Route::get('/announcements', [AnnouncementController::class, 'index']);
     Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show']);
+    // Discounts and contests on the site today.
+    Route::get('/deals', [DealController::class, 'index']);
+    Route::get('/deals/{deal}', [DealController::class, 'show']);
     // The search box's grouped suggestions. The site forwards each
     // visitor's address and sends no token, so every visitor has a
     // stranger's 120 a minute and nobody's typing eats the site's bucket.

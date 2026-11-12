@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Filament\Resources\AnnouncementResource\Pages\ListAnnouncements;
 use App\Models\Announcement;
 use App\Models\Book;
+use App\Models\Deal;
 use App\Models\Publisher;
 use App\Models\User;
 use App\Services\Telegram\ChannelScanner;
@@ -392,5 +393,32 @@ class ChannelScanTest extends TestCase
             Announcement::query()->where('status', ModerationStatus::Rejected)->pluck('source_url')->all(),
         );
         Http::assertNothingSent();
+    }
+
+    public function test_a_sale_or_contest_post_becomes_a_deal_draft_not_an_announcement(): void
+    {
+        $this->channelPost(110, "🔥 Barcha kitoblarga 30% chegirma!\nPromokod: KUZ30\n15-noyabrgacha amal qiladi.", '2026-10-23 09:00', 'none');
+        $this->channelPost(111, "📚 KONKURS! 3 ta kitobni yutib oling. Shartlar: kanalga obuna bo'ling va postni ulashing.");
+
+        $report = $this->scan();
+
+        $this->assertSame(2, $report['drafts']);
+        $this->assertSame(0, Announcement::query()->count());
+
+        $sale = Deal::query()->where('source_url', 'https://t.me/HilolNashr/110')->sole();
+        $this->assertSame(ModerationStatus::Pending, $sale->status);
+        $this->assertTrue($sale->found_by_scan);
+        $this->assertSame($this->hilol->id, $sale->publisher_id);
+        $this->assertSame(30, $sale->discount_percent);
+        $this->assertSame('KUZ30', $sale->promo_code);
+        $this->assertSame('2026-11-15', $sale->ends_on->toDateString());
+        $this->assertNull($sale->image_path);
+
+        $contest = Deal::query()->where('source_url', 'https://t.me/HilolNashr/111')->sole();
+        $this->assertSame('contest', $contest->kind->value);
+        $this->assertNotNull($contest->image_path);
+
+        // Read once: the next scan drafts nothing again.
+        $this->assertSame(0, $this->scan()['drafts']);
     }
 }
