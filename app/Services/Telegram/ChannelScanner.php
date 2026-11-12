@@ -14,8 +14,9 @@ use Throwable;
 /**
  * Reads every publisher's Telegram channel for posts that came since the
  * last scan, and makes a pending draft from each that looks like a new book
- * or a pre-order (AnnouncementDraft::looksLikeAnnouncement). Nothing reaches
- * the site before an admin publishes it.
+ * or a pre-order (AnnouncementDraft::looksLikeAnnouncement), or a sale or a
+ * contest (DealDraft::looksLikeDeal, a Deal). Nothing reaches the site
+ * before an admin publishes it.
  *
  * Only the channel's own posts with a photo count: a new book is announced
  * with its cover, while videos are trailers and readings, and a forward is
@@ -41,6 +42,7 @@ class ChannelScanner
     public function __construct(
         private readonly TelegramChannel $telegram,
         private readonly AnnouncementImporter $importer,
+        private readonly DealImporter $deals,
     ) {}
 
     /**
@@ -159,6 +161,21 @@ class ChannelScanner
         $catalogue = null;
 
         foreach ($new as $post) {
+            // A sale or a contest: a deal draft rather than a new book, with
+            // or without a picture. Never both from one post.
+            if (! $post->isForwardedFromElsewhere() && DealDraft::looksLikeDeal($post->text)) {
+                try {
+                    if ($this->deals->fromPost($post, $publisher) !== null) {
+                        $drafts++;
+                    }
+                } catch (Throwable $e) {
+                    report($e);
+                    $failed[] = $post->url();
+                }
+
+                continue;
+            }
+
             if (! $post->hasPhoto || $post->isForwardedFromElsewhere() || ! AnnouncementDraft::looksLikeAnnouncement($post->text)) {
                 continue;
             }

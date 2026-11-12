@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
  */
 final class AnnouncementDraft
 {
-    private const PREORDER_WORDS = '/oldindan[\s_]+buyurtma|old\.?\s*buyurtma|predzakaz|предзаказ|предварительн\w*\s+заказ|pre-?order/iu';
+    public const PREORDER_WORDS = '/oldindan[\s_]+buyurtma|old\.?\s*buyurtma|predzakaz|предзаказ|предварительн\w*\s+заказ|pre-?order/iu';
 
     // Latin month names take Uzbek suffixes (oktabrgacha, 25-oktabrda);
     // Cyrillic ones Russian case endings (октября, марта). Nothing else may
@@ -115,7 +115,7 @@ final class AnnouncementDraft
      * #sotuvda", "🎉 TEZ KUNDA!") are passed over, and a quote counts only
      * on a short line: in a paragraph it is more likely a chapter or a saying.
      */
-    private static function title(array $lines): string
+    public static function title(array $lines): string
     {
         $content = array_values(array_filter($lines, fn (string $line) => ! self::isHeading($line)));
 
@@ -174,7 +174,7 @@ final class AnnouncementDraft
      * The pre-order's last day: "25.10", "25.10.2026", "25-oktabrgacha",
      * "до 25 октября". A day without a year is the next one to come.
      */
-    private static function deadline(string $text, CarbonImmutable $postedAt): ?string
+    public static function deadline(string $text, CarbonImmutable $postedAt): ?string
     {
         if (preg_match('/(?<!\d)(\d{1,2})[.\/](\d{1,2})(?:[.\/](\d{4}|\d{2}))?(?!\d)/u', $text, $m)) {
             [$day, $month, $year] = [(int) $m[1], (int) $m[2], isset($m[3]) ? (int) $m[3] : null];
