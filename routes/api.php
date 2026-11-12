@@ -32,6 +32,8 @@ Route::middleware('throttle:public-read')->group(function () {
     Route::get('/authors', [AuthorController::class, 'index']);
     Route::get('/authors/{author}', [AuthorController::class, 'show']);
     Route::get('/books', [BookController::class, 'index']);
+    // Before /books/{book}, which would read "years" as a book id.
+    Route::get('/books/years', [BookController::class, 'years']);
     Route::get('/books/{book}', [BookController::class, 'show']);
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/publishers', [PublisherController::class, 'index']);

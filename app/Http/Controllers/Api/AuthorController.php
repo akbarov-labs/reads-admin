@@ -7,6 +7,7 @@ use App\Http\Resources\Api\AuthorResource;
 use App\Models\Author;
 use App\Models\Book;
 use App\Support\CatalogueCovers;
+use App\Support\SearchKeys;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
@@ -36,8 +37,29 @@ class AuthorController extends Controller
             ->joinSub($counts, 'published', 'published.author_id', '=', 'authors.id')
             ->select('authors.*', 'published.books_count');
 
+        $terms = [];
+
         if (filled($q = $this->searchTerm($request))) {
-            $query->where(fn ($match) => $match->where('authors.name', 'like', "%{$q}%")->orWhere('authors.original_name', 'like', "%{$q}%"));
+            $terms = SearchKeys::terms($q);
+            $like = self::containing($q);
+
+            // As typed anywhere in the name, or by search_key, which folds
+            // alphabet and apostrophes: "қодирий" finds "Abdulla Qodiriy",
+            // and a pen name kept as an alias finds its author.
+            $query->where(function ($match) use ($like, $terms) {
+                $match->where('authors.name', 'like', $like)->orWhere('authors.original_name', 'like', $like);
+
+                if ($terms !== []) {
+                    $match->orWhere(fn ($key) => SearchKeys::match($key, 'authors.search_key', $terms))
+                        ->orWhereHas('aliases', fn ($alias) => SearchKeys::match($alias, 'author_aliases.search_key', $terms));
+                }
+            });
+        }
+
+        // A search puts the name typed in full first; the usual order
+        // decides the rest.
+        if ($terms !== [] && ! $request->filled('sort')) {
+            SearchKeys::rank($query, 'authors.search_key', $terms);
         }
 
         $request->query('sort') === 'name'

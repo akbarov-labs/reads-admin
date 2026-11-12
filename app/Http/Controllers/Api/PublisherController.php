@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\PublisherResource;
 use App\Models\Publisher;
 use App\Support\CatalogueCovers;
+use App\Support\SearchKeys;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -22,8 +23,25 @@ class PublisherController extends Controller
         $query = Publisher::whereHas('editions', fn ($editions) => $editions->approved()->whereHas('book', fn ($book) => $book->approved()))
             ->withBookCount(approvedOnly: true);
 
+        $terms = [];
+
         if (filled($q = $this->searchTerm($request))) {
-            $query->where('name', 'like', "%{$q}%");
+            $terms = SearchKeys::terms($q);
+            $like = self::containing($q);
+
+            // As typed, or by search_key, which folds alphabet and
+            // apostrophes: "Шарқ" finds "Sharq".
+            $query->where(function ($match) use ($like, $terms) {
+                $match->where('publishers.name', 'like', $like);
+
+                if ($terms !== []) {
+                    $match->orWhere(fn ($key) => SearchKeys::match($key, 'publishers.search_key', $terms));
+                }
+            });
+        }
+
+        if ($terms !== [] && ! $request->filled('sort')) {
+            SearchKeys::rank($query, 'publishers.search_key', $terms);
         }
 
         $request->query('sort') === 'name'
