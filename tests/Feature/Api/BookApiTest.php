@@ -357,4 +357,45 @@ class BookApiTest extends TestCase
             ->assertJsonPath('data.0.children.0.slug', 'jahon')
             ->assertJsonPath('data.0.children.0.bookCount', 1);
     }
+
+    public function test_it_filters_by_any_approved_printing_year(): void
+    {
+        $reprinted = $this->catalogueBook(['uzbek_title' => 'Reprinted'], ['year' => 2019]);
+        $this->edition($reprinted, ['year' => 2024]);
+        $this->catalogueBook(['uzbek_title' => 'Old'], ['year' => 2001]);
+        $pending = $this->catalogueBook(['uzbek_title' => 'Pending printing'], ['year' => 2001]);
+        $this->edition($pending, ['year' => 2024, 'status' => ModerationStatus::Pending]);
+
+        $this->getJson('/api/books?year=2024')->assertJsonCount(1, 'data')->assertJsonPath('data.0.uzbekTitle', 'Reprinted');
+        $this->getJson('/api/books?year=2019')->assertJsonCount(1, 'data')->assertJsonPath('data.0.uzbekTitle', 'Reprinted');
+        $this->getJson('/api/books?year=2001')->assertJsonCount(2, 'data');
+        // Not a year: ignored rather than an empty list.
+        $this->getJson('/api/books?year=20x4')->assertJsonCount(3, 'data');
+    }
+
+    public function test_years_lists_the_printing_years_of_the_filtered_books_newest_first(): void
+    {
+        $hilol = $this->publisher('Hilol-nashr');
+        $reprinted = $this->catalogueBook(['uzbek_title' => 'Reprinted'], ['year' => 2019, 'publisher_id' => $hilol->id]);
+        $this->edition($reprinted, ['year' => 2024, 'publisher_id' => $hilol->id]);
+        $this->edition($reprinted, ['year' => 2024]);
+        $this->catalogueBook(['uzbek_title' => 'Also Hilol'], ['year' => 2024, 'publisher_id' => $hilol->id]);
+        $this->catalogueBook(['uzbek_title' => 'Elsewhere'], ['year' => 1995]);
+        $this->catalogueBook(['uzbek_title' => 'No year'], ['year' => null]);
+
+        $this->getJson('/api/books/years')
+            ->assertOk()
+            ->assertExactJson(['data' => [
+                ['year' => 2024, 'count' => 2],
+                ['year' => 2019, 'count' => 1],
+                ['year' => 1995, 'count' => 1],
+            ]]);
+
+        // The list's own filters apply; ?year itself does not narrow it.
+        $this->getJson('/api/books/years?publisher=hilol-nashr&year=2019')
+            ->assertExactJson(['data' => [
+                ['year' => 2024, 'count' => 2],
+                ['year' => 2019, 'count' => 1],
+            ]]);
+    }
 }

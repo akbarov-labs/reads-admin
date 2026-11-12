@@ -9,9 +9,11 @@ use App\Http\Resources\Api\BookResource;
 use App\Models\Book;
 use App\Support\SearchKeys;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class BookController extends Controller
@@ -31,7 +33,8 @@ class BookController extends Controller
      *   ?q=        title, original title, author name, or an exact ISBN
      *   ?isbn=     only the book with an approved edition of this ISBN
      *   ?author=   ?publisher=   ?translator=   ?category=   ?series=
-     *   ?sort=     year (newest edition first, the default) | title | recent;
+     *   ?year=     only books with an approved edition printed that year
+     *   ?sort=    year (newest edition first, the default) | title | recent;
      *              a search with no sort of its own puts the closest title first
      *   ?page=     ?per_page= (at most 100)
      */
@@ -59,6 +62,33 @@ class BookController extends Controller
         return BookResource::collection($page);
     }
 
+    /**
+     * The years the books on a list were printed, newest first, each with
+     * how many of those books have an approved edition from it: the site's
+     * "Yil" filter. It takes index()'s filters except ?year itself, so the
+     * years offered on Hilol-nashr's list are Hilol-nashr's.
+     */
+    public function years(Request $request): JsonResponse
+    {
+        $books = Book::approved()->select('books.id');
+        $this->filter($books, $request, byYear: false);
+
+        // Grouped once over editions rather than counted per year: see the
+        // 502 note in AuthorController for what a correlated count costs.
+        $years = DB::table('editions')
+            ->where('status', ModerationStatus::Approved->value)
+            ->whereNotNull('year')
+            ->whereIn('book_id', $books)
+            ->groupBy('year')
+            ->orderByDesc('year')
+            ->selectRaw('year, count(distinct book_id) as books')
+            ->get()
+            ->map(fn ($row) => ['year' => (int) $row->year, 'count' => (int) $row->books])
+            ->values();
+
+        return response()->json(['data' => $years]);
+    }
+
     public function show(Book $book): BookDetailResource
     {
         // A book awaiting moderation does not exist as far as the site is
@@ -84,7 +114,7 @@ class BookController extends Controller
         return new BookDetailResource($book, $this->relatedTo($book));
     }
 
-    private function filter(Builder $query, Request $request): void
+    private function filter(Builder $query, Request $request, bool $byYear = true): void
     {
         if (filled($q = $this->searchTerm($request))) {
             $like = '%'.self::escapeLike($q).'%';
@@ -137,6 +167,13 @@ class BookController extends Controller
 
         if (filled($slug = $request->query('series'))) {
             $query->whereHas('series', fn (Builder $s) => $s->where('slug', $slug));
+        }
+
+        // Any approved printing from that year, not only the newest: a book
+        // from 2019 reprinted in 2024 is on both years' lists.
+        if ($byYear && preg_match('/^\d{4}$/', (string) $request->query('year')) === 1) {
+            $year = (int) $request->query('year');
+            $query->whereHas('editions', fn (Builder $e) => $e->approved()->where('year', $year));
         }
     }
 

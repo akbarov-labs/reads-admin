@@ -13,7 +13,7 @@ use Tests\TestCase;
  * portraitUrl gets in AuthorApiTest: a bare "/storage/" would send
  * next/image off to fetch a directory listing.
  *
- * @see \Tests\Feature\Api\AuthorApiTest for the shared reasoning about
+ * @see AuthorApiTest for the shared reasoning about
  *      locales, string ids and field names.
  */
 class PublisherApiTest extends TestCase
@@ -120,7 +120,7 @@ class PublisherApiTest extends TestCase
     public function test_translatable_fields_follow_the_requested_locale(): void
     {
         $this->publisher([
-            'bio' => ['uz' => "Toshkentdagi nashriyot.", 'ru' => 'Издательство в Ташкенте.'],
+            'bio' => ['uz' => 'Toshkentdagi nashriyot.', 'ru' => 'Издательство в Ташкенте.'],
             'country' => ['uz' => "O'zbekiston", 'ru' => 'Узбекистан'],
         ]);
 
@@ -160,5 +160,15 @@ class PublisherApiTest extends TestCase
         $this->publisher();
 
         $this->getJson('/api/publishers')->assertOk();
+    }
+
+    public function test_a_search_matches_either_alphabet(): void
+    {
+        $this->publisher(['slug' => 'sharq', 'name' => 'Sharq']);
+        $this->publisher(['slug' => 'gafur-gulom', 'name' => 'Gʻafur Gʻulom nomidagi nashriyot']);
+
+        $this->getJson('/api/publishers?q=Шарқ')->assertJsonCount(1, 'data')->assertJsonPath('data.0.slug', 'sharq');
+        $this->getJson('/api/publishers?q=gafur')->assertJsonCount(1, 'data')->assertJsonPath('data.0.slug', 'gafur-gulom');
+        $this->getJson('/api/publishers?q=nomidagi')->assertJsonCount(1, 'data');
     }
 }

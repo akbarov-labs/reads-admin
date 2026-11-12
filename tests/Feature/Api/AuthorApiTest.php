@@ -202,4 +202,17 @@ class AuthorApiTest extends TestCase
 
         $this->getJson('/api/authors')->assertOk();
     }
+
+    public function test_a_search_matches_either_alphabet_and_pen_names(): void
+    {
+        $this->author(['slug' => 'abdulla-qodiriy', 'name' => 'Abdulla Qodiriy']);
+        $cholpon = $this->author(['slug' => 'abdulhamid-sulaymon', 'name' => 'Abdulhamid Sulaymon oʻgʻli']);
+        $cholpon->aliases()->create(['name' => 'Choʻlpon']);
+
+        // No Cyrillic stored anywhere: search_key folds the alphabet.
+        $this->getJson('/api/authors?q=Қодирий')->assertJsonCount(1, 'data')->assertJsonPath('data.0.slug', 'abdulla-qodiriy');
+        $this->getJson('/api/authors?q=cholpon')->assertJsonCount(1, 'data')->assertJsonPath('data.0.slug', 'abdulhamid-sulaymon');
+        // The name typed in full comes first, whoever has more books.
+        $this->getJson('/api/authors?q=abdulla')->assertJsonPath('data.0.slug', 'abdulla-qodiriy');
+    }
 }

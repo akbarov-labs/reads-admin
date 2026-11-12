@@ -12,4 +12,10 @@ abstract class Controller
     {
         return UzbekText::normalizeApostrophes(trim((string) $request->query('q')));
     }
+
+    /** A LIKE pattern for text anywhere in a column, escaped as BookController escapes it. */
+    protected static function containing(string $text): string
+    {
+        return '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $text).'%';
+    }
 }
