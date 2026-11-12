@@ -17,7 +17,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * The review queue for discounts and contests. A draft comes from the
+ * The review queue for discounts, contests and events. A draft comes from the
  * hourly scan of publishers' channels (a post about a sale or a contest),
  * a pasted post link (a shop's channel too), or is typed in by hand for a
  * shop's promotion on its own site. Published deals show on the site's
@@ -119,7 +119,7 @@ class DealResource extends Resource
                 Forms\Components\DatePicker::make('ends_on')
                     ->label('Until (last day)')
                     ->native(false)
-                    ->helperText('Empty: shown for '.Deal::UNDATED_FOR_DAYS.' days from the post.'),
+                    ->helperText('For an event, its day. Empty: shown for '.Deal::UNDATED_FOR_DAYS.' days from the post.'),
                 Forms\Components\TextInput::make('url')
                     ->label('Where to take it up')
                     ->url()
@@ -158,7 +158,11 @@ class DealResource extends Resource
                 Tables\Columns\TextColumn::make('title')->searchable()->wrap()
                     ->description(fn (Deal $record) => $record->sourceName()),
                 Tables\Columns\TextColumn::make('kind')->badge()
-                    ->color(fn (Deal $record) => $record->kind === DealKind::Contest ? 'info' : 'success'),
+                    ->color(fn (Deal $record) => match ($record->kind) {
+                        DealKind::Contest => 'info',
+                        DealKind::Event => 'warning',
+                        default => 'success',
+                    }),
                 Tables\Columns\TextColumn::make('discount_percent')->label('%')->suffix('%')->placeholder('—'),
                 Tables\Columns\TextColumn::make('ends_on')->label('Until')->date('j M Y')->placeholder('—')->sortable(),
                 Tables\Columns\TextColumn::make('status')->badge()
