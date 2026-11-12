@@ -8,6 +8,7 @@ use App\Models\Edition;
 use App\Models\StoreListing;
 use App\Models\User;
 use App\Services\Stores\QamarFeed;
+use App\Services\Stores\StoreListingApplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -32,6 +33,9 @@ class QamarFeedTest extends TestCase
     private string $sitemap = '';
 
     private ?int $failWithStatus = null;
+
+    /** Serve covers as a picture far past MAX_COVER_PIXELS. */
+    private bool $huge = false;
 
     /** @var list<string> */
     private array $requested = [];
@@ -67,7 +71,7 @@ class QamarFeedTest extends TestCase
             }
 
             if (str_contains($url, '/media/')) {
-                return Http::response($this->png());
+                return Http::response($this->huge ? $this->hugePngHeader() : $this->png());
             }
 
             return isset($this->pages[$url]) ? Http::response($this->pages[$url]) : Http::response('', 404);
@@ -182,6 +186,76 @@ class QamarFeedTest extends TestCase
         $this->assertStringContainsString(",9789943567993,cover,\"covers/qamar/9789943567993.webp\"\n", Storage::disk('local')->get($logs[0]));
     }
 
+    public function test_prices_link_first_and_covers_past_the_nights_cap_wait_for_the_next(): void
+    {
+        foreach (['9789943000011', '9789943000012', '9789943000013'] as $i => $isbn) {
+            $this->catalogueBook(book: ['uzbek_title' => "Kitob {$i}"], edition: ['isbn' => $isbn, 'cover_path' => null], authors: []);
+        }
+
+        $this->shop([
+            'https://qamar.uz/kitob/a' => ['name' => 'Kitob 0', 'isbn' => '9789943000011', 'image' => 'https://qamar.uz/media/a.jpg'],
+            'https://qamar.uz/kitob/b' => ['name' => 'Kitob 1', 'isbn' => '9789943000012', 'image' => 'https://qamar.uz/media/b.jpg'],
+            'https://qamar.uz/kitob/c' => ['name' => 'Kitob 2', 'isbn' => '9789943000013', 'image' => 'https://qamar.uz/media/c.jpg'],
+        ]);
+
+        $this->assertSame(0, Artisan::call('stores:qamar', ['--covers' => 1]));
+
+        // Every listing is on its book tonight, so every price shows.
+        $this->assertSame(3, StoreListing::whereNotNull('edition_id')->count());
+        $this->assertSame(1, Edition::whereNotNull('cover_path')->count());
+        // The two covers past the cap come back the next night.
+        $this->assertSame(2, StoreListing::whereNull('applied_at')->count());
+
+        $this->assertSame(0, Artisan::call('stores:qamar', ['--no-read' => true, '--covers' => 5]));
+
+        $this->assertSame(3, Edition::whereNotNull('cover_path')->count());
+        $this->assertSame(0, StoreListing::whereNull('applied_at')->count());
+    }
+
+    public function test_one_listing_that_fails_is_skipped_not_the_end_of_the_run(): void
+    {
+        foreach (['9789943000021', '9789943000022'] as $i => $isbn) {
+            $this->catalogueBook(book: ['uzbek_title' => "Kitob {$i}"], edition: ['isbn' => $isbn, 'cover_path' => null], authors: []);
+        }
+        $this->shop([
+            'https://qamar.uz/kitob/a' => ['name' => 'Kitob 0', 'isbn' => '9789943000021', 'image' => 'https://qamar.uz/media/a.jpg'],
+            'https://qamar.uz/kitob/b' => ['name' => 'Kitob 1', 'isbn' => '9789943000022', 'image' => 'https://qamar.uz/media/b.jpg'],
+        ]);
+
+        // The first listing's comparison throws, as a broken picture once did.
+        $this->app->instance(StoreListingApplier::class, new class extends StoreListingApplier
+        {
+            public function apply(StoreListing $listing, bool $dryRun = false, bool $withCover = true): array
+            {
+                if ($listing->isbn === '9789943000021') {
+                    throw new \RuntimeException('broken picture');
+                }
+
+                return parent::apply($listing, $dryRun, $withCover);
+            }
+        });
+
+        $this->assertSame(0, Artisan::call('stores:qamar'));
+
+        $this->assertMatchesRegularExpression('/errors\s*\|\s*1/', Artisan::output());
+        // Both are linked by ISBN before any comparison, so both prices show.
+        $this->assertSame(2, StoreListing::whereNotNull('edition_id')->count());
+        // The second was still compared and got its cover.
+        $this->assertNotNull(Edition::where('isbn', '9789943000022')->value('cover_path'));
+    }
+
+    public function test_a_picture_too_large_to_be_a_cover_is_not_decoded(): void
+    {
+        $this->catalogueBook(book: ['uzbek_title' => 'Plakat'], edition: ['isbn' => '9789943000031', 'cover_path' => null], authors: []);
+        $this->shop(['https://qamar.uz/kitob/p' => ['name' => 'Plakat', 'isbn' => '9789943000031', 'image' => 'https://qamar.uz/media/huge.png']]);
+        $this->huge = true;
+
+        $this->assertSame(0, Artisan::call('stores:qamar'));
+
+        $this->assertNull(Edition::where('isbn', '9789943000031')->value('cover_path'));
+        $this->assertNotNull(StoreListing::where('isbn', '9789943000031')->value('edition_id'));
+    }
+
     public function test_the_next_night_reads_only_pages_that_changed(): void
     {
         $this->shop([
@@ -283,6 +357,18 @@ class QamarFeedTest extends TestCase
         ]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         return "<html><head><script type=\"application/ld+json\">{$graph}</script></head><body><p>Shop text.</p></body></html>";
+    }
+
+    /**
+     * A PNG whose header says 5000 × 5000: all getimagesize reads. Decoding
+     * a real one needs about 100 MB, as a poster-sized "cover" on the shop
+     * would, which is the point of the check.
+     */
+    private function hugePngHeader(): string
+    {
+        $ihdr = 'IHDR'.pack('NNCCCCC', 5000, 5000, 8, 2, 0, 0, 0);
+
+        return "\x89PNG\r\n\x1a\n".pack('N', 13).$ihdr.pack('N', crc32($ihdr)).str_repeat("\0", 64);
     }
 
     private function png(): string

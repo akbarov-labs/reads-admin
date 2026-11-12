@@ -70,6 +70,9 @@ return [
         // Pages read per run: the first nights work through the whole shop
         // (about 3,100 books), later ones only what changed.
         'pages_per_run' => (int) env('QAMAR_PAGES_PER_RUN', 1200),
+        // Missing covers fetched from the shop in one night, one at a time
+        // with delay_ms between: about 10 minutes. The rest wait for the next.
+        'covers_per_run' => (int) env('QAMAR_COVERS_PER_RUN', 250),
         // A page not re-read for this long is read again when a run has
         // pages to spare, for its price and stock.
         'refresh_after_hours' => (int) env('QAMAR_REFRESH_AFTER_HOURS', 20),
