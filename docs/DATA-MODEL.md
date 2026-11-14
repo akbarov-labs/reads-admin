@@ -156,8 +156,9 @@ What the seeder normalises (`App\Support\UzbekText`, `App\Support\Asaxiy\AsaxiyC
   series is created only when at least two books share it.
 
 Known limits: editions in different languages ("Большая игра" and
-"Katta o'yin") are not recognised as one work, and there is no book merge
-tool yet. Different spellings of one author ("Tohir Malik", "Toxir Malik")
+"Katta o'yin") are not recognised as one work, and the import made a
+separate book for many bindings or scripts of one work ("11/22/63 (A5)");
+those are merged with `books:merge` (below). Different spellings of one author ("Tohir Malik", "Toxir Malik")
 stay separate authors until an admin merges them.
 
 ### Merging authors
@@ -174,6 +175,50 @@ What it leaves behind is an `author_aliases` row: the old name and slug.
 aliases, so the duplicate is not made again, and `/api/authors/{old-slug}`
 answers with the kept author, whose current slug the site redirects to.
 
+### Merging books
+
+One work entered twice ("11/22/63", "11/22/63 (A5)", "11/22/63 (мягкая)")
+should be one book with several editions. Which books are one work is a
+person's call (three abridgements of «Капитал» are three books), so merges
+come from a reviewed CSV:
+
+```sh
+php artisan books:merge merges.csv --dry-run   # run each merge and roll it back: the report only
+php artisan books:merge merges.csv             # asks first; --force to skip the question
+php artisan books:unmerge 5235 5551            # put merged books back, by their old ids
+```
+
+The CSV is `keep_id,merge_id` per line (a header, extra columns, blank
+lines and `#` comments are fine). The whole file is checked first: a book
+merged twice, merged and kept, or merged into itself stops the run. A row
+whose book is gone, or whose kept book is off the site while the merged one
+is on it, is skipped and reported. Each run is logged to
+`storage/app/private/book-merges/` (a CSV to read; a real run also writes a
+JSON copy of every snapshot).
+
+`BookMerger` moves everything that hangs off the merged book to the kept
+one: editions (and with them taqrizlar, covers, store listings, reader
+counts), shelves, recommendations both ways, page views (a day both were
+opened is added up), collection entries, library holdings (a library that
+listed both has the copies of both), quotes, reader reviews, announcements,
+deals, store clicks, Softly and library-import rows. What the kept book says
+about itself wins: its title, its own description, its authors and genre
+(an empty kept record takes the merged book's). Its blank original title,
+source language, description and series are filled. Moved editions get a
+new `updated_at`, so the bot's feed serves them with their new title,
+authors and genre. The report warns where authors, series or languages
+differ, or both books have their own description.
+
+What is left is a `book_merges` row:
+
+- `merged_book_id`: `/api/books/{old id}` answers with the kept book (also
+  when that book was merged on in turn), and the site redirects the old
+  address to the kept book's;
+- `merge_key`, the old first author + title: `CatalogueRecords::findBook`
+  (the bot's push) and the Asaxiy seeder join the kept book when a new ISBN
+  comes in under the old title, instead of making the duplicate again;
+- `snapshot`: everything moved, dropped, added up or filled, from which
+  `books:unmerge` restores the book under its old id.
 
 ## Store listings (qamar.uz)
 

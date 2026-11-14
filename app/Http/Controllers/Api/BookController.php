@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\BookDetailResource;
 use App\Http\Resources\Api\BookResource;
 use App\Models\Book;
+use App\Models\BookMerge;
 use App\Support\SearchKeys;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -89,8 +90,10 @@ class BookController extends Controller
         return response()->json(['data' => $years]);
     }
 
-    public function show(Book $book): BookDetailResource
+    public function show(string $book): BookDetailResource
     {
+        $book = $this->bookOrMerged($book);
+
         // A book awaiting moderation does not exist as far as the site is
         // concerned, including at its own URL.
         if (! Book::approved()->whereKey($book->id)->exists()) {
@@ -112,6 +115,22 @@ class BookController extends Controller
         ]);
 
         return new BookDetailResource($book, $this->relatedTo($book));
+    }
+
+    /**
+     * The book with this id, or the one it was merged into (BookMerger): an
+     * old address answers with the kept book, whose own id the site then
+     * redirects to, as /api/authors/{old slug} does for a merged author.
+     */
+    private function bookOrMerged(string $id): Book
+    {
+        if (preg_match('/^\d{1,18}$/', $id) !== 1) {
+            throw new NotFoundHttpException;
+        }
+
+        return Book::find((int) $id)
+            ?? Book::find(BookMerge::keptIdFor((int) $id) ?? 0)
+            ?? throw new NotFoundHttpException;
     }
 
     private function filter(Builder $query, Request $request, bool $byYear = true): void
