@@ -1,0 +1,201 @@
+rank,book_id,title,views90,uz,ru,en,shows,text_lang,genre,issues,kind
+1,11431,Matematika Master,119,66,52,1,none,-,,,needs-book-in-hand
+2,11080,Harvard metodi,114,97,1,16,none,-,Psixologiya va shaxsiy rivojlanish,,writable
+3,7694,Shoh va mot,86,86,0,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+4,11528,Multilevel reading achiever C1,82,63,10,9,none,-,,,needs-book-in-hand
+5,11525,Multilevel Master Foundation,73,45,8,20,none,-,,,needs-book-in-hand
+6,72,"Eliyahu M. Goldratt, Jeff Koks: Maqsad. Uzluksiz takomillashuv jarayoni",63,60,3,0,none,-,Biznes,,writable
+7,11414,Мастер математик,40,6,34,0,none,-,O'quv adabiyoti,,needs-book-in-hand
+8,1654,Bilsang edi,39,36,1,2,asaxiy-copy,uz,Badiiy adabiyot,,writable
+9,17,Sofiyaning dunyosi,36,30,1,5,asaxiy-copy,uz,Jahon adabiyoti,,writable
+10,3573,Ranjkom,28,0,10,18,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+11,22,Hayot qadri,27,20,4,3,asaxiy-copy,uz,Jahon adabiyoti,long>2500 cliche-uz,writable
+12,11527,Multilevel Mock Achiever C1,27,21,1,5,none,-,,,needs-book-in-hand
+13,30,Binafsha shu'lasi,26,20,0,6,asaxiy-copy,uz,Jahon adabiyoti,duplicate-start,writable
+14,707,Multilevel master. Mock tests,26,19,7,0,asaxiy-copy,en,Chet tilini o'rganish,,needs-book-in-hand
+15,2041,Oqsoch,23,4,5,14,asaxiy-copy,uz,Jahon adabiyoti,sales-words,writable
+16,11917,Qoida No1: hech qachon No2 bo'lma,21,21,0,0,none,-,,,writable
+17,14,Atom odatlar,18,17,0,1,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,long>2500,writable
+18,11526,Multilevel Master Mock tests 2,17,2,14,1,none,-,,,needs-book-in-hand
+19,36,Odam bo'lish qiyin,16,10,0,6,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+20,1597,Multilevel Master. Speaking,16,4,12,0,asaxiy-copy,uz,Chet tilini o'rganish,,needs-book-in-hand
+21,11014,Fizika tezkor,16,12,0,4,none,-,O'quv adabiyoti,,needs-book-in-hand
+22,11253,Matematika Master | Geometriya,16,12,4,0,none,-,O'quv adabiyoti,,needs-book-in-hand
+23,71,Baxtiyor oila,15,13,0,2,asaxiy-copy,uz,Diniy adabiyot,,needs-book-in-hand
+24,911,Artur Konan Doyl. Qizil hujjat,15,14,0,1,asaxiy-copy,uz,Jahon adabiyoti,,writable
+25,2175,Sen mening qalbimdasan,15,5,8,2,asaxiy-copy,uz,Badiiy adabiyot,,writable
+26,984,Men - Maryam,14,5,9,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+27,7270,Qaysar,14,12,0,2,asaxiy-copy,uz,Jahon adabiyoti,,writable
+28,11432,Matematika master variantlari | Milliy sertifikat,14,6,7,1,none,-,O'quv adabiyoti,,needs-book-in-hand
+29,1115,Arosat,13,7,5,1,asaxiy-copy,uz,Turk adabiyoti,,needs-book-in-hand
+30,10155,Tasavvuf va nafs tarbiyasi,12,11,1,0,bot/channel-text,uz,Diniy adabiyot,,needs-book-in-hand
+31,12474,Yer ostidan maktublar,12,11,1,0,bot/channel-text,uz,Badiiy adabiyot,,writable
+32,1792,Zaharli hayot yoxud ishq qurbonlari,11,11,0,0,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+33,9041,"Al kamil - Arab tili darsligi (A0, A1)",11,8,3,0,none,-,,,writable
+34,15,Molxona,10,10,0,0,asaxiy-copy,uz,Jahon adabiyoti,long>2500,writable
+35,78,Fotimaning bolasi,10,6,1,3,asaxiy-copy,uz,Jahon adabiyoti,,writable
+36,92,Hadis va hayot,10,7,1,2,asaxiy-copy,uz,Diniy adabiyot,,needs-book-in-hand
+37,1767,Ug'ur Ko'shar: Avliyo va qaroqchi,10,10,0,0,asaxiy-copy,uz,Turk adabiyoti,,writable
+38,3317,Ko'rkam so'z yog'dusi,10,8,2,0,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+39,319,Binafsha shu'lasi 2,9,7,0,2,asaxiy-copy,uz,Jahon adabiyoti,duplicate-start,writable
+40,483,Rejissyor. Bevaqt uzilgan tor faryodi,9,9,0,0,asaxiy-copy,uz,O'zbek adabiyoti,cliche-uz,writable
+41,1826,M.Mirzaahmedov: Matematikadan masalalar to'plami 6-sinf,9,6,2,1,asaxiy-copy,uz,O'quv adabiyoti,duplicate-exact,needs-book-in-hand
+42,3178,Reading Starter New Edition 1,9,1,6,2,asaxiy-copy,en,O'quv adabiyoti,duplicate-exact,needs-book-in-hand
+43,3380,Assasin,9,1,6,2,asaxiy-copy,uz,Jahon adabiyoti,sales-words,writable
+44,300,Anti-Karnegi yohud odam-manipulyator,8,3,2,3,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+45,2292,Xo'rlanganlar,8,5,2,1,asaxiy-copy,uz,Jahon adabiyoti,,writable
+46,3169,Inshiroh (Hikoyalar to'plami),8,2,4,2,asaxiy-copy,uz,Badiiy adabiyot,,writable
+47,6150,Qaytar qismat,8,0,6,2,asaxiy-copy,uz,Detektiv va fantastika,sales-words,writable
+48,26,Jekill va Hayd fojiasi,7,6,0,1,none,-,Jahon adabiyoti,,writable
+49,49,Dyuna,7,5,1,1,asaxiy-copy,uz,Jahon adabiyoti,long>2500,writable
+50,55,Mukoshafatul qulub,7,6,0,1,asaxiy-copy,uz,Diniy adabiyot,,needs-book-in-hand
+51,424,Sotuvchining 45 qoidasi,7,7,0,0,asaxiy-copy,uz,Biznes,sales-words,writable
+52,490,Garri Potter va maxfiy xona,7,2,2,3,asaxiy-copy,uz,Jahon adabiyoti,short<200,writable
+53,1001,Josim al-Umron: Yusufning qizi,7,5,2,0,asaxiy-copy,uz,Jahon adabiyoti,emoji,writable
+54,1518,Geografiya mahkumlari,7,6,0,1,asaxiy-copy,uz,Jahon adabiyoti,cliche-uz,writable
+55,1683,Tolqon botir,7,5,1,1,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+56,2869,Koreyadagi yorqin muhabbat,7,5,2,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+57,4892,Ishq va iymon,7,1,0,6,asaxiy-copy,uz,Jahon adabiyoti,,writable
+58,6759,Zuhrajon xayollari saltanatida,7,0,7,0,asaxiy-copy,uz,Bolalar adabiyoti,emoji,writable
+59,8918,Alif-yo (Muallimi soniy),7,0,0,7,none,-,,,writable
+60,8945,Sunniy aqiydalar,7,6,0,1,none,-,,,writable
+61,9583,Janohut tolib (Tolibning qanoti),7,0,7,0,none,-,,,writable
+62,9962,Qaddingni ko'tar,7,5,2,0,none,-,,,writable
+63,11524,Multilevel listening Achiever C1,7,2,4,1,none,-,,,needs-book-in-hand
+64,12265,To'rtko'cha,7,5,1,1,none,-,Badiiy adabiyot,,writable
+65,23,Kapitalizm va erkinlik,6,6,0,0,asaxiy-copy,uz,Siyosat va iqtisodiyot,,writable
+66,140,Iymon,6,4,1,1,bot/channel-text,uz,Diniy adabiyot,,needs-book-in-hand
+67,1251,Buyuk shaxlarning ta'sir ko'rsatishga oid 75 qoidasi,6,6,0,0,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+68,1470,"""Surgun""dagi sarguzashtlar",6,1,5,0,asaxiy-copy,uz,Detektiv va fantastika,,writable
+69,1482,Fotima roziyallohu anhoning isrofsiz to'yi,6,6,0,0,asaxiy-copy,uz,Diniy adabiyot,duplicate-exact,needs-book-in-hand
+70,2271,Magnit ayol yoxud erkaklarni esdan og'dirish san'ati 2,6,6,0,0,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+71,2533,"Salom, Pekin!",6,5,0,1,asaxiy-copy,uz,Jahon adabiyoti,,writable
+72,2565,Dunyolar Jangi,6,6,0,0,asaxiy-copy,uz,Badiiy adabiyot,,writable
+73,2754,O'lim hujrasi,6,3,3,0,asaxiy-copy,uz,Jahon adabiyoti,emoji,writable
+74,2900,Bolalar bog'chasi uchun retseptlar,6,2,4,0,asaxiy-copy,uz,O'quv adabiyoti,,needs-book-in-hand
+75,3376,Qizil soya,6,2,1,3,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+76,3680,Ona tili va Adabiyot: milliy sertifikat kitobi,6,4,2,0,asaxiy-copy,uz,Abituriyentlar uchun,emoji,writable
+77,6134,Kimyo Optima (1996-2020),6,0,6,0,asaxiy-copy,uz,Abituriyentlar uchun,duplicate-exact,needs-book-in-hand
+78,11309,Ko'zlaringni haromdan saqla,6,4,2,0,none,-,,,writable
+79,11529,Multilevel speaking Achiever C1,6,5,0,1,none,-,,,needs-book-in-hand
+80,13021,Священный коран (Шейх Алауддин Мансур),6,1,5,0,bot/channel-text,uz,,,writable
+81,13794,Nafsga emas Haqqa qara,6,0,0,6,none,-,,,writable
+82,15134,Insoniyat yulduzlari,6,6,0,0,none,-,,,writable
+83,8,Urush san'ati,5,5,0,0,asaxiy-copy,uz,Tarix,long>2500 emoji,writable
+84,57,"O'lsang, kim yig'laydi?",5,4,0,1,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+85,59,Mantiqiy xato: To'g'ri fikrlash qo'llanmasi,5,3,0,2,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,needs-book-in-hand
+86,88,Yosh xonim uchun odobnoma. Har bir qiz bilishi lozim bo'lgan 50 qoida to'plami,5,4,0,1,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+87,125,Super xotira sari yetti qadam,5,4,1,0,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+88,147,Ba'zilar olisdan sevarlar,5,5,0,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+89,232,"Afv et, Allohim",5,5,0,0,asaxiy-copy,uz,Turk adabiyoti,,writable
+90,254,Yaldo kechasi,5,4,0,1,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+91,344,Muhabbatning 5 tili,5,5,0,0,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+92,465,Islom tarixi (1-2 kitoblar),5,5,0,0,asaxiy-copy,uz,Diniy adabiyot,,needs-book-in-hand
+93,516,Iztirob,5,4,0,1,asaxiy-copy,uz,Jahon adabiyoti,,writable
+94,881,Ijtimoiy shartnoma,5,5,0,0,asaxiy-copy,uz,Siyosat va iqtisodiyot,,writable
+95,1145,Tejamkor startap,5,1,0,4,asaxiy-copy,uz,Biznes,,writable
+96,1390,Masnaviy 40 rivoyatga 40 sharh,5,2,3,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+97,1481,Uzrnoma,5,3,2,0,asaxiy-copy,uz,Siyosat va iqtisodiyot,,writable
+98,1543,Aqlli investor,5,0,3,2,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+99,1618,Odam anatomiyasi,5,5,0,0,asaxiy-copy,uz,O'quv adabiyoti,,needs-book-in-hand
+100,1876,Momaqaldiroq ostida sayr,5,4,0,1,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+101,2136,Tuzoq o'yin boshlandi,5,2,1,2,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+102,2313,To'rtlar belgisi (The sign of four),5,3,0,2,asaxiy-copy,uz,Bolalar adabiyoti,duplicate-exact,writable
+103,2364,Davlat boshqaruvi to'g'risida (1-2 kitoblar),5,5,0,0,asaxiy-copy,uz,Jahon adabiyoti,emoji,writable
+104,3466,12 haftalik yil,5,5,0,0,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+105,3587,Rasulullohdan maktublar,5,4,1,0,asaxiy-copy,uz,Diniy adabiyot,,needs-book-in-hand
+106,4446,"Inson Qadri uchun, El-Yurt farovonligi uchun",5,2,0,3,asaxiy-copy,uz,Siyosat va iqtisodiyot,,writable
+107,4574,To'rt qalb bir qismat,5,4,0,1,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+108,6137,Kreml muzokaralar maktabi,5,5,0,0,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+109,6145,Taym Mashin 1984,5,0,0,5,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+110,8927,Arab tili saboqlari 1-kitob (Boshlang'ich bosqich),5,2,3,0,none,-,,,writable
+111,9487,Iqro 1-kitob (Boshlang'ich arab tili),5,5,0,0,none,-,,,writable
+112,9525,Jannatga yo'l yoki qiyomat xabarlari,5,4,1,0,none,-,,,writable
+113,9896,"Milliy taraqqiyot yo'limizni qat'iyat bilan davom ettirib, yangi bosqichga ko'taramiz 1-jild",5,5,0,0,none,-,,,writable
+114,10145,Pul daraxti,5,5,0,0,bot/channel-text,uz,,wall-of-text,writable
+115,10245,Toshkentdagi hazrat Usmon Mushafi tarixi,5,3,0,2,none,-,,,writable
+116,10653,Barzax hayoti,5,5,0,0,bot/channel-text,uz,Diniy adabiyot,,needs-book-in-hand
+117,11837,Pre-Cambridge IELTS reading,5,3,2,0,none,-,,,needs-book-in-hand
+118,11908,Qishga aylangan bahorim,5,5,0,0,none,-,Badiiy adabiyot,,writable
+119,12472,Yazma sınav (Multilevel B1-B2-C1),5,0,1,4,none,-,,,needs-book-in-hand
+120,12857,Umar ibn Xattobni uchratganimizda,5,3,0,2,bot/channel-text,uz,Diniy adabiyot,,needs-book-in-hand
+121,12909,"Mehr bering menga, muallim",5,4,0,1,none,-,,,writable
+122,13973,"Olim, odam va olam",5,1,0,4,none,-,,,writable
+123,39,Bir varaqli marketing reja,4,1,0,3,asaxiy-copy,uz,Biznes,long>2500 sales-words,writable
+124,60,Stiv Jobs,4,3,0,1,asaxiy-copy,uz,Biografiya,long>2500,writable
+125,93,Jahon tartiboti,4,4,0,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+126,112,Qizil tabletka,4,0,0,4,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+127,138,Iqlim o'zgarishi,4,4,0,0,asaxiy-copy,uz,Siyosat va iqtisodiyot,long>2500 sales-words,writable
+128,156,Farishtalar va iblislar,4,4,0,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+129,214,"Sen bir olam, men o'zga olam",4,2,2,0,asaxiy-copy,uz,Jahon adabiyoti,emoji,writable
+130,220,Andisha va g'urur,4,1,2,1,asaxiy-copy,uz,Jahon adabiyoti,,writable
+131,301,Lissabondagi tun,4,0,3,1,asaxiy-copy,uz,Jahon adabiyoti,,writable
+132,353,Chumolilar saltanati,4,1,2,1,asaxiy-copy,uz,Bolalar adabiyoti,,writable
+133,447,O'zingga mehr ila,4,0,4,0,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+134,533,Sohilsiz dengiz,4,3,0,1,asaxiy-copy,uz,Diniy adabiyot,duplicate-exact,needs-book-in-hand
+135,579,Jadid Kulliyoti,4,4,0,0,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+136,744,Yassiyurt,4,0,3,1,asaxiy-copy,uz,Jahon adabiyoti,,writable
+137,784,Okuma Sinav Multilevel B1-B2-C1,4,0,4,0,asaxiy-copy,uz,Chet tilini o'rganish,,needs-book-in-hand
+138,785,Nasiba niyatga bog'liq,4,4,0,0,asaxiy-copy,uz,Turk adabiyoti,,writable
+139,859,So'qqabosh bevagina,4,2,2,0,asaxiy-copy,uz,O'zbek adabiyoti,cliche-uz duplicate-start,writable
+140,871,Money laqabli kuchukcha,4,4,0,0,asaxiy-copy,uz,Biznes,,writable
+141,904,1924 Turkistonning parchalanishi,4,4,0,0,asaxiy-copy,uz,Tarix,,writable
+142,1051,Lev Tolstoy: Shayton,4,4,0,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+143,1195,Devona,4,1,3,0,asaxiy-copy,uz,Turk adabiyoti,,writable
+144,1310,Kitobim-oftobim 2 (sinfdan tashqari o'qish kitobi),4,3,1,0,asaxiy-copy,uz,Bolalar adabiyoti,,writable
+145,1622,Nafsga emas Haqqa qra,4,0,0,4,asaxiy-copy,uz,Diniy adabiyot,cliche-uz,needs-book-in-hand
+146,1667,Multilevel Mock Achiever C1,4,4,0,0,asaxiy-copy,en,Chet tilini o'rganish,,needs-book-in-hand
+147,1818,NLP texnologiyalari: Suhbat orqali gipnoz,4,4,0,0,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+148,1967,Faqat erkaklar uchun,4,3,1,0,asaxiy-copy,uz,Diniy adabiyot,,needs-book-in-hand
+149,2082,Shiorga aylangan maqollar 525 maqol,4,4,0,0,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+150,2088,Turkiston mintaqasida sovet rejimiga qarshi istiqlolchilik harakati va mohiyati (1918-1935),4,3,1,0,asaxiy-copy,uz,Tarix,,writable
+151,2148,Qalb ziynati,4,3,1,0,asaxiy-copy,uz,Diniy adabiyot,cliche-uz,needs-book-in-hand
+152,2257,Aktrisa,4,2,2,0,asaxiy-copy,uz,Detektiv va fantastika,,writable
+153,2719,Pista nazariyasi,4,2,2,0,none,-,,,writable
+154,3173,"So'fi Olloyor ""Sabotul ojizin"" sharhi",4,4,0,0,asaxiy-copy,uz,Diniy adabiyot,duplicate-exact,needs-book-in-hand
+155,3478,O'tkirjonning O'nta o'rdak ukasi,4,0,4,0,asaxiy-copy,uz,Badiiy adabiyot,,writable
+156,3646,"Tong shabadasi (hikoyalar, ocherklar, she'rlar)",4,0,2,2,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+157,3748,O'zbek tili va adabiyotidan savollar to'plami (II qism),4,4,0,0,asaxiy-copy,uz,O'quv adabiyoti,duplicate-exact,needs-book-in-hand
+158,4282,Matematika va informatika Optima (1996-2020),4,4,0,0,asaxiy-copy,uz,Abituriyentlar uchun,duplicate-exact,needs-book-in-hand
+159,5019,IELTS Journal. Tips for IELTS Speaking. Target Band 7+,4,2,2,0,asaxiy-copy,en,O'quv adabiyoti,,needs-book-in-hand
+160,5339,Biologiya Optima (1996-2020),4,0,4,0,asaxiy-copy,uz,Abituriyentlar uchun,duplicate-exact,writable
+161,5688,Hayz va nifos hukmlari,4,4,0,0,asaxiy-copy,uz,Diniy adabiyot,,needs-book-in-hand
+162,7302,The Tenant,4,0,1,3,asaxiy-copy,en,Jahon adabiyoti,,writable
+163,7634,Ona tili va adabiyot. Exclusive Optima (2015-2022),4,4,0,0,asaxiy-copy,uz,Abituriyentlar uchun,duplicate-exact,writable
+164,9456,Iffat va hayo,4,3,1,0,none,-,,,writable
+165,9833,"O'rgatding, Allohim!",4,4,0,0,none,-,Diniy adabiyot,,needs-book-in-hand
+166,10643,Avvalo o'zingizni seving,4,4,0,0,none,-,Psixologiya va shaxsiy rivojlanish,,writable
+167,10840,Destination (Grammar and Vocabulary) A1,4,1,1,2,none,-,,,needs-book-in-hand
+168,11106,Ichki kasalliklar,4,4,0,0,none,-,,,writable
+169,11418,"Matematika | 1,2,3-qismlar + Kombinatorika va Ehtimol",4,4,0,0,none,-,O'quv adabiyoti,,needs-book-in-hand
+170,11469,Milliy sertifikat: ona tili va adabiyot,4,4,0,0,none,-,O'quv adabiyoti,,needs-book-in-hand
+171,11547,Nabiralarimga maktublar,4,0,3,1,none,-,Bolalar adabiyoti,,writable
+172,12038,"Shunchaki bajar, bajar shunchaki",4,2,1,1,none,-,,,writable
+173,12598,Lol (har shaharning o'z egasi bor),4,1,3,0,bot/channel-text,uz,Jahon adabiyoti,wall-of-text,writable
+174,12938,G'aroyib sinov,4,3,0,1,none,-,Bolalar adabiyoti,,writable
+175,13005,Arab tili fonetikasi,4,1,2,1,none,-,O'quv adabiyoti,,needs-book-in-hand
+176,13129,Millat tili – millat madaniyati,4,4,0,0,none,-,,,writable
+177,13135,Da'vo,4,2,1,1,none,-,Badiiy adabiyot,,writable
+178,13687,Nafs tarbiyasi (G'azzoliy),4,1,0,3,none,-,,,writable
+179,13742,Umar ibn Xattobni uchratganimda,4,4,0,0,none,-,,,writable
+180,13812,Nafs nimadir,4,0,4,0,none,-,,,writable
+181,14954,Turk tilini mustaqil o'rganamiz,4,4,0,0,none,-,,,writable
+182,6,Katta o'yin. Ikki imperiya to'qnashuvi,3,2,0,1,asaxiy-copy,uz,Tarix,,writable
+183,7,Diqqat: Chalg'ituvchi dunyoda muvaffaqiyat sirlari,3,2,0,1,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,long>2500 cliche-uz,writable
+184,31,Farovonlik paradoksi,3,3,0,0,asaxiy-copy,uz,Siyosat va iqtisodiyot,long>2500,writable
+185,76,"Saodat asri qissalari (I-IV kitoblar, 4 juz) Tutqichli",3,2,0,1,asaxiy-copy,uz,Diniy adabiyot,,needs-book-in-hand
+186,79,Ikki eshik orasi,3,2,0,1,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+187,87,Jinoyat va jazo,3,3,0,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+188,100,Uyga yo'l,3,3,0,0,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+189,113,Bank 4.0 Doim siz bilan - hozir va shu yerda,3,0,1,2,asaxiy-copy,uz,Biznes,long>2500 sales-words,writable
+190,131,Taxtlar o'yini,3,2,1,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+191,145,Alisher Isaev: O'sish nuqtasi,3,1,1,1,asaxiy-copy,uz,Biznes,long>2500,writable
+192,154,Qani Mening Pishlog'im?,3,1,2,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+193,158,Dardingni sev,3,0,3,0,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,duplicate-exact,writable
+194,170,"""Python""da dasturlash asoslari",3,3,0,0,asaxiy-copy,uz,IT,,writable
+195,191,Hayotga ha de,3,0,3,0,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+196,217,Yumshoq kuch. Jahon siyosatida muvaffaqiyatga erishish vositalari,3,3,0,0,asaxiy-copy,uz,Jahon adabiyoti,,writable
+197,238,Yolg'on psixologiyasi,3,3,0,0,asaxiy-copy,uz,Psixologiya va shaxsiy rivojlanish,,writable
+198,244,Osmoni falaklarda,3,0,3,0,asaxiy-copy,uz,O'zbek adabiyoti,,writable
+199,250,Tarixi Muhammadiy,3,3,0,0,asaxiy-copy,uz,Diniy adabiyot,,needs-book-in-hand
+200,294,Olim yetishtirgan onalar,3,1,0,2,asaxiy-copy,uz,Diniy adabiyot,,needs-book-in-hand

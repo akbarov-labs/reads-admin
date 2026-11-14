@@ -286,6 +286,32 @@ class BookApiTest extends TestCase
         $this->getJson("/api/books/{$book->id}")->assertJsonPath('data.descriptionSource', null);
     }
 
+    public function test_a_book_with_its_own_description_folds_the_shop_text_under_it(): void
+    {
+        $shop = str_repeat('Totalitar tuzumda yashayotgan Uinston Smitning taqdiri haqida roman. ', 2);
+        $book = $this->catalogueBook(edition: ['isbn' => '9789910679629', 'description' => $shop, 'source_url' => 'https://asaxiy.uz/product/1984']);
+
+        // No text of its own: the shop's is the description, nothing to fold.
+        $this->getJson("/api/books/{$book->id}")
+            ->assertJsonPath('data.descriptionIsOwn', false)
+            ->assertJsonPath('data.shopDescription', null);
+
+        $book->update(['description' => 'Kitobning oʻz tavsifi.']);
+        $this->getJson("/api/books/{$book->id}")
+            ->assertJsonPath('data.description', 'Kitobning oʻz tavsifi.')
+            ->assertJsonPath('data.descriptionIsOwn', true)
+            ->assertJsonPath('data.shopDescription', [
+                'text' => trim($shop),
+                'source' => ['name' => 'Asaxiy', 'url' => 'https://asaxiy.uz/product/1984'],
+            ]);
+
+        // Text from a publisher channel folds too, with no credit link.
+        $channel = $this->catalogueBook(book: ['description' => 'Bizning matn.'], edition: ['isbn' => '9789943231467', 'description' => str_repeat('Kanaldan kelgan tavsif matni. ', 5), 'source_url' => null]);
+        $this->getJson("/api/books/{$channel->id}")
+            ->assertJsonPath('data.shopDescription.text', trim(str_repeat('Kanaldan kelgan tavsif matni. ', 5)))
+            ->assertJsonPath('data.shopDescription.source', null);
+    }
+
     public function test_a_description_from_anywhere_else_carries_no_credit(): void
     {
         $book = $this->catalogueBook(edition: ['isbn' => '9789910679629', 'description' => str_repeat('Botdan kelgan tavsif matni. ', 5), 'source_url' => null]);
