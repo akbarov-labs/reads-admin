@@ -129,7 +129,11 @@ class CatalogueRecords
             }
         }
 
-        return null;
+        // A book merged into another (BookMerger) answers to its old title
+        // too, so a new ISBN sent under it joins the kept book.
+        $merged = DB::table('book_merges')->where('merge_key', $wanted)->value('book_id');
+
+        return $merged !== null ? Book::find($merged) : null;
     }
 
     /** @return list<int> */

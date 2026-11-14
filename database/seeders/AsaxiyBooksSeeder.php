@@ -420,6 +420,12 @@ class AsaxiyBooksSeeder extends Seeder
             $this->books[$this->keyFor($firstAuthors[$book->id] ?? null, $book->uzbek_title)] ??= $book->id;
         }
 
+        // A book merged into another (BookMerger) is that book under its
+        // old title: its listings join the kept book, not a new copy.
+        foreach (DB::table('book_merges')->select('merge_key', 'book_id')->cursor() as $merge) {
+            $this->books[$merge->merge_key] ??= $merge->book_id;
+        }
+
         $byIsbn = Edition::whereNotNull('isbn')->pluck('id', 'isbn')->all();
         $byArticle = Edition::whereNotNull('source_article')->pluck('id', 'source_article')->all();
         $disk = Storage::disk('public');
