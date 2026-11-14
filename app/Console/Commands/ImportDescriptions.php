@@ -13,8 +13,9 @@ use Illuminate\Support\Facades\Storage;
 
 #[Signature('books:import-descriptions
     {file : CSV with the columns book_id and description}
-    {--dry-run : Count what would be filled, change nothing}')]
-#[Description('Give books with no description anywhere the reviewed description from a file')]
+    {--dry-run : Count what would be filled, change nothing}
+    {--over-copies : Also give a book its own text when only its editions carry one (a shop or channel copy)}')]
+#[Description('Give books with no description of their own the reviewed description from a file')]
 class ImportDescriptions extends Command
 {
     /**
@@ -24,6 +25,11 @@ class ImportDescriptions extends Command
      * and also the description of each of its editions that has none, so
      * the bot, which keeps descriptions per ISBN, gets it on its next pull
      * (filling clears the edition's sync_hash).
+     *
+     * With --over-copies, a book whose only text sits on its editions — the
+     * Asaxiy import's or a publisher channel's words — gets the reviewed
+     * text as its own description too. The editions keep theirs: the page
+     * leads with the book's own text and folds the shop's under it.
      */
     public function handle(): int
     {
@@ -44,7 +50,8 @@ class ImportDescriptions extends Command
         }
 
         $dryRun = (bool) $this->option('dry-run');
-        $counts = ['filled' => 0, 'editions too' => 0, 'already described' => 0, 'no such book' => 0, 'empty text' => 0];
+        $overCopies = (bool) $this->option('over-copies');
+        $counts = ['filled' => 0, 'over a copy' => 0, 'editions too' => 0, 'already described' => 0, 'no such book' => 0, 'empty text' => 0];
         $log = ['book_id,edition_ids'];
 
         while (($row = fgetcsv($handle)) !== false) {
@@ -65,7 +72,9 @@ class ImportDescriptions extends Command
                 continue;
             }
 
-            if (filled($book->description) || $book->editions->contains(fn ($edition) => filled(trim((string) $edition->description)))) {
+            $editionsHaveText = $book->editions->contains(fn ($edition) => filled(trim((string) $edition->description)));
+
+            if (filled($book->description) || ($editionsHaveText && ! $overCopies)) {
                 $counts['already described']++;
                 $this->line("Book {$book->id} “{$book->uzbek_title}” already has a description; left alone.");
 
@@ -85,6 +94,7 @@ class ImportDescriptions extends Command
             }
 
             $counts['filled']++;
+            $counts['over a copy'] += $editionsHaveText ? 1 : 0;
             $counts['editions too'] += $editions->count();
             $log[] = $book->id.',"'.$editions->pluck('id')->implode(' ').'"';
         }

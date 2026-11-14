@@ -142,7 +142,17 @@ class Book extends Model
             return null;
         }
 
-        $url = (string) $this->aboutEdition()?->source_url;
+        return self::shopCredit($this->aboutEdition()?->source_url);
+    }
+
+    /**
+     * The credit for text taken from a shop page: Asaxiy's listing, or null.
+     *
+     * @return array{name: string, url: string}|null
+     */
+    private static function shopCredit(?string $url): ?array
+    {
+        $url = (string) $url;
         $host = strtolower((string) parse_url($url, PHP_URL_HOST));
 
         return $host === 'asaxiy.uz' || str_ends_with($host, '.asaxiy.uz')
@@ -150,8 +160,32 @@ class Book extends Model
             : null;
     }
 
+    /**
+     * The shop's text for a book that has its own description: the page
+     * leads with ours and folds this under it, credited. Null when the book
+     * has no own text (the shop's is then `about` itself) or no edition
+     * carries one.
+     *
+     * @return array{text: string, source: array{name: string, url: string}|null}|null
+     */
+    public function getShopAboutAttribute(): ?array
+    {
+        if (blank($this->description)) {
+            return null;
+        }
+
+        $edition = $this->aboutEdition();
+        $text = trim((string) $edition?->description);
+
+        if ($text === '' || $text === trim((string) $this->description)) {
+            return null;
+        }
+
+        return ['text' => $text, 'source' => self::shopCredit($edition->source_url)];
+    }
+
     /** The approved edition whose description stands in for the book's own. */
-    private function aboutEdition(): ?Edition
+    public function aboutEdition(): ?Edition
     {
         return $this->approvedEditions
             ->filter(function (Edition $edition) {

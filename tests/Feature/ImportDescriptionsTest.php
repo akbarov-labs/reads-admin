@@ -70,6 +70,33 @@ class ImportDescriptionsTest extends TestCase
         $this->assertSame(1, Book::whereNotNull('description')->where('id', $bare->id)->count());
     }
 
+    public function test_over_copies_gives_a_book_its_own_text_and_leaves_the_shop_text_on_its_editions(): void
+    {
+        $copied = $this->catalogueBook(book: ['uzbek_title' => 'Sinbad'], edition: ['isbn' => '9780194400923', 'description' => 'Seriya haqida umumiy matn.']);
+        $copied->editions()->first()->forceFill(['sync_hash' => 'bot-has-it'])->save();
+        $copied->editions()->create(['isbn' => '9780194400930']);
+        $ownText = $this->catalogueBook(book: ['uzbek_title' => 'Boburnoma', 'description' => 'Bizning matn.'], edition: ['isbn' => '9789943000103']);
+
+        $file = $this->csv([
+            [$copied->id, 'Sinbadning dengiz safarlari, 3-daraja uchun.'],
+            [$ownText->id, 'Yangi matn'],
+        ]);
+
+        $this->assertSame(0, Artisan::call('books:import-descriptions', ['file' => $file, '--over-copies' => true]));
+        $this->assertStringContainsString('Described 1 books.', Artisan::output());
+
+        $this->assertSame('Sinbadning dengiz safarlari, 3-daraja uchun.', $copied->fresh()->description);
+        [$shopEdition, $bareEdition] = $copied->editions()->orderBy('id')->get()->all();
+        // The edition with the shop's text keeps it, and the bot isn't told to re-pull it.
+        $this->assertSame('Seriya haqida umumiy matn.', $shopEdition->description);
+        $this->assertSame('bot-has-it', $shopEdition->sync_hash);
+        // A bare edition gets ours, as without the option.
+        $this->assertSame('Sinbadning dengiz safarlari, 3-daraja uchun.', $bareEdition->description);
+
+        // A book with its own description is still left alone.
+        $this->assertSame('Bizning matn.', $ownText->fresh()->description);
+    }
+
     public function test_a_file_without_the_columns_is_refused(): void
     {
         $path = tempnam(sys_get_temp_dir(), 'desc');

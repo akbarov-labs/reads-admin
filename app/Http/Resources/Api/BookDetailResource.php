@@ -29,6 +29,12 @@ class BookDetailResource extends BookResource
             'description' => $this->about,
             // Credit for a description copied from a shop listing, or null.
             'descriptionSource' => $this->about_source,
+            // Whether `description` is the editors' own words; a copy from a
+            // shop or a publisher channel isn't, and the site keeps those out
+            // of search snippets.
+            'descriptionIsOwn' => filled($this->description),
+            // A shop's text the page folds under the book's own, or null.
+            'shopDescription' => $this->shop_about,
             'editions' => EditionResource::collection($this->approvedEditions),
 
             // Approved only — the controller constrains the eager load, so
